@@ -2,6 +2,12 @@ SiamCi integration prototype
 Created 2/9/2011
 Carlos Rueda - MBARI
 
+2011-02-24
+	- project now hosted at http://gitorious.org/siamci
+	- made hard links to Siam_driver.py and test_Siam.py to facilitate version control for the moment.
+	
+	- Created profiles in the pom to facilitate tests from the command line, and updated README.
+	
 2011-02-23
 	- added src/main/python/ion/agents/instrumentagents/ directory to keep a copy of:
 		Siam_driver.py

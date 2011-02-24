@@ -4,31 +4,58 @@ Carlos Rueda - MBARI
 
 This is the SIAM-CI integration prototype.
 
-STATUS: Very preliminary. Just general preparations at this point.
+STATUS: Preliminary.
 
 This is a Maven project with the JAR dependencies being those according to the SIAM middleware 
-and the CI ioncore-java library.
+and the CI ion-object-definitions and ioncore-java libraries.
 
+
+* Preparing dependencies
+------------------------
 As some of the JAR dependencies are not available in standard or external maven repositories, 
 they are to be installed in the local repository before proceeding with normal development or build. 
 The etc/build.xml ant script is included to install those dependencies. Just run:
 	ant -f etc/build.xml install
 This assumes the following locations:
+   - ion-object-definitions --> ../../ion-object-definitions/ 
    - ioncore-java root directory --> ../../ioncore-java/ 
    - SIAM root directory --> ../../siam2/ 
 both relative to etc/. 
 To explicitly indicate these directories, use the 'ioncore-java' and 'siam' system properties, 
 for example:
 	ant -f etc/build.xml -Dioncore-java=/Dev/ooici/ioncore-java install
+See etc/build.xml for other properties that may need adjustment.
+
+NOTE: the above approach to be changed to use the ivy mechanism that was later enabled.
 
 
-Build:
+* Building the program
+----------------------
+Once the dependencies above are installed in your local maven repository:
 	$ mvn clean compile
 	
-Initial tests:
+	
+* Initial tests
+---------------
+- Run the SIAM-CI adapter process  (kill it with ^C when done):
+	$ mvn exec:java -Dsiam-ci
+	... (some output indicating AMQP server host/port, queue, exchange) ...
+	Waiting for message ...
+	
+- In another shell session, run the tests (these are not yet unit tests)
+	$ mvn exec:java -Dsiam-ci-test
+	... (several lines showing the sent and received message) ...
+	
+  The siam-ci shell above should also show some log messages.
+
+
+
+* Some tests for SIAM operations
+--------------------------------
+The following are only SIAM related (not with the adapter)
 
 - Run a program similar to SIAM's listPorts:	
-	$ mvn exec:java -Dexec.args="listPorts localhost -stats"
+	$ mvn exec:java -Dsiam-runner -Dexec.args="listPorts localhost -stats"
 	...
 	SIAM version $Name:  $
 	java.rmi.UnmarshalException: error unmarshalling return; nested exception is: 
@@ -50,7 +77,7 @@ Initial tests:
 
 - A similar test, but running the original utility class in the siam.jar library,
   org.mbari.siam.operations.utils.PortSampler:
-	$ mvn exec:java -Dexec.args="samplePort localhost testPort"
+	$ mvn exec:java -Dsiam-runner -Dexec.args="samplePort localhost testPort"
 	...
 	SIAM version $Name:  $
 	TEstSiamInstrument:
