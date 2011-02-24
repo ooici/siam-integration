@@ -1,0 +1,131 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>net.ooici</groupId>
+	<artifactId>siamci</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>SIAM-CI Adapter</name>
+	<properties>
+		<maven.compiler.source>1.5</maven.compiler.source>
+		<maven.compiler.target>1.5</maven.compiler.target>
+		
+		<!-- see http://maven.apache.org/general.html#encoding-warning --> 
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		
+		<siam_version>0.9</siam_version>
+		<siam_instr_version>0.0.1</siam_instr_version>
+		<ionproto_version>0.3.12</ionproto_version>
+		<ioncore_version>0.2.1</ioncore_version>
+		<msgpack_version>0.3</msgpack_version>
+	</properties>
+
+	<build>
+		<plugins>
+			<plugin>
+				<!-- See http://mojo.codehaus.org/exec-maven-plugin/usage.html -->
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>1.2</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>java</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<mainClass>test.siam.utils.UtilRunner</mainClass>
+					<systemProperties>
+						<systemProperty>
+              				<key>java.security.policy</key>
+              				<value>etc/policy</value>
+            			</systemProperty>
+						<systemProperty>
+              				<key>log4j.threshold</key>
+              				<value>ERROR</value>
+            			</systemProperty>
+						<systemProperty>
+              				<key>portLister.justify</key>
+              				<value>LEFT</value>
+            			</systemProperty>
+					</systemProperties>
+					<!-- arguments>
+            			<argument>argument1</argument>
+					</arguments -->
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+	
+	<dependencies>
+	
+		<dependency>
+			<groupId>org.mbari</groupId>
+			<artifactId>siam</artifactId>
+			<version>${siam_version}</version>
+		</dependency>
+		<dependency>
+			<groupId>siam_test_devices</groupId>
+			<artifactId>TestSiamInstrument1</artifactId>
+			<version>${siam_instr_version}</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>ionproto</groupId>
+			<artifactId>ionproto</artifactId>
+			<version>${ionproto_version}</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>ioncore</groupId>
+			<artifactId>ioncore</artifactId>
+			<version>${ioncore_version}</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>commons-cli</groupId>
+			<artifactId>commons-cli</artifactId>
+			<version>1.1</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>1.2</version>
+		</dependency>
+		<dependency>
+			<groupId>msgpack</groupId>
+			<artifactId>msgpack</artifactId>
+			<version>${msgpack_version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-aop</artifactId>
+			<version>3.0.4.RELEASE</version>
+		</dependency>
+		<dependency>
+			<groupId>com.rabbitmq</groupId>
+			<artifactId>amqp-client</artifactId>
+			<version>2.3.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>1.5.6</version>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-log4j12</artifactId>
+			<version>1.5.6</version>
+		</dependency>
+		<dependency>
+			<groupId>com.googlecode.json-simple</groupId>
+			<artifactId>json-simple</artifactId>
+			<version>1.1</version>
+		</dependency>
+		<dependency>
+			<groupId>com.google.protobuf</groupId>
+			<artifactId>protobuf-java</artifactId>
+			<version>2.3.0</version>
+		</dependency>
+	</dependencies>
+</project>

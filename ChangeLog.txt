@@ -1,0 +1,90 @@
+SiamCi integration prototype
+Created 2/9/2011
+Carlos Rueda - MBARI
+
+2011-02-23
+	- added src/main/python/ion/agents/instrumentagents/ directory to keep a copy of:
+		Siam_driver.py
+		test/test_Siam.py
+	  from my local image of ioncore-python, while these elements get pushed to an appropriate OOICI repo.
+	  
+	- Updated dependencies according to recent updates in ion-object-definitions and ioncore-java
+	
+	- Initial structure of interfaces (ISiamCiFactory, ISiamCiAdapter) and
+	  preliminary implementation. 
+	  
+	- The overall implementation idea is as follows:
+		- The SIAM-CI adapter launches a process to dispatch messages received on a certain queue 
+		  (by default called SIAM-CI).
+		- IonMock: a simple program that sends a message to the adapter and displays the response.
+		  This is while the corresponding functionality is enabled on the python side.
+		  
+	- Test:
+	
+		1- have rabbitmq running on localhost
+		
+		2- launch SiamCiMain
+			net.ooici.siamci.impl.SiamCiProcess.<init>(){35} - Creating SiamCiProcess
+			Opened channel on host localhost, port 5672
+			Declared queue amq.gen-ObUk6ROJeWxx4EuS3vsbzg==
+			Bound queue amq.gen-ObUk6ROJeWxx4EuS3vsbzg== to exchange magnet.topic with binding key 375a55fb-56e8-4bed-b874-2b19d06c2fb0.1
+			Spawned process 375a55fb-56e8-4bed-b874-2b19d06c2fb0.1
+			net.ooici.siamci.impl.SiamCiAdapterImpl.start(){28} - starting process
+			net.ooici.siamci.impl.SiamCiProcess.run(){44} - Running SiamCiProcess
+			net.ooici.siamci.impl.SiamCiProcess._run(){62} - 
+			===================================================================
+			Waiting for message ...
+					
+		3- Run IonMock  -- 
+		  Lots of lines including:
+			net.ooici.siamci.ion.IonMock.testSendReceive(){41} - 
+			>>>>>>>>>>>>>>>>>Test Send/Receive<<<<<<<<<<<<<<<<<
+			...			
+			============== Object ==============
+			command: "get"
+			args {
+			  channel: "ch1"
+			  parameter: "foo"
+			}
+			====================================
+			
+			...			
+			net.ooici.siamci.ion.IonMock.testSendReceive(){48} - 
+			******Prepare MsgBrokerClient******
+			Opened channel on host localhost, port 5672
+			Declared queue amq.gen-LaiEgQzLZjbebRQOuQOPwg==
+			Bound queue amq.gen-LaiEgQzLZjbebRQOuQOPwg== to exchange magnet.topic with binding key dfa2afb3-3aef-4e62-8229-fb57e0a0f49b.1
+			Spawned process dfa2afb3-3aef-4e62-8229-fb57e0a0f49b.1
+			net.ooici.siamci.ion.IonMock.testSendReceive(){56} - 
+			******RPC Send******
+			Sent message to exchange magnet.topic with routing key testing.siam-ci, msglen 363
+			set encoding to: application/ion-jsond
+			Message received on queue amq.gen-LaiEgQzLZjbebRQOuQOPwg==, msglen 400
+			net.ooici.siamci.ion.IonMock.testSendReceive(){61} - 
+			******Unpack Message******
+			net.ooici.siamci.ion.IonMock.testSendReceive(){63} -  reply.getContent class = class java.lang.String
+			net.ooici.siamci.ion.IonMock.testSendReceive(){65} - !!!!!!!! content is String -- using getBytes  !!!!!
+			...		
+			
+		 While SiamCiMain outputs:
+			set encoding to: ION R1 GPB
+			Message received on queue SIAM-CI, msglen 363
+			net.ooici.siamci.impl.SiamCiProcess._run(){72} - headers: {sender=dfa2afb3-3aef-4e62-8229-fb57e0a0f49b.1, receiver=testing.siam-ci, op=respond, conv-id=#0, encoding=ION R1 GPB, reply-to=dfa2afb3-3aef-4e62-8229-fb57e0a0f49b.1, accept-encoding=application/ion-jsond, conv-seq=1}
+			net.ooici.siamci.impl.SiamCiProcess._run(){81} - receiver = testing.siam-ci    reply-to: dfa2afb3-3aef-4e62-8229-fb57e0a0f49b.1
+			Sent message to exchange magnet.topic with routing key dfa2afb3-3aef-4e62-8229-fb57e0a0f49b.1, msglen 400
+			net.ooici.siamci.impl.SiamCiProcess._run(){62} - 
+			===================================================================
+			Waiting for message ...
+		 	
+		
+		
+2011-02-21
+	- various updates according to newest images of ion-object-definitions and ioncore-java.
+	- etc/build.xml: "install" macro
+	- ion.example: EchoClientTest and IonSimpleEcho: a simple test of communication of messages
+	  related with instruments, which I added to my fork carueda/ion-object-definitions
+	
+2011-02-09
+	- initial preparations for using maven and setting up dependencies on incore-java and
+	  SIAM libraries. Initial test with emulating SIAM's listPort utility OK.
+	- I'm hosting this project on a personal SVN repository for the moment.
