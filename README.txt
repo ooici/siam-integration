@@ -12,17 +12,18 @@ and the CI ion-object-definitions and ioncore-java libraries.
 
 * Preparing dependencies
 ------------------------
-As some of the JAR dependencies are not available in standard or external maven repositories, 
-they are to be installed in the local repository before proceeding with normal development or build. 
-The etc/build.xml ant script is included to install those dependencies. Just run:
-	ant -f etc/build.xml install
-This assumes the following locations:
+As some of the JAR dependencies (including ion-object-definitions, ioncore-java, SIAM) are not available 
+in standard or external maven repositories, they are to be installed in the local repository before proceeding 
+with normal development or build. The etc/build.xml ant script is included to install those dependencies. 
+The ant script assumes the following locations:
    - ion-object-definitions --> ../../ion-object-definitions/ 
    - ioncore-java root directory --> ../../ioncore-java/ 
    - SIAM root directory --> ../../siam2/ 
 both relative to etc/. 
-To explicitly indicate these directories, use the 'ioncore-java' and 'siam' system properties, 
-for example:
+If these locations are correct for your envirnoment, just run:
+	ant -f etc/build.xml install
+To explicitly indicate any of these directories, you can use the 'siam', 'ion-object-definitions', and 
+'ioncore-java' system properties as appropriate. For example:
 	ant -f etc/build.xml -Dioncore-java=/Dev/ooici/ioncore-java install
 See etc/build.xml for other properties that may need adjustment.
 
@@ -46,7 +47,7 @@ Once the dependencies above are installed in your local maven repository:
 	$ mvn exec:java -Dsiam-ci-test
 	... (several lines showing the sent and received message) ...
 	
-  The siam-ci shell above should also show some log messages.
+  The siam-ci shell above should also show some corresponding log messages.
 
 
 
