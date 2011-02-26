@@ -12,12 +12,8 @@ pika.log.setup(color=True)
 
 receiver_queue_name = "demo_receive_queue"
 
-#
-# NOTE: ideally, reply_queue_name = '', so we get the reply queue name from the amqp server (see
-# the corresponding channel.queue_declare below). However, although the reply_to property is set, 
-# pika is not receiving (bug?) that property on the receiver side. So, we need to fix the name
-# of the reply queue.  See demo_receive.py.
-reply_queue_name = 'demo_reply_queue'
+# See demo_receive_rpc.py.
+reply_queue_name = None
 
 connection = None
 channel = None
@@ -44,7 +40,7 @@ def on_channel_open(channel_):
 def on_receiver_queue_declared(frame):
     global receiver_queue_name
     logging.info("demo_send: Receiver Queue Declared: %s", receiver_queue_name)
-    channel.queue_declare(queue=reply_queue_name, #durable=True,
+    channel.queue_declare(queue='', #durable=True,
                           exclusive=True, #auto_delete=False,
                           callback=on_reply_queue_declared)
         
@@ -71,7 +67,7 @@ def on_reply_queue_declared(frame):
                               ))
 
     # prepare to receive responses
-    channel.basic_consume(handle_response, queue=reply_queue_name, no_ack = True)
+    channel.basic_consume(handle_response, queue=reply_queue_name)
     
 def handle_response(channel, method_frame, header_frame, body):
     pika.log.info("RESPONSE RECEIVED content_type=%s delivery-tag=%i: %s",

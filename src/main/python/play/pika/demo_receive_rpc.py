@@ -43,6 +43,9 @@ def handle_delivery(channel, method_frame, header_frame, body):
     @todo reply_to and other properties not gotten! (pika bug?) 
     """
     
+    pika.log.info("Received message: '%s'", body)    
+    channel.basic_ack(delivery_tag=method_frame.delivery_tag)
+    
     reply_queue_name = None 
     if header_frame.reply_to:
         reply_queue_name = header_frame.reply_to
@@ -66,7 +69,6 @@ def handle_delivery(channel, method_frame, header_frame, body):
     pika.log.info("method_frame %s" , str(method_frame))
     pika.log.info("header_frame %s" , str(header_frame))
 
-    channel.basic_ack(delivery_tag=method_frame.delivery_tag)
 
     pika.log.info("SENDING RESPONSE")
     channel.basic_publish(exchange='',
