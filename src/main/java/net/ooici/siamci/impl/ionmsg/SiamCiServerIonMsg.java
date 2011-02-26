@@ -1,4 +1,4 @@
-package net.ooici.siamci.impl;
+package net.ooici.siamci.impl.ionmsg;
 
 import ion.core.BaseProcess;
 import ion.core.messaging.IonMessage;
@@ -17,9 +17,9 @@ TODO
  * 
  * @author carueda
  */
-class SiamCiProcess implements Runnable {
+class SiamCiServerIonMsg implements Runnable {
 	
-	private static final Logger log = LoggerFactory.getLogger(SiamCiProcess.class);
+	private static final Logger log = LoggerFactory.getLogger(SiamCiServerIonMsg.class);
 	
 
 	private final String queueName = SiamCiConstants.DEFAULT_QUEUE_NAME;
@@ -30,7 +30,7 @@ class SiamCiProcess implements Runnable {
 	
 	private volatile boolean keepRunning;
 
-	SiamCiProcess() throws Exception {
+	SiamCiServerIonMsg() throws Exception {
 
 		log.info("Creating SiamCiProcess");
 		ionClient = new MsgBrokerClient("localhost", com.rabbitmq.client.AMQP.PROTOCOL.PORT, "magnet.topic");

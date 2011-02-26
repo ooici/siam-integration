@@ -1,4 +1,4 @@
-package net.ooici.siamci.impl;
+package net.ooici.siamci.impl.ionmsg;
 
 import net.ooici.siamci.ISiamCiAdapter;
 
@@ -6,24 +6,25 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Implementation using the ION messaging APIs.
+ * TODO NOTE: incomplete
  * 
  * @author carueda
  */
-class SiamCiAdapterImpl implements ISiamCiAdapter {
+public class SiamCiAdapterIonMsg implements ISiamCiAdapter {
 	
-	private static final Logger log = LoggerFactory.getLogger(SiamCiAdapterImpl.class);
+	private static final Logger log = LoggerFactory.getLogger(SiamCiAdapterIonMsg.class);
 	
 	
-	private SiamCiProcess siamCiProcess;
+	private SiamCiServerIonMsg siamCiProcess;
 	private Thread thread;
 	
-	SiamCiAdapterImpl() {
-		
+	public SiamCiAdapterIonMsg() {
 	}
 	
 
 	public void start() throws Exception {
-		siamCiProcess = new SiamCiProcess();	
+		siamCiProcess = new SiamCiServerIonMsg();	
 		thread = new Thread(siamCiProcess);
 		log.info("starting process");
 		thread.start();
