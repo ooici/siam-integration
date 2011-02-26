@@ -2,13 +2,13 @@ package net.ooici.siamci.impl.gpb;
 
 import java.io.IOException;
 
-import net.ooici.play.instr.InstrumentDefs.ChannelParameterPair;
 import net.ooici.play.instr.InstrumentDefs.Command;
 import net.ooici.siamci.SiamCiConstants;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.protobuf.Message;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
@@ -26,7 +26,7 @@ class SiamCiServerGpb implements Runnable {
 	private static final Logger log = LoggerFactory.getLogger(SiamCiServerGpb.class);
 	
 
-	private final String queueName = "demo_receive_queue"; // SiamCiConstants.DEFAULT_QUEUE_NAME;
+	private final String queueName = SiamCiConstants.DEFAULT_QUEUE_NAME;
 	
 	private ConnectionFactory factory;
 	private Connection connection;
@@ -35,7 +35,7 @@ class SiamCiServerGpb implements Runnable {
 	private volatile boolean keepRunning;
 
 	SiamCiServerGpb() throws Exception {
-		log.info("Creating SiamCiProcess");
+		log.debug("Creating SiamCiProcess");
 		factory = new ConnectionFactory();
 		factory.setHost("localhost");
 		connection = factory.newConnection();
@@ -77,20 +77,21 @@ class SiamCiServerGpb implements Runnable {
 			QueueingConsumer.Delivery delivery = consumer.nextDelivery();
 			byte[] body = delivery.getBody();
 			
-			Command cmd = Command.parseFrom(body);
-			_showCommand(cmd);
 			
 			BasicProperties props = delivery.getProperties();
 			String replyTo = props.getReplyTo();
 			String corr_id = props.getCorrelationId();
 			String contentType = props.getContentType();
 			
-			log.info(" [x] Received body len " + body.length);
-			log.info(" [x]   with replyTo= '" + replyTo + "' corr_id='" +corr_id+ "'");
-			log.info(" [x]     contentType= '" + contentType + "'");
+			log.debug(" [x] Received body len " + body.length);
+			log.debug(" [x]   with replyTo= '" + replyTo + "' corr_id='" +corr_id+ "'");
+			log.debug(" [x]     contentType= '" + contentType + "'");
+			
+			Command cmd = Command.parseFrom(body);
+			_showMessage(cmd, "Command received:");
 			
 			if ( replyTo == null ) {
-				log.info(" [x] NOT REPLYING as replyTo is null");
+				log.warn(" [x] NOT REPLYING as replyTo is null");
 				continue;
 			}
 			
@@ -98,15 +99,13 @@ class SiamCiServerGpb implements Runnable {
 			props2.setCorrelationId(corr_id);
 			
 		    channel.basicPublish("", replyTo, props2, body);
-		    log.info(" [x] Sent '" + body + "'");
+		    log.info(" [x] Command replied.");
 		}
 	}
 
-	private void _showCommand(Command cmd) {
-		log.info(" [x] Command: command=" +cmd.getCommand());
-		for ( ChannelParameterPair cp : cmd.getArgsList() ) {
-			log.info(" [x]          arg: channel=" +cp.getChannel()+ "  parameter=" +cp.getParameter());
-		}
+	private void _showMessage(Message msg, String title) {
+		final String prefix = "    | ";
+		log.info(" [x] " +title+ "\n    " +msg.getClass() + "\n" + prefix + msg.toString().replaceAll("\n", "\n"+prefix));
 	}
 
 	public void stop() {

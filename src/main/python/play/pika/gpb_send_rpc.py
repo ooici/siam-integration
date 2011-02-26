@@ -12,7 +12,7 @@ import pika.log as logging
 
 pika.log.setup(color=True)
 
-receiver_queue_name = "demo_receive_queue"
+receiver_queue_name = "SIAM-CI"
 
 # See demo_receive_rpc.py.
 reply_queue_name = None
@@ -66,7 +66,7 @@ def on_reply_queue_declared(frame):
                               correlation_id = corr_id
                           ))
 
-    show_obj(cmd, "Command sent")
+    show_message(cmd, "Command sent:")
     
     # prepare to receive responses
     channel.basic_consume(handle_response, queue=reply_queue_name)
@@ -85,7 +85,7 @@ def handle_response(channel, method_frame, header_frame, body):
     
     cmd = Command()
     cmd.ParseFromString(body)
-    show_obj(cmd, "Command received")
+    show_message(cmd, "Command received:")
     
 
 def make_command():
@@ -98,9 +98,9 @@ def make_command():
     return cmd
     
   
-def show_obj(obj, title="Object"):
+def show_message(msg, title="Message:"):
     prefix = "    | "
-    pika.log.info(title+ ":\n    " + str(type(obj)) + "\n" + prefix + str(obj).replace("\n", "\n"+prefix))
+    pika.log.info(title+ "\n    " + str(type(msg)) + "\n" + prefix + str(msg).replace("\n", "\n"+prefix))
 
 if __name__ == '__main__':
     import sys
