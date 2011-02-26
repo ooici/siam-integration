@@ -1,17 +1,18 @@
 ReceiveRpc & SendRpc
-	Run ReceiveRpc and then SendRpc. The two outputs should look like so:
+	Run ReceiveRpc and then SendRpc. The two outputs look something like:
 	
 	SendRpc:
+	 [x] SendRpc: Sent 'Hello World !!!!'  with CORR ID = bb2e52d8-dc71-4775-b54e-ff5f7242a75c
+	      replyTo = amq.gen-93cPbp2kTrBN3mr1ICV6SA==
 	 [*] Waiting for responses. To exit press CTRL+C
-	 [x] Sent 'Hello World !!!!'  with CORR ID = 02c471d7-e96e-4375-9cb7-bbcc406c0bca
-	 [x] Received RESPONSE '##corr_id=02c471d7-e96e-4375-9cb7-bbcc406c0bca## Hello World !!!!'
-	     corr_id=02c471d7-e96e-4375-9cb7-bbcc406c0bca
-
+	 [x] Received RESPONSE 'HELLO WORLD !!!! -- ## corr_id=bb2e52d8-dc71-4775-b54e-ff5f7242a75c ##'
+	     corr_id=bb2e52d8-dc71-4775-b54e-ff5f7242a75c
+	     
 	ReceiveRpc:
-	 [*] Waiting for messages. To exit press CTRL+C
+	 [*] ReceiveRpc: Waiting for messages. To exit press CTRL+C
 	 [x] Received 'Hello World !!!!'
-	 [x]     replyTo 'amq.gen-VSHSoKw/Czh+9Es0a0rLmA=='    corr_id=02c471d7-e96e-4375-9cb7-bbcc406c0bca
-	 [x]     contentType 'MyContentType'
-	 [x] Sent '##corr_id=02c471d7-e96e-4375-9cb7-bbcc406c0bca## Hello World !!!!'
+	 [x]   with replyTo= 'amq.gen-93cPbp2kTrBN3mr1ICV6SA==' corr_id='bb2e52d8-dc71-4775-b54e-ff5f7242a75c'
+	 [x]     contentType= 'text/plain'
+	 [x] Sent 'HELLO WORLD !!!! -- ## corr_id=bb2e52d8-dc71-4775-b54e-ff5f7242a75c ##'
 
 	

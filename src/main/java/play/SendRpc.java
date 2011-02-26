@@ -24,63 +24,53 @@ public class SendRpc {
 	private static Channel channel;
 
 	public static void main(String[] argv) throws Exception {
+		_prepare();
+		_send();
+	    _waitResponse();
+	}
 
+	private static void _prepare() throws Exception {
 		factory = new ConnectionFactory();
 		factory.setHost("localhost");
 		connection = factory.newConnection();
 		channel = connection.createChannel();
-
 		channel.queueDeclare(receiver_queue_name, true, false, false, null);
 		
-		DeclareOk declareOk = channel.queueDeclare("", false, true, false, null);
+		DeclareOk declareOk = channel.queueDeclare("", false, true, true, null);
 		reply_queue_name = declareOk.getQueue();
-		
-		
-		_prepareForResponses();
-		
+	}
+
+	private static void _send() throws Exception {
 		String corr_id = UUID.randomUUID().toString();
 		BasicProperties props = new BasicProperties();
 		props.setCorrelationId(corr_id);
 		props.setReplyTo(reply_queue_name);
-		props.setContentType("MyContentType");
+		props.setContentType("text/plain");
 		
 		String message = "Hello World !!!!";
 		channel.basicPublish("", receiver_queue_name, props, message.getBytes());
 		
-	    System.out.println(" [x] Sent '" + message + "'  with CORR ID = " +corr_id + "\n" + 
+	    System.out.println(" [x] SendRpc: Sent '" + message + "'  with CORR ID = " +corr_id + "\n" + 
 	    		          "      replyTo = " +reply_queue_name);
 	}
 
-
-	private static void _prepareForResponses() {
-		new Thread(new Runnable() {
-			public void run() {
-				System.out.println(" [*] Waiting for responses. To exit press CTRL+C");
-
-				QueueingConsumer consumer = new QueueingConsumer(channel);
-				try {
-					channel.basicConsume(reply_queue_name, true, consumer);
-					while (true) {
-						QueueingConsumer.Delivery delivery = consumer.nextDelivery();
-						String message = new String(delivery.getBody());
-						
-						BasicProperties props = delivery.getProperties();
-						String corr_id = props.getCorrelationId();
-						
-						System.out.println(" [x] Received RESPONSE '" + message + "'\n" +
-								           "     corr_id=" +corr_id);
-						
-						
-						// done (in this test we are just waiting for a response)
-						connection.close();
-						break;
-					}
-				}
-				catch (Exception e) {
-					e.printStackTrace();
-					return;
-				}
-			}
-		}).start();
+	private static void _waitResponse() throws Exception {
+		System.out.println(" [*] Waiting for responses. To exit press CTRL+C");
+		QueueingConsumer consumer = new QueueingConsumer(channel);
+		channel.basicConsume(reply_queue_name, true, consumer);
+		while (true) {
+			QueueingConsumer.Delivery delivery = consumer.nextDelivery();
+			String message = new String(delivery.getBody());
+			
+			BasicProperties props = delivery.getProperties();
+			String corr_id = props.getCorrelationId();
+			
+			System.out.println(" [x] Received RESPONSE '" + message + "'\n" +
+					           "     corr_id=" +corr_id);
+			
+			// done (in this test we are just waiting for a response)
+			connection.close();
+			break;
+		}
 	}
 }
