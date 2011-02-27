@@ -15,7 +15,7 @@ import com.rabbitmq.client.AMQP.Queue.DeclareOk;
  */
 public class SendRpc {
 
-	private final static String receiver_queue_name = "demo_receive_queue";
+	private final static String receiver_queue_name = "SIAM-CI";
 	
 	private static String reply_queue_name;
 

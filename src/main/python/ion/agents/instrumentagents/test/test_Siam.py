@@ -22,8 +22,6 @@ from twisted.trial import unittest
 
 class TestSiam(IonTestCase):
     
-    SimulatorPort = 0
-    
     @defer.inlineCallbacks
     def setUp(self):
         yield self._start_container()
@@ -53,10 +51,10 @@ class TestSiam(IonTestCase):
         yield self._stop_container()
 
 
-    @defer.inlineCallbacks
-    def test_initialize(self):
-        yield self.driver_client.initialize('some arg')
-        log.debug('TADA!')
+#    @defer.inlineCallbacks
+#    def test_initialize(self):
+#        yield self.driver_client.initialize('some arg')
+#        log.debug('TADA!')
 
     @defer.inlineCallbacks
     def test_get_status(self):
@@ -67,35 +65,35 @@ class TestSiam(IonTestCase):
         yield self.driver_client.get_status(argList)
 
 
-    @defer.inlineCallbacks
-    def test_fetch_set(self):
-        raise unittest.SkipTest('Not implemented yet')
-        """
-        @todo: implement
-        """
+#    @defer.inlineCallbacks
+#    def test_fetch_set(self):
+#        raise unittest.SkipTest('Not implemented yet')
+#        """
+#        @todo: implement
+#        """
 
 
-    @defer.inlineCallbacks
-    def test_execute(self):
-        raise unittest.SkipTest('Needs new PubSub services')
-        """
-        Test the execute command to the Instrument Driver
-        @todo: implement
-        """
+#    @defer.inlineCallbacks
+#    def test_execute(self):
+#        raise unittest.SkipTest('Needs new PubSub services')
+#        """
+#        Test the execute command to the Instrument Driver
+#        @todo: implement
+#        """
 
 
-    @defer.inlineCallbacks
-    def test_sample(self):
-        raise unittest.SkipTest('Needs new PubSub services')
-        """
-        @todo: implement
-        """
-        yield self.driver_client.initialize('some arg')
-
-        cmd1 = ['ds', 'now']
-        yield self.driver_client.execute(cmd1)
-
-        yield pu.asleep(1)
-
-        yield self.driver_client.disconnect(['some arg'])
+#    @defer.inlineCallbacks
+#    def test_sample(self):
+#        raise unittest.SkipTest('Needs new PubSub services')
+#        """
+#        @todo: implement
+#        """
+#        yield self.driver_client.initialize('some arg')
+#
+#        cmd1 = ['ds', 'now']
+#        yield self.driver_client.execute(cmd1)
+#
+#        yield pu.asleep(1)
+#
+#        yield self.driver_client.disconnect(['some arg'])
 

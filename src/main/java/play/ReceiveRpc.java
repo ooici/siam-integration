@@ -7,14 +7,14 @@ import com.rabbitmq.client.QueueingConsumer;
 import com.rabbitmq.client.AMQP.BasicProperties;
 
 /**
- * Loop receiving messages from the "demo_receive_queue" queue and replying to
+ * Loop receiving messages from a queue queue and replying to
  * the rountingKey given by the value of the property reply-to, if any.
  * 
  * @author carueda
  */
 public class ReceiveRpc {
 
-	private final static String receiver_queue_name = "demo_receive_queue";
+	private final static String receiver_queue_name = "SIAM-CI";
 
 	private static ConnectionFactory factory;
 	private static Connection connection;

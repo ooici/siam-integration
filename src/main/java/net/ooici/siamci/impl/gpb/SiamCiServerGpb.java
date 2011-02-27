@@ -3,6 +3,9 @@ package net.ooici.siamci.impl.gpb;
 import java.io.IOException;
 
 import net.ooici.play.instr.InstrumentDefs.Command;
+import net.ooici.play.instr.InstrumentDefs.Result;
+import net.ooici.play.instr.InstrumentDefs.SuccessFail;
+import net.ooici.play.instr.InstrumentDefs.SuccessFail.Item;
 import net.ooici.siamci.SiamCiConstants;
 
 import org.slf4j.Logger;
@@ -90,22 +93,49 @@ class SiamCiServerGpb implements Runnable {
 			Command cmd = Command.parseFrom(body);
 			_showMessage(cmd, "Command received:");
 			
+			
 			if ( replyTo == null ) {
 				log.warn(" [x] NOT REPLYING as replyTo is null");
 				continue;
 			}
-			
 			BasicProperties props2 = new BasicProperties();
 			props2.setCorrelationId(corr_id);
 			
-		    channel.basicPublish("", replyTo, props2, body);
-		    log.info(" [x] Command replied.");
+			Message response = _processCommand(cmd);
+			
+			byte[] replyBody = response.toByteArray();
+			
+		    channel.basicPublish("", replyTo, props2, replyBody);
+		    _showMessage(response, "Response replied:");
 		}
+	}
+
+	private Message _processCommand(Command cmd) {
+		Message response;
+
+		if ( "ping".equals(cmd.getCommand()) ) {
+			SuccessFail sf = SuccessFail.newBuilder().setResult(Result.OK).build();
+			response = sf;
+		}
+		else {
+			// TODO others
+			SuccessFail sf = SuccessFail.newBuilder()
+				.setResult(Result.ERROR)
+				.addItem(Item.newBuilder()
+						.setType(Item.Type.STR)
+						.setStr("Command '" +cmd.getCommand()+ "' not implemented")
+						.build())
+				.build()
+			;
+			response = sf;
+		}
+		
+		return response;
 	}
 
 	private void _showMessage(Message msg, String title) {
 		final String prefix = "    | ";
-		log.info(" [x] " +title+ "\n    " +msg.getClass() + "\n" + prefix + msg.toString().replaceAll("\n", "\n"+prefix));
+		log.info(" [x] " +title+ "\n    " +msg.getClass() + "\n" + prefix + msg.toString().trim().replaceAll("\n", "\n"+prefix));
 	}
 
 	public void stop() {

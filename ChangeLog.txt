@@ -2,6 +2,86 @@ SiamCi integration prototype
 Created 2/9/2011
 Carlos Rueda - MBARI
 
+2011-02-26
+	- Basic functionality about RPC requests from python and corresponding replies from java
+	  is now enabled. This is using GPB messages directly (not ION messages).
+	  Unfortunately, it was confusing how to implement an ION-based messaging mechanism. 
+	  In particular, the rpc_send methods, although straightforward to use against services 
+	  running in the python capability container, are not suitable (or I couldn't figure) for 
+	  use against external services (like SiamCiServerGpb).
+	  
+	- SiamCiServerGpb: this is the RPC server using GPB messages directly. It can be tested
+	  with the gpb_send_rpc.py script and also with new scripts on the ioncore-python side.
+	  New modules under src/main/python/ion/agents/instrumentagents/:
+		SiamCi_proxy  -- Client to the SiamCi adapter
+		test/test_SiamCi.py
+	
+	Tests:
+	- Run the SIAM-CI adapter:
+		$ mvn compile exec:java -Dsiam-ci
+		===========Waiting for call============
+		net.ooici.siamci.impl.gpb.SiamCiServerGpb._run(){89} -  [x] Received body len 31
+		net.ooici.siamci.impl.gpb.SiamCiServerGpb._run(){90} -  [x]   with replyTo= 'amq.gen-EBgFII0MOraQRHhvdg8rLA==' corr_id='85d59ebf-a405-49ad-9fd1-0b19b50ea9c9'
+		net.ooici.siamci.impl.gpb.SiamCiServerGpb._run(){91} -  [x]     contentType= 'application/octet-stream'
+		net.ooici.siamci.impl.gpb.SiamCiServerGpb._showMessage(){138} -  [x] Command received:
+		    class net.ooici.play.instr.InstrumentDefs$Command
+		    | command: "hiCmd"
+		    | args {
+		    |   channel: "ch1"
+		    |   parameter: "pr1"
+		    | }
+		    | args {
+		    |   channel: "ch2"
+		    |   parameter: "pr2"
+		    | }
+		net.ooici.siamci.impl.gpb.SiamCiServerGpb._showMessage(){138} -  [x] Response replied:
+		    class net.ooici.play.instr.InstrumentDefs$SuccessFail
+		    | result: ERROR
+		    | item {
+		    |   type: STR
+		    |   str: "Command \'hiCmd\' not implemented"
+		    | }
+		
+	- A simple client:
+		$ python src/main/python/play/pika/gpb_send_rpc.py 
+		[INFO     2011-02-26 23:17:56,849  #36891] Sending command WITH CORR ID: 85d59ebf-a405-49ad-9fd1-0b19b50ea9c9
+		[INFO     2011-02-26 23:17:56,850  #36891] Command sent:
+		    <class 'net.ooici.play.instr.instrument_defs_pb2.Command'>
+		    | command: "hiCmd"
+		    | args {
+		    |   channel: "ch1"
+		    |   parameter: "pr1"
+		    | }
+		    | args {
+		    |   channel: "ch2"
+		    |   parameter: "pr2"
+		    | }
+		    | 
+		[INFO     2011-02-26 23:17:56,853  #36891] correlation_id --> None
+		[INFO     2011-02-26 23:17:56,854  #36891] Command received:
+		    <class 'net.ooici.play.instr.instrument_defs_pb2.Command'>
+		    | args {
+		    |   parameter: "Command \'hiCmd\' not implemented"
+		    | }
+		    
+	- with the server running, run the test on ioncore-python:
+		(py_buildout)carueda:ioncore-python carueda$ trial ion/agents/instrumentagents/test/test_SiamCi.py
+		...
+		ion.agents.instrumentagents.test.test_SiamCi
+		  TestSiamCi
+		    test_ping ... ping response:
+		    <class 'net.ooici.play.instr.instrument_defs_pb2.SuccessFail'>
+		    | result: OK
+		    | 
+		                                                         [OK]
+		
+		-------------------------------------------------------------------------------
+		Ran 1 tests in 0.731s
+		
+		PASSED (successes=1)
+		 	
+	
+	
 2011-02-24
 	- project now hosted at http://gitorious.org/siamci
 	- made hard links to Siam_driver.py and test_Siam.py to facilitate version control for the moment.

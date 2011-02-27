@@ -38,17 +38,7 @@ Once the dependencies above are installed in your local maven repository:
 	
 * Initial tests
 ---------------
-- Run the SIAM-CI adapter process  (kill it with ^C when done):
-	$ mvn exec:java -Dsiam-ci
-	... (some output indicating AMQP server host/port, queue, exchange) ...
-	Waiting for message ...
-	
-- In another shell session, run the tests (these are not yet unit tests)
-	$ mvn exec:java -Dsiam-ci-test
-	... (several lines showing the sent and received message) ...
-	
-  The siam-ci shell above should also show some corresponding log messages.
-
+See ChangeLong.txt
 
 
 * Some tests for SIAM operations

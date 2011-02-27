@@ -2,24 +2,23 @@
 
 """
 @file ion/agents/instrumentagents/Siam_driver.py
-@author Carlos Rueda (initially based on SBE49_dirver.py)
+@author Carlos Rueda
 @brief Driver code for SIAM
 """
 import ion.util.ionlog
 log = ion.util.ionlog.getLogger(__name__)
-from twisted.internet import defer, reactor
+from twisted.internet import defer  #, reactor
 
 
-from ion.agents.instrumentagents.instrument_connection import InstrumentConnection
-from twisted.internet.protocol import ClientCreator
-
-from collections import deque
 
 from ion.agents.instrumentagents.instrument_agent import InstrumentDriver
-from ion.agents.instrumentagents.instrument_agent import InstrumentDriverClient, publish_msg_type
+from ion.agents.instrumentagents.instrument_agent import InstrumentDriverClient
 #from ion.agents.instrumentagents.instrument_agent import publish_msg_type
 
 from ion.core.process.process import ProcessFactory
+
+from ion.agents.instrumentagents.SiamCi_proxy import SiamCiAdapterProxy
+
 
        
 class SiamInstrumentDriver(InstrumentDriver):
@@ -29,6 +28,7 @@ class SiamInstrumentDriver(InstrumentDriver):
 
     def __init__(self, *args, **kwargs):
         InstrumentDriver.__init__(self, *args, **kwargs)
+        self.siamci = SiamCiAdapterProxy()
 
 
     @defer.inlineCallbacks
@@ -40,6 +40,8 @@ class SiamInstrumentDriver(InstrumentDriver):
     @defer.inlineCallbacks
     def op_get_status(self, content, headers, msg):
         log.debug('In SiamDriver op_get_status')
+        
+        content = self.siamci.get_status(content, headers, msg)
 
         yield self.reply_ok(msg, content)
 

@@ -17,7 +17,6 @@ public class SiamCiAdapterGpb implements ISiamCiAdapter {
 	
 	
 	private SiamCiServerGpb siamCiProcess;
-	private Thread thread;
 	
 	public SiamCiAdapterGpb() {
 	}
@@ -25,13 +24,11 @@ public class SiamCiAdapterGpb implements ISiamCiAdapter {
 
 	public void start() throws Exception {
 		siamCiProcess = new SiamCiServerGpb();	
-		thread = new Thread(siamCiProcess);
 		log.info("starting process");
-		thread.start();
+		siamCiProcess.run();
 	}
 
 	public void stop() {
 		siamCiProcess.stop();
-		thread.interrupt();
 	}
 }
