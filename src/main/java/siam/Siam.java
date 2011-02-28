@@ -25,6 +25,12 @@ import org.mbari.siam.utils.PrintUtils;
 /**
  * Implementation of the high-level API to access SIAM functionality.
  * 
+ * <p> See <a href="http://oidemo.mbari.org:1451/siam-site/content/utilityReference.html"
+ * >the SIAM utility reference</a> for a general description of the operations.
+ * 
+ * <p>Note: this implementation is very preliminary and can certainly be improved; 
+ * it is just a quick basis for the prototype.
+ * 
  * @author carueda
  */
 public class Siam implements ISiam {
@@ -133,10 +139,13 @@ public class Siam implements ISiam {
     }
 	
 	/**
-	 *  test program
+	 *  test program:
+	 *  @param args   [host  [port]]
 	 */
 	public static void main(String[] args) throws Exception {
-		String host = args.length == 0 ? "localhost" : args[0];
+		final String host = args.length >= 1 ? args[0] : "localhost";
+		final String port = args.length >= 2 ? args[1] : "testPort";
+		
 		Siam siam = new Siam(host);
 		
 		PrintWriter out = new PrintWriter(System.out, true);
@@ -144,9 +153,26 @@ public class Siam implements ISiam {
 		
 		///////////////////////////////////////////////////////////
 		// listPorts:
-		out.println("listPorts:");
+		out.println("**listPorts:");
 		List<PortItem> list = siam.listPorts();
 		PortLister.list(siam.getNodeId(), list, out);
+		out.println();
+		
+		
+		///////////////////////////////////////////////////////////
+		// getPortStatus:
+		out.println("**getPortStatus: port=" +port);
+		String status = siam.getPortStatus(port);
+		out.println("   status: " +status);
+		out.println();
+		
+		///////////////////////////////////////////////////////////
+		// getPortLastSample:
+		out.println("**getPortLastSample: port=" +port);
+		Map<String, String> sample = siam.getPortLastSample(port);
+		out.println("   result: " +sample);
+		out.println();
+		
 	}
 
 }

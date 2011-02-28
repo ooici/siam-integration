@@ -2,6 +2,22 @@ SiamCi integration prototype
 Created 2/9/2011
 Carlos Rueda - MBARI
 
+2011-02-27
+	- Incorporating SIAM functionality into the tests. 
+	  A simple interface, ISiam, and corresponding implementation, Siam, were created to facilitate
+	  operations in the SIAM-CI adapter, in concrete, SiamCiServerGpb.
+	  (nNote that there is no a proper SIAM API library.) 
+	  
+	- Included (via hard link) TestSiamInstrument1.java from my local image of the SIAM code base
+	  so it gets into this project's git repo.
+	  The package is siam.test.devices.device1, which also includes corresp. Makefile to be
+	  used in the main SIAM directory to create the instrument service JAR. 
+	  
+	- Included (via hard link) net/ooici/play/instr/instrument_defs.proto from my local image of 
+	  the ion-object-definitions project so it gets into this project's git repo.
+	  The location here is under src/main/gpb.
+	
+	
 2011-02-26
 	- Basic functionality about RPC requests from python and corresponding replies from java
 	  is now enabled. This is using GPB messages directly (not ION messages).

@@ -114,7 +114,7 @@ class SiamCiAdapterProxy():
         response = self._rpc(body)
         sf = SuccessFail()
         sf.ParseFromString(response)
-        print(show_message(sf, "get_last_sample response:"))
+        log.debug(show_message(sf, "get_last_sample response:"))
         
         # TODO: convert the GPB to an appropriate structure
         return sf

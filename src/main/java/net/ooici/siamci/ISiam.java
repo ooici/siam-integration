@@ -7,6 +7,12 @@ import java.util.Map;
 /**
  * This is a high-level API to access SIAM functionality.
  * 
+ * <p> See <a href="http://oidemo.mbari.org:1451/siam-site/content/utilityReference.html"
+ * >the SIAM utility reference</a> for a general description of the operations.
+ * 
+ * <p>Note: this interface is very preliminary and can certainly be improved; 
+ * it is just a quick basis for the prototype.
+ * 
  * @author carueda
  */
 public interface ISiam {

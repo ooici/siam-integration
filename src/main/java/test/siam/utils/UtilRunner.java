@@ -66,8 +66,9 @@ public class UtilRunner {
 	/** some known "main" classes */
 	private static Map<String, Class<?>> _shortNames = new HashMap<String, Class<?>>();
 	static {
-		_shortNames.put("listPorts", PortLister.class);
+		_shortNames.put("listPorts", org.mbari.siam.operations.utils.PortLister.class);
 		_shortNames.put("samplePort", org.mbari.siam.operations.utils.PortSampler.class);
+		_shortNames.put("getLastSample", org.mbari.siam.operations.utils.GetLastSample.class);
 	}
 
 }
