@@ -33,9 +33,10 @@ class TestSiamCi(IonTestCase):
 
     @defer.inlineCallbacks
     def test_ping(self):
-        """
-        @todo: implement
-        """
         ret = yield self.siamci.ping()
         self.assertTrue(ret)
+
+    @defer.inlineCallbacks
+    def test_list_ports(self):
+        ret = yield self.siamci.list_ports()
 

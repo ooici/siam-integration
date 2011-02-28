@@ -29,6 +29,7 @@ class SiamCiAdapterProxy():
         self.queue = queue
         self.host = host
         
+        
     def _rpc(self, body):
         """
         Generic call and handling of reponse.
@@ -56,11 +57,11 @@ class SiamCiAdapterProxy():
         def _on_message(channel, method, header, body):
             self.response = body
             channel.stop_consuming()
-            self.connection.close()
             
         log.debug("waiting for response on queue: " +self.reply_queue)
         self.channel.basic_consume(_on_message, queue=self.reply_queue)
         
+        self.connection.close()
         return self.response
     
     def ping(self):
@@ -72,7 +73,19 @@ class SiamCiAdapterProxy():
         response = self._rpc(body)
         sf = SuccessFail()
         sf.ParseFromString(response)
-        show_message(sf, "ping response:")
+        log.debug(show_message(sf, "ping response:"))
+        return sf.result == OK
+        
+    def list_ports(self, host='localhost'):
+        """
+        Retrieves the ports (instrument services) running on the given host ('localhost' by default)
+        """
+        cmd = make_command("list_ports", [('host', host)])
+        body = cmd.SerializeToString()
+        response = self._rpc(body)
+        sf = SuccessFail()
+        sf.ParseFromString(response)
+        log.debug(show_message(sf, "list_ports response:"))
         return sf.result == OK
         
 
@@ -89,4 +102,5 @@ def make_command(cmd_name, args=[]):
   
 def show_message(msg, title="Message:"):
     prefix = "    | "
-    print(title+ "\n    " + str(type(msg)) + "\n" + prefix + str(msg).replace("\n", "\n"+prefix))
+    contents = str(msg).strip().replace("\n", "\n"+prefix)
+    return title+ "\n    " + str(type(msg)) + "\n" + prefix + contents

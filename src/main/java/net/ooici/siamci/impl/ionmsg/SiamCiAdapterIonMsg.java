@@ -1,5 +1,6 @@
 package net.ooici.siamci.impl.ionmsg;
 
+import net.ooici.siamci.ISiam;
 import net.ooici.siamci.ISiamCiAdapter;
 
 import org.slf4j.Logger;
@@ -19,7 +20,7 @@ public class SiamCiAdapterIonMsg implements ISiamCiAdapter {
 	private SiamCiServerIonMsg siamCiProcess;
 	private Thread thread;
 	
-	public SiamCiAdapterIonMsg() {
+	public SiamCiAdapterIonMsg(ISiam siam) {
 	}
 	
 

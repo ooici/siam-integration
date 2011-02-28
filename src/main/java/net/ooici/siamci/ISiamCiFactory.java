@@ -1,5 +1,6 @@
 package net.ooici.siamci;
 
+
 /**
  * SiamCi factory.
  * 
@@ -8,7 +9,12 @@ package net.ooici.siamci;
 public interface ISiamCiFactory {
 
 	/**
+	 * Gets the SIAM hight-level interface implementation
+	 */
+	public ISiam createSiam(String host) throws Exception;
+	
+	/**
 	 * Gets the SIAM-CI adapter implementation.
 	 */
-	public ISiamCiAdapter createSiamCiAdapter();
+	public ISiamCiAdapter createSiamCiAdapter(ISiam siam);
 }

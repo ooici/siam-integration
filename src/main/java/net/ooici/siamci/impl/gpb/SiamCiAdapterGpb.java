@@ -1,5 +1,6 @@
 package net.ooici.siamci.impl.gpb;
 
+import net.ooici.siamci.ISiam;
 import net.ooici.siamci.ISiamCiAdapter;
 
 import org.slf4j.Logger;
@@ -15,15 +16,16 @@ public class SiamCiAdapterGpb implements ISiamCiAdapter {
 	
 	private static final Logger log = LoggerFactory.getLogger(SiamCiAdapterGpb.class);
 	
-	
+	private final ISiam siam;
 	private SiamCiServerGpb siamCiProcess;
 	
-	public SiamCiAdapterGpb() {
+	public SiamCiAdapterGpb(ISiam siam) {
+		this.siam = siam;
 	}
 	
 
 	public void start() throws Exception {
-		siamCiProcess = new SiamCiServerGpb();	
+		siamCiProcess = new SiamCiServerGpb(siam);	
 		log.info("starting process");
 		siamCiProcess.run();
 	}
