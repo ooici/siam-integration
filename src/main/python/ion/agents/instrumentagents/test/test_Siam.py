@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """
 @file ion/agents/instrumentagents/test/test_Siam.py
-@brief This module has test cases to test out the SIAM driver
-@author Carlos Rueda (using Steve Foley's test_SBE49.py as a basis)
+@brief This module has test cases to test out the SIAM driver.
+@author Carlos Rueda (using test_SBE49.py as a basis)
 @see ion.agents.instrumentagents.test.test_instrument
 """
 import ion.util.ionlog
@@ -51,18 +51,30 @@ class TestSiam(IonTestCase):
         yield self._stop_container()
 
 
-#    @defer.inlineCallbacks
-#    def test_initialize(self):
-#        yield self.driver_client.initialize('some arg')
-#        log.debug('TADA!')
+    @defer.inlineCallbacks
+    def test_initialize(self):
+        result = yield self.driver_client.initialize("dummy-arg")
+        self.assertTrue(result)
 
     @defer.inlineCallbacks
     def test_get_status(self):
         """
         @todo: implement
         """
-        argList = [ 'foo', "baz" ]
-        yield self.driver_client.get_status(argList)
+        yield self.driver_client.get_status("testPort")
+
+    @defer.inlineCallbacks
+    def test_ping(self):
+        ret = yield self.driver_client.ping()
+        self.assertTrue(ret)
+
+    @defer.inlineCallbacks
+    def test_list_ports(self):
+        ret = yield self.driver_client.list_ports()
+
+    @defer.inlineCallbacks
+    def test_get_last_sample(self):
+        ret = yield self.driver_client.get_last_sample("testPort")
 
 
 #    @defer.inlineCallbacks

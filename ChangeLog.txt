@@ -3,7 +3,7 @@ Created 2/9/2011
 Carlos Rueda - MBARI
 
 2011-02-27
-	- Incorporating SIAM functionality into the tests. 
+	- Incorporated more SIAM functionality into the tests. 
 	  A simple interface, ISiam, and corresponding implementation, Siam, were created to facilitate
 	  operations in the SIAM-CI adapter, in concrete, SiamCiServerGpb.
 	  (Note that there is no a proper SIAM API library.) 
@@ -16,6 +16,8 @@ Carlos Rueda - MBARI
 	- Included (via hard link) net/ooici/play/instr/instrument_defs.proto from my local image of 
 	  the ion-object-definitions project so it gets into this project's git repo.
 	  The location here is under src/main/gpb.
+	  
+	- Updated documentation.
 	
 	
 2011-02-26
