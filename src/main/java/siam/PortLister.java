@@ -26,40 +26,6 @@ public class PortLister {
 		this.node = node;
 	}
 	
-    /** Return mnemonic string for specified status. */
-    private static String statusMnem(int status) {
-		switch (status) {
-			case Device.OK:
-				return "OK";
-				
-			case Device.ERROR:
-				return "ERROR";
-				
-			case Device.INITIAL:
-				return "INIT";
-				
-			case Device.SHUTDOWN:
-				return "SHUTDOWN";
-				
-			case Device.SUSPEND:
-				return "SUSPEND";
-				
-			case Device.SAMPLING:
-				return "SAMPLING";
-				
-			case Device.SLEEPING:
-				return "SLEEPING";
-				
-			case Device.SAFE:
-				return "SAFE";
-				
-				
-			case Device.UNKNOWN:
-			default:
-				return "UNKNOWN!";
-		}
-    }
-	
 	public List<PortItem> listPorts() throws Exception {
 		Port[] ports = node.getPorts();
 		if (ports == null) {
@@ -79,7 +45,7 @@ public class PortLister {
 			Device device = null;
 			try {
 				device = node.getDevice(pi.deviceId);
-				pi.serviceStatus=statusMnem(device.getStatus());
+				pi.serviceStatus = SiamUtils.statusMnem(device.getStatus());
 				pi.sampleCount= device.getSamplingCount();
 				pi.errorCount= device.getSamplingErrorCount();
 				pi.retryCount= device.getSamplingRetryCount();

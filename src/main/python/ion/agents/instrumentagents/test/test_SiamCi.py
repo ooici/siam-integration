@@ -40,3 +40,11 @@ class TestSiamCi(IonTestCase):
     def test_list_ports(self):
         ret = yield self.siamci.list_ports()
 
+    @defer.inlineCallbacks
+    def test_get_status(self):
+        ret = yield self.siamci.get_status("testPort")
+
+    @defer.inlineCallbacks
+    def test_get_last_sample(self):
+        ret = yield self.siamci.get_last_sample("testPort")
+

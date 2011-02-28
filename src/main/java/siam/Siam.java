@@ -5,12 +5,21 @@ import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import net.ooici.siamci.ISiam;
 
 import org.apache.log4j.Logger;
+import org.mbari.siam.distributed.Device;
+import org.mbari.siam.distributed.DeviceNotFound;
+import org.mbari.siam.distributed.Instrument;
+import org.mbari.siam.distributed.NoDataException;
 import org.mbari.siam.distributed.Node;
+import org.mbari.siam.distributed.PortNotFound;
+import org.mbari.siam.distributed.SensorDataPacket;
+import org.mbari.siam.utils.PrintUtils;
 
 
 /**
@@ -72,7 +81,57 @@ public class Siam implements ISiam {
 		return new PortLister(node).listPorts();
     }
 	
+	
+	/**
+	 * heloer
+	 */
+	private Instrument _getInstrument(String portName) throws Exception {
+		try {
+			Device device = node.getDevice(portName.getBytes());
 
+			if (device instanceof Instrument) {
+				Instrument instrument = (Instrument) device;
+				return instrument;
+			}
+			else {
+				throw new Exception("Device on port " +portName+ " is not an Instrument");
+			}
+		}
+		catch (PortNotFound e) {
+			throw new Exception("Port " + portName + " not found");
+		}
+		catch (DeviceNotFound e) {
+			throw new Exception("Device not found on port " + portName);
+		}
+		catch (NoDataException e) {
+			throw new Exception("No data from instrument on port " + portName);
+		}
+    }
+	
+
+	public String getPortStatus(String port) throws Exception {
+		Instrument instrument = _getInstrument(port);
+		return SiamUtils.statusMnem(instrument.getStatus());
+	}
+	
+	/**
+	 * Adapted from SIAM's GetLastSample
+	 */
+	public Map<String,String> getPortLastSample(String portName) throws Exception {
+		Instrument instrument = _getInstrument(portName);
+		SensorDataPacket sdp = instrument.getLastSample();
+		HashMap<String, String> result = new HashMap<String,String>();
+		result.put("parentId", String.valueOf(sdp.getParentId()));
+		result.put("recordType", String.valueOf(sdp.getRecordType()));
+		result.put("systemTime", String.valueOf(sdp.systemTime()));
+		result.put("seqNo", String.valueOf(sdp.sequenceNo()));
+		result.put("mdref", String.valueOf(sdp.metadataRef()));
+		result.put("nBytes", String.valueOf(sdp.dataBuffer().length));
+		result.put("buffer", PrintUtils.getAscii(sdp.dataBuffer(), 0, 0));
+		
+		return result;
+    }
+	
 	/**
 	 *  test program
 	 */

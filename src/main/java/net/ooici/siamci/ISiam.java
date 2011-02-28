@@ -1,6 +1,7 @@
 package net.ooici.siamci;
 
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -22,4 +23,8 @@ public interface ISiam {
 
 	
 	public List<PortItem> listPorts() throws Exception;
+	
+	public String getPortStatus(String port) throws Exception;
+	
+	public Map<String,String> getPortLastSample(String port) throws Exception;
 }

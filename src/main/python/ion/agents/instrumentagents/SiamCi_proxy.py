@@ -76,17 +76,49 @@ class SiamCiAdapterProxy():
         log.debug(show_message(sf, "ping response:"))
         return sf.result == OK
         
-    def list_ports(self, host='localhost'):
+    def list_ports(self):
         """
-        Retrieves the ports (instrument services) running on the given host ('localhost' by default)
+        Retrieves the ports (instrument services) running on the SIAM node
         """
-        cmd = make_command("list_ports", [('host', host)])
+        cmd = make_command("list_ports")
         body = cmd.SerializeToString()
         response = self._rpc(body)
         sf = SuccessFail()
         sf.ParseFromString(response)
         log.debug(show_message(sf, "list_ports response:"))
-        return sf.result == OK
+        
+        # TODO: convert the GPB to an appropriate structure
+        return sf
+    
+    
+    def get_status(self, port):
+        """
+        Gets the status of a particular instrument as indicated by the given port
+        """
+        cmd = make_command("get_status", [("port", port)])
+        body = cmd.SerializeToString()
+        response = self._rpc(body)
+        sf = SuccessFail()
+        sf.ParseFromString(response)
+        log.debug(show_message(sf, "get_status response:"))
+        
+        # TODO: convert the GPB to an appropriate structure
+        return sf
+        
+    def get_last_sample(self, port):
+        """
+        Gets the last sample from the instrument on the given "port"
+        """
+        cmd = make_command("get_last_sample", [("port", port)])
+        body = cmd.SerializeToString()
+        response = self._rpc(body)
+        sf = SuccessFail()
+        sf.ParseFromString(response)
+        print(show_message(sf, "get_last_sample response:"))
+        
+        # TODO: convert the GPB to an appropriate structure
+        return sf
+        
         
 
 
