@@ -58,6 +58,39 @@
 		</profile>
 		
 		<profile>
+			<id>isiam</id>
+			<activation><property><name>isiam</name></property></activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.codehaus.mojo</groupId>
+						<artifactId>exec-maven-plugin</artifactId>
+						<version>1.2</version>
+						<configuration>
+							<mainClass>siam.Siam</mainClass>
+							<systemProperties>
+								<systemProperty>
+		              				<key>java.security.policy</key>
+		              				<value>etc/policy</value>
+		            			</systemProperty>
+								<systemProperty>
+		              				<key>log4j.threshold</key>
+		              				<value>ERROR</value>
+		            			</systemProperty>
+								<systemProperty>
+		              				<key>portLister.justify</key>
+		              				<value>LEFT</value>
+		            			</systemProperty>
+							</systemProperties>
+							<!-- arguments>
+		            			<argument>argument1</argument>
+							</arguments -->
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
 			<id>siam-runner</id>
 			<activation><property><name>siam-runner</name></property></activation>
 			<build>

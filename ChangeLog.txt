@@ -6,7 +6,7 @@ Carlos Rueda - MBARI
 	- Incorporating SIAM functionality into the tests. 
 	  A simple interface, ISiam, and corresponding implementation, Siam, were created to facilitate
 	  operations in the SIAM-CI adapter, in concrete, SiamCiServerGpb.
-	  (nNote that there is no a proper SIAM API library.) 
+	  (Note that there is no a proper SIAM API library.) 
 	  
 	- Included (via hard link) TestSiamInstrument1.java from my local image of the SIAM code base
 	  so it gets into this project's git repo.
