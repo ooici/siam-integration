@@ -22,6 +22,7 @@ class TestSiamCi(IonTestCase):
         yield self._start_container()
 
         self.siamci = SiamCiAdapterProxy()
+        yield self.siamci.start()
                 
 
     @defer.inlineCallbacks
@@ -45,4 +46,3 @@ class TestSiamCi(IonTestCase):
     @defer.inlineCallbacks
     def test_get_last_sample(self):
         ret = yield self.siamci.get_last_sample("testPort")
-

@@ -15,7 +15,9 @@ Carlos Rueda - MBARI
 	  the actual messaging mechanism.
 	- Updated various sources according to this refactoring and updated ION-related implemention of 
 	  the ISiamCiAdapter interface, see in particular SiamCiServerIonMsg, which is the one directly
-	  related with messaging usisn ION mechanism.
+	  related with messaging using ION mechanism.
+	  
+	- SiamCi_proxy.py and test_SiamCi.py now working with ION messaging
 
 
 2011-02-27
