@@ -8,6 +8,7 @@ import ion.core.utils.ProtoUtils;
 import ion.core.utils.StructureManager;
 import ion.example.IonSimpleEcho;
 
+import java.io.PrintStream;
 import java.util.Map;
 
 import net.ooici.core.container.Container;
@@ -119,21 +120,21 @@ class SiamCiServerIonMsg implements Runnable {
 			}
 
 			Map<String,String> headers = _getIonHeaders(msgin);
+			if ( log.isDebugEnabled() ) {
+				log.debug("headers: " + headers);
+			}
+			final String sender = (String) headers.get("sender");
+			log.info("Request received from '" +sender+ "'");
+			
 			//
 			// to properly respond, we need the reply-to and conv-id property values:
 			//
-			final String receiver = (String) headers.get("receiver");
 			final String toName = (String) headers.get("reply-to");
 			final String convId = (String) headers.get("conv-id");
-			
-			if ( log.isDebugEnabled() ) {
-				log.debug("headers: " + headers);
-				log.debug("receiver = " +receiver+ "    reply-to: " + toName+ "    conv-id: " +convId);
-			}
 
 			if ( toName == null ) {
 				// nobody to reply to?
-				log.warn(" [x] NOT REPLYING as reply-to is null");
+				log.info("NOT REPLYING as reply-to is null");
 				continue;
 			}
 			
@@ -150,12 +151,13 @@ class SiamCiServerIonMsg implements Runnable {
 			}
 			
 			if ( convId == null ) {
-				log.warn(" [x] Will reply but with no conv-id as it was not provided");
+				log.info("Will reply but with no conv-id as it was not provided");
 				continue;
 			}
 			
 			Container.Structure.Builder structureBuilder = ProtoUtils.addIonMessageContent(null, "myName", "Identity", response);
 			_sendReply(toName, convId, structureBuilder.build());
+			log.info("Reply sent to '" +toName+ "'  conv-id: " +convId);
 		}
 	}
 	
@@ -225,14 +227,14 @@ class SiamCiServerIonMsg implements Runnable {
 		return headers;
 	}
 	
+	/**
+	 * Extracts the Command from the message.
+	 */
 	@SuppressWarnings("unchecked")
 	private Command _getCommand(IonMessage reply) {
         StructureManager sm = StructureManager.Factory(reply);
-//        System.out.println("\n>>>> Items:");
         for(String key : sm.getItemIds()) {
-            System.out.println(key);
             GPBWrapper<Command> demWrap = sm.getObjectWrapper(key);
-            System.out.println(demWrap);
             Command cmd = demWrap.getObjectValue();
             return cmd;
         }
@@ -242,24 +244,38 @@ class SiamCiServerIonMsg implements Runnable {
 	// from ProtoUtils.testSendReceive()
 	@SuppressWarnings("unchecked")
 	private void _unpack(IonMessage reply) {
-        System.out.println("\n------------------<_unpack>--------------------------------");
-        System.out.println(" reply.getContent class = " +reply.getContent().getClass());
+        log.debug("\n------------------<_unpack>--------------------------------");
+        log.debug(" reply.getContent class = " +reply.getContent().getClass());
         StructureManager sm = StructureManager.Factory(reply);
-        System.out.println(">>>> Heads:");
+        log.debug(">>>> Heads:");
         for(String key : sm.getHeadIds()) {
-            System.out.println(key);
+        	log.debug("  headId = " +key);
             GPBWrapper<IonMsg> msgWrap = sm.getObjectWrapper(key);
-            System.out.println(msgWrap);
+            log.debug("  object wrapper = " +msgWrap);
 //            IonMsg msg = msgWrap.getObjectValue();
         }
-        System.out.println("\n>>>> Items:");
+        log.debug("\n>>>> Items:");
         for(String key : sm.getItemIds()) {
-            System.out.println(key);
+        	log.debug("  itemId = " +key);
             GPBWrapper<Command> demWrap = sm.getObjectWrapper(key);
-            System.out.println(demWrap);
+            log.debug("  object wrapper = " +demWrap);
 //            Command dem = demWrap.getObjectValue();
         }
-        System.out.println("------------------</_unpack>--------------------------------\n");
+        log.debug("------------------</_unpack>--------------------------------\n");
 	}
 	
+	
+	static {
+		//
+		// TODO, once ioncore-java starts using standard logging, eliminate the following,
+		// which simply "redirects" System.out messages to a file.
+		//
+		final String outputFile = "stdout.txt";
+		try {
+			System.setOut(new PrintStream(outputFile));
+		}
+		catch (Throwable ex) {
+			log.warn("Could not set system out to file " +outputFile, ex);
+		}
+	}
 }

@@ -2,6 +2,10 @@ SiamCi integration prototype
 Created 2/9/2011
 Carlos Rueda - MBARI
 
+2011-03-08
+	- organized logging output and added log4.properties
+
+
 2011-03-07
 	- ION messaging finally working. Using the following for the basic functionality
 		- src/main/java/ion/example/IonSimpleEcho

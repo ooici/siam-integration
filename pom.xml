@@ -33,6 +33,12 @@
 	   					<configuration>
 							<mainClass>net.ooici.siamci.SiamCiMain</mainClass>
 							<executable>java</executable>
+							<systemProperties>
+								<systemProperty>
+		              				<key>log4j.configuration</key>
+		              				<value>file:etc/log4j.properties</value>
+		            			</systemProperty>
+							</systemProperties>
 						</configuration>
 					</plugin>
 				</plugins>

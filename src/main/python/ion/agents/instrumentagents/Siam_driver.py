@@ -48,16 +48,6 @@ class SiamInstrumentDriver(InstrumentDriver):
         response = yield self.siamci.get_status(content)
         log.debug("get_status: %s -> %s " % (str(content), str(response)))
 
-        #
-        # NOTE: ION works with carrot.backends.txamqplib.Message's:
-        #    type(msg) --> <class 'carrot.backends.txamqplib.Message'>
-        # 
-        # We would in general reply with the response from the operation, which in this case is
-        # of type --> net.ooici.play.instr.instrument_defs_pb2.SuccessFail
-        # but this would raise an error like so:
-        #  TypeError: can't serialize <net.ooici.play.instr.instrument_defs_pb2.SuccessFail object at 0x2b346c0>
-        # so, just extract the non-gpb piece and reply with it:
-        #
         result = response.result
         yield self.reply_ok(msg, result)
 

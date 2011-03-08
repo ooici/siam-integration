@@ -30,7 +30,7 @@ public class SiamCiAdapterIonMsg implements ISiamCiAdapter {
 
 	public void start() throws Exception {
 		siamCiProcess = new SiamCiServerIonMsg(requestProcessor);	
-		thread = new Thread(siamCiProcess);
+		thread = new Thread(siamCiProcess, siamCiProcess.getClass().getSimpleName());
 		log.info("starting process");
 		thread.start();
 	}
