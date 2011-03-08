@@ -45,7 +45,7 @@ class SiamInstrumentDriver(InstrumentDriver):
     def op_get_status(self, content, headers, msg):
         log.debug('In SiamDriver op_get_status')
         
-        response = self.siamci.get_status(content)
+        response = yield self.siamci.get_status(content)
         log.debug("get_status: %s -> %s " % (str(content), str(response)))
 
         #
@@ -65,14 +65,14 @@ class SiamInstrumentDriver(InstrumentDriver):
     def op_ping(self, content, headers, msg):
         log.debug('In SiamDriver op_ping')
         
-        response = self.siamci.ping()
+        response = yield self.siamci.ping()
         yield self.reply_ok(msg, response)
 
     @defer.inlineCallbacks
     def op_list_ports(self, content, headers, msg):
         log.debug('In SiamDriver op_list_ports')
         
-        response = self.siamci.list_ports()
+        response = yield self.siamci.list_ports()
         
         result = "ERROR"
         if response.result == OK:
@@ -87,7 +87,7 @@ class SiamInstrumentDriver(InstrumentDriver):
     def op_get_last_sample(self, content, headers, msg):
         log.debug('In SiamDriver op_get_last_sample')
         
-        response = self.siamci.get_last_sample(content)
+        response = yield self.siamci.get_last_sample(content)
         
         result = "ERROR"
         if response.result == OK:

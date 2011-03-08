@@ -53,6 +53,7 @@ class TestSiam(IonTestCase):
 
     @defer.inlineCallbacks
     def test_initialize(self):
+        raise unittest.SkipTest('Not implemented yet')
         result = yield self.driver_client.initialize("dummy-arg")
         self.assertTrue(result)
 

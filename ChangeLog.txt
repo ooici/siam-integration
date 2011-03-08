@@ -17,7 +17,53 @@ Carlos Rueda - MBARI
 	  the ISiamCiAdapter interface, see in particular SiamCiServerIonMsg, which is the one directly
 	  related with messaging using ION mechanism.
 	  
-	- SiamCi_proxy.py and test_SiamCi.py now working with ION messaging
+	- SiamCi_proxy.py  now working with ION messaging; see test_SiamCi.py
+	- SiamCi_driver.py now working with ION messaging; see test_Siam.py
+	
+	The test runs as follows:
+	
+	- - - - - -  In <base_dir>/siamci  - - - - - - -
+	$ mvn clean compile exec:java -Dsiam-ci
+	net.ooici.siamci.impl.RequestProcessor.<init>(){38} - CommandProcessor created.
+	net.ooici.siamci.SiamCiMain.<init>(){53} - siamCiFactory: net.ooici.siamci.impl.SiamCiFactoryImpl
+	net.ooici.siamci.SiamCiMain.<init>(){54} - siam: siam.Siam
+	net.ooici.siamci.SiamCiMain.<init>(){55} - requestProcessor: net.ooici.siamci.impl.RequestProcessor
+	net.ooici.siamci.SiamCiMain.<init>(){56} - siamCiAdapter: net.ooici.siamci.impl.ionmsg.SiamCiAdapterIonMsg
+	net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg.<init>(){78} - Creating SiamCiProcess
+	Opened channel on host localhost, port 5672
+	Declared queue SIAM-CI
+	Bound queue SIAM-CI to exchange magnet.topic with binding key SIAM-CI
+	net.ooici.siamci.impl.ionmsg.SiamCiAdapterIonMsg.start(){34} - starting process
+	net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg.run(){91} - Running SiamCiServerIonMsg
+	net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg._run(){112} - Waiting for request ...
+
+	
+	- - - - - -  In <base_dir>/ioncore-python  - - - - - - -
+	(py_buildout)carueda:ioncore-python carueda$ trial ion/agents/instrumentagents/test/test_Siam*.py
+	ion.agents.instrumentagents.test.test_SiamCi
+	  TestSiamCi
+	    test_get_last_sample ...                                               [OK]
+	    test_get_status ...                                                    [OK]
+	    test_list_ports ...                                                    [OK]
+	    test_ping ...                                                          [OK]
+	ion.agents.instrumentagents.test.test_Siam
+	  TestSiam
+	    test_get_last_sample ...                                               [OK]
+	    test_get_status ...                                                    [OK]
+	    test_initialize ...                                               [SKIPPED]
+	    test_list_ports ...                                                    [OK]
+	    test_ping ...                                                          [OK]
+	
+	===============================================================================
+	[SKIPPED]
+	Not implemented yet
+	
+	ion.agents.instrumentagents.test.test_Siam.TestSiam.test_initialize
+	-------------------------------------------------------------------------------
+	Ran 9 tests in 5.835s
+	
+	PASSED (skips=1, successes=8)
+	
 
 
 2011-02-27
