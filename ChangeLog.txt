@@ -2,11 +2,26 @@ SiamCi integration prototype
 Created 2/9/2011
 Carlos Rueda - MBARI
 
+2011-03-07
+	- ION messaging finally working. Using the following for the basic functionality
+		- src/main/java/ion/example/IonSimpleEcho
+		- src/main/java/ion/example/EchoClientTest
+		- src/main/python/ion/agents/instrumentagents/test/test_echo_service_in_java.py
+		The latter is hard linked to ../ioncore-python/ion/agents/instrumentagents/test/test_echo_service_in_java.py
+		to faciliate test from the ioncore-python.
+		
+	Now, preparing SIAM-CI adapter code to enable this ION messaging mechanism.
+	- New IRequestProcessor (and corresponding implementation) to decouple the processing of requests from
+	  the actual messaging mechanism.
+	- Updated various sources according to this refactoring and updated ION-related implemention of 
+	  the ISiamCiAdapter interface, see in particular SiamCiServerIonMsg, which is the one directly
+	  related with messaging usisn ION mechanism.
+
+
 2011-02-27
 	- Incorporated more SIAM functionality into the tests. 
 	  A simple interface, ISiam, and corresponding implementation, Siam, were created to facilitate
 	  operations in the SIAM-CI adapter, in concrete, SiamCiServerGpb.
-	  (Note that there is no a proper SIAM API library.) 
 	  
 	- Included (via hard link) TestSiamInstrument1.java from my local image of the SIAM code base
 	  so it gets into this project's git repo.

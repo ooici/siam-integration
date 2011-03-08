@@ -3,6 +3,7 @@ package net.ooici.siamci;
 
 /**
  * SiamCi factory.
+ * It provides the implementation of central interfaces.
  * 
  * @author carueda
  */
@@ -14,7 +15,18 @@ public interface ISiamCiFactory {
 	public ISiam createSiam(String host) throws Exception;
 	
 	/**
-	 * Gets the SIAM-CI adapter implementation.
+	 * Gets the request processor implementation.
+	 * 
+	 * @param siam interface to SIAM library
 	 */
-	public ISiamCiAdapter createSiamCiAdapter(ISiam siam);
+	public IRequestProcessor createRequestProcessor(ISiam siam);
+	
+	/**
+	 * Gets the SIAM-CI adapter implementation.
+	 * 
+	 * @param siam interface to SIAM library
+	 * @param requestProcessor  processor
+	 * @return adapter
+	 */
+	public ISiamCiAdapter createSiamCiAdapter(IRequestProcessor requestProcessor);
 }

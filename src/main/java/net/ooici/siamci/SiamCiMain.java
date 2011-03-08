@@ -34,6 +34,7 @@ public class SiamCiMain {
 	private final ISiamCiFactory siamCiFactory;
 
 	private final ISiam siam;
+	private final IRequestProcessor requestProcessor;
 	private final ISiamCiAdapter siamCiAdapter;
 
 	/**
@@ -45,11 +46,13 @@ public class SiamCiMain {
 		siamCiFactory = new SiamCiFactoryImpl();
 		
 		siam = siamCiFactory.createSiam(host);
+		requestProcessor = siamCiFactory.createRequestProcessor(siam);
 
-		siamCiAdapter = siamCiFactory.createSiamCiAdapter(siam);
+		siamCiAdapter = siamCiFactory.createSiamCiAdapter(requestProcessor);
 		
-		log.info("siam: " +siam.getClass().getName());
 		log.info("siamCiFactory: " +siamCiFactory.getClass().getName());
+		log.info("siam: " +siam.getClass().getName());
+		log.info("requestProcessor: " +requestProcessor.getClass().getName());
 		log.info("siamCiAdapter: " +siamCiAdapter.getClass().getName());
 		
 

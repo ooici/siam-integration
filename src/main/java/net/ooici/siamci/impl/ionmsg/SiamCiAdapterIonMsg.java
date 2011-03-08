@@ -1,6 +1,6 @@
 package net.ooici.siamci.impl.ionmsg;
 
-import net.ooici.siamci.ISiam;
+import net.ooici.siamci.IRequestProcessor;
 import net.ooici.siamci.ISiamCiAdapter;
 
 import org.slf4j.Logger;
@@ -19,13 +19,17 @@ public class SiamCiAdapterIonMsg implements ISiamCiAdapter {
 	
 	private SiamCiServerIonMsg siamCiProcess;
 	private Thread thread;
+
+
+	private IRequestProcessor requestProcessor;
 	
-	public SiamCiAdapterIonMsg(ISiam siam) {
+	public SiamCiAdapterIonMsg(IRequestProcessor requestProcessor) {
+		this.requestProcessor = requestProcessor;
 	}
 	
 
 	public void start() throws Exception {
-		siamCiProcess = new SiamCiServerIonMsg();	
+		siamCiProcess = new SiamCiServerIonMsg(requestProcessor);	
 		thread = new Thread(siamCiProcess);
 		log.info("starting process");
 		thread.start();
