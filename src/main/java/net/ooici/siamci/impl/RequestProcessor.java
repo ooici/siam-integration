@@ -1,5 +1,7 @@
 package net.ooici.siamci.impl;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -50,6 +52,12 @@ class RequestProcessor implements IRequestProcessor {
 		else if ( "get_last_sample".equals(cmd.getCommand()) ) {
 			response = _getLastSample(cmd);
 		}
+		else if ( "fetch_params".equals(cmd.getCommand()) ) {
+			response = _fetchParams(cmd);
+		}
+		else if ( "set_params".equals(cmd.getCommand()) ) {
+			response = _setParams(cmd);
+		}
 		else if ( "ping".equals(cmd.getCommand()) ) {
 			SuccessFail sf = SuccessFail.newBuilder().setResult(Result.OK).build();
 			response = sf;
@@ -96,6 +104,9 @@ class RequestProcessor implements IRequestProcessor {
 		return response;
 	}
 
+	/**
+	 * get status 
+	 */
 	private GeneratedMessage _getStatus(Command cmd) {
 		if ( cmd.getArgsCount() == 0 ) {
 			return _createErrorResponse("get_status command requires at least an argument");
@@ -125,6 +136,9 @@ class RequestProcessor implements IRequestProcessor {
 		return response;
 	}
 	
+	/**
+	 * Get last sample
+	 */
 	private GeneratedMessage _getLastSample(Command cmd) {
 		if ( cmd.getArgsCount() == 0 ) {
 			return _createErrorResponse("get_last_sample command requires at least an argument");
@@ -157,6 +171,128 @@ class RequestProcessor implements IRequestProcessor {
 	}
 
 	
+	/**
+	 * fetch params.
+	 * 
+	 * If only ('port', portName) is given, then all parameters are fetched.
+	 * Otherwise, the specific list of parameters are fetched.
+	 * FIXME: Note that the value for an invalid parameter will be "ERROR"; this error needs
+	 * a more appropriate notification.
+	 */
+	private GeneratedMessage _fetchParams(Command cmd) {
+		if ( cmd.getArgsCount() == 0 ) {
+			return _createErrorResponse("fetch_params command requires at least one argument");
+		}
+		ChannelParameterPair cp = cmd.getArgs(0);
+		if ( ! "port".equals(cp.getChannel()) ) {
+			return _createErrorResponse("fetch_params: first argument must be 'port'");
+		}
+		String port = cp.getParameter();
+		
+		// get all instrument parameters:
+		Map<String, String> params = null;
+		try {
+			params = siam.getPortProperties(port);
+		}
+		catch (Exception e) {
+			log.warn("fetch_params exception", e);
+			return _createErrorResponse("Could not fetch instrument parameters: " +e.getMessage());
+		}
+
+		Builder buildr = SuccessFail.newBuilder().setResult(Result.OK);
+		
+		if ( cmd.getArgsCount() > 1 ) {
+			// specific parameters are being requested.
+			List<String> requestedParams = new ArrayList<String>();
+			for ( int i = 1; i < cmd.getArgsCount(); i++ ) {
+				cp = cmd.getArgs(i);
+				String ch = cp.getChannel();
+				String pr = cp.getParameter();
+				if ( ! "instrument".equals(ch) ) {
+					String error = "set_params command: first element in tuple must be 'instrument.' " +
+					"Other channel name is NOT yet implemented: '" +ch+ "'";
+					if ( log.isDebugEnabled() ) {
+						log.debug("_fetchParams: " +error);
+					}
+					return _createErrorResponse(error);
+				}
+				requestedParams.add(pr);
+				
+			}
+			for (String reqParam : requestedParams ) {
+				String value = params.get(reqParam);
+				
+				if ( value == null ) {
+					//
+					// FIXME when the parameter does not exist, notify the corresponding error
+					// in an appropriate way.  For now, just setting the value to "ERROR"
+					value = "ERROR";
+				}
+				
+				buildr.addItem(Item.newBuilder()
+						.setType(Item.Type.PAIR)
+						.setPair(StringPair.newBuilder().setFirst(reqParam).setSecond(value))
+				);
+			}
+		}
+		else {
+			// ALL parameters are being requested.
+			for ( Entry<String, String> es : params.entrySet() ) {
+				buildr.addItem(Item.newBuilder()
+						.setType(Item.Type.PAIR)
+						.setPair(StringPair.newBuilder().setFirst(es.getKey()).setSecond(es.getValue()))
+				);
+			}
+		}
+		
+		SuccessFail response = buildr.build();
+		return response;
+	}
+	
+	/**
+	 * set params
+	 */
+	private GeneratedMessage _setParams(Command cmd) {
+		if ( cmd.getArgsCount() == 0 ) {
+			return _createErrorResponse("set_params command requires at least two arguments");
+		}
+		ChannelParameterPair cp = cmd.getArgs(0);
+		if ( ! "port".equals(cp.getChannel()) ) {
+			return _createErrorResponse("set_params command: first argument must be 'port'");
+		}
+		String port = cp.getParameter();
+		
+		Map<String, String> params = new HashMap<String, String>();
+		
+		for ( int i = 1; i < cmd.getArgsCount(); i++ ) {
+			cp = cmd.getArgs(i);
+			String ch = cp.getChannel();
+			String pr = cp.getParameter();
+			params.put(ch, pr);
+		}
+		try {
+			params = siam.setPortProperties(port, params);
+		}
+		catch (Exception e) {
+			log.warn("set_params exception", e);
+			return _createErrorResponse("Exception: " +e.getMessage());
+		}
+		
+		Builder buildr = SuccessFail.newBuilder().setResult(Result.OK);
+		for ( Entry<String, String> es : params.entrySet() ) {
+			buildr.addItem(Item.newBuilder()
+					.setType(Item.Type.PAIR)
+					.setPair(StringPair.newBuilder().setFirst(es.getKey()).setSecond(es.getValue()))
+			);
+		}
+		
+		SuccessFail response = buildr.build();
+		return response;
+	}
+	
+	/**
+	 * creates an error response
+	 */
 	private GeneratedMessage _createErrorResponse(String description) {
 		SuccessFail sf = SuccessFail.newBuilder()
 			.setResult(Result.ERROR)

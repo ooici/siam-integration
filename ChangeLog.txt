@@ -4,6 +4,66 @@ Carlos Rueda - MBARI
 
 2011-03-08
 	- organized logging output and added log4.properties
+	- SiamCiServerIonMsg: temporary use of System.setOut to a file as ioncore-java writes some messages to
+	  stdout.
+	
+	- More consistent handling of instrument driver operations (fetch_params, set_params, get_status, 
+	  get_last_sample, list_ports, etc).  However, this is yet to be completed as the data structures
+	  suggested by [1] and [2] are harmonized.
+	  [1] https://confluence.oceanobservatories.org/display/CIDev/Instrument+Driver+Interface
+	  [2] ioncore-python: ion/agents/instrumentagents/instrument_agent.py
+	  
+	- More TODOs and FIXMEs annotations in the code.
+	
+	Current test:
+	
+	- - - - - -  In <base_dir>/siamci  - - - - - - -
+	$ mvn clean compile exec:java -Dsiam-ci
+	03-08-2011 22:21:13,182 [net.ooici.siamci.SiamCiMain.main()] DEBUG siam.Siam - getNodeURL(): input=localhost
+	03-08-2011 22:21:13,407 [net.ooici.siamci.SiamCiMain.main()] INFO  net.ooici.siamci.SiamCiMain - siamCiFactory: net.ooici.siamci.impl.SiamCiFactoryImpl
+	03-08-2011 22:21:13,407 [net.ooici.siamci.SiamCiMain.main()] INFO  net.ooici.siamci.SiamCiMain - siam: siam.Siam
+	03-08-2011 22:21:13,408 [net.ooici.siamci.SiamCiMain.main()] INFO  net.ooici.siamci.SiamCiMain - requestProcessor: net.ooici.siamci.impl.RequestProcessor
+	03-08-2011 22:21:13,408 [net.ooici.siamci.SiamCiMain.main()] INFO  net.ooici.siamci.SiamCiMain - siamCiAdapter: net.ooici.siamci.impl.ionmsg.SiamCiAdapterIonMsg
+	03-08-2011 22:21:13,409 [net.ooici.siamci.SiamCiMain.main()] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Creating SiamCiProcess
+	03-08-2011 22:21:13,525 [net.ooici.siamci.SiamCiMain.main()] INFO  net.ooici.siamci.impl.ionmsg.SiamCiAdapterIonMsg - starting process
+	03-08-2011 22:21:13,526 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Running SiamCiServerIonMsg
+	03-08-2011 22:21:13,526 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Waiting for request ...
+	
+
+	- - - - - -  In <base_dir>/ioncore-python  - - - - - - -
+	(py_buildout)carueda:ioncore-python carueda$ trial ion/agents/instrumentagents/test/test_Siam*.py
+	ion.agents.instrumentagents.test.test_SiamCi
+	  TestSiamCi
+	    test_fetch_params_all ...                                              [OK]
+	    test_fetch_params_some ...                                             [OK]
+	    test_get_last_sample ...                                               [OK]
+	    test_get_status ...                                                    [OK]
+	    test_list_ports ...                                                    [OK]
+	    test_ping ...                                                          [OK]
+	    test_set_params ...                                                    [OK]
+	ion.agents.instrumentagents.test.test_Siam
+	  TestSiam
+	    test_execute ...                                                  [SKIPPED]
+	    test_fetch_params_all ...                                              [OK]
+	    test_fetch_params_some ...                                             [OK]
+	    test_fetch_set ...                                                     [OK]
+	    test_get_last_sample ...                                               [OK]
+	    test_get_status ...                                                    [OK]
+	    test_initialize ...                                               [SKIPPED]
+	    test_list_ports ...                                                    [OK]
+	    test_ping ...                                                          [OK]
+	
+	===============================================================================
+	[SKIPPED]
+	Not implemented yet
+	
+	ion.agents.instrumentagents.test.test_Siam.TestSiam.test_execute
+	ion.agents.instrumentagents.test.test_Siam.TestSiam.test_initialize
+	-------------------------------------------------------------------------------
+	Ran 16 tests in 7.413s
+	
+	PASSED (skips=2, successes=14)
+
 
 
 2011-03-07

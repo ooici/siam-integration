@@ -23,13 +23,18 @@ Command_type = object_utils.create_type_identifier(object_id=22001, version=1)
 class SiamCiAdapterProxy():
     """
     Communicates with a SiamCiAdapter to support SiamInstrumentDriver operations.
+    @note: the proxy has an associated port (given at construction time) for those
+    operations that are instrumentp-specific.  Note that other general, non-instrument
+    specific operations are also provided.
     @todo: under construction
     """
 
-    def __init__(self, queue='SIAM-CI'):
+    def __init__(self, port=None, queue='SIAM-CI'):
         """
-        @param queue: the routing key to send requests. By default, "SIAM=CI"
+        @param port: the port associated for those operations that are instrument specific.
+        @param queue: the routing key to send requests. By default, "SIAM-CI"
         """
+        self.port = port
         self.queue = queue
         self.proc = None
         self.mc = None
@@ -98,26 +103,89 @@ class SiamCiAdapterProxy():
     
     
     @defer.inlineCallbacks
-    def get_status(self, port):
+    def get_status(self):
         """
         Gets the status of a particular instrument as indicated by the given port
         """
-        cmd = yield self._make_command("get_status", [("port", port)])
+        assert self.port, "No port provided"
+        cmd = yield self._make_command("get_status", [("port", self.port)])
         response = yield self._rpc(cmd)
         log.debug(show_message(response, "get_status response:"))
         
         defer.returnValue(response)
         
     @defer.inlineCallbacks
-    def get_last_sample(self, port):
+    def get_last_sample(self):
         """
         Gets the last sample from the instrument on the given "port"
         """
-        cmd = yield self._make_command("get_last_sample", [("port", port)])
-        response = yield  self._rpc(cmd)
+        assert self.port, "No port provided"
+        cmd = yield self._make_command("get_last_sample", [("port", self.port)])
+        response = yield self._rpc(cmd)
         log.debug(show_message(response, "get_last_sample response:"))
         
-        defer.returnValue(response)
+        result = "ERROR"
+        if response.result == OK:
+            result = {}
+            for it in response.item:
+                result[it.pair.first] = it.pair.second
+                
+        defer.returnValue(result)
+        
+    @defer.inlineCallbacks
+    def fetch_params(self, param_list=[]):
+        """
+        Gets parameters associated with the instrument on the given "port"
+        
+        @param param_list: the list of desired parameters. If empty (the default), all parameters
+              are requested.
+        """
+        assert self.port, "No port provided"
+        
+        args = [("port", self.port)]
+        for it in param_list:
+            if isinstance(it, tuple):
+                c, p = it
+                args.extend( [ (c, p) ])
+            else:
+                assert not isinstance(it, (list, dict))
+                
+                # see https://confluence.oceanobservatories.org/display/CIDev/Instrument+Driver+Interface#InstrumentDriverInterface-getmessage
+                args.extend( [ ('instrument', it) ])
+                
+        cmd = yield self._make_command("fetch_params", args)
+        response = yield self._rpc(cmd)
+        log.debug(show_message(response, "fetch_params response:"))
+        
+        result = "ERROR"
+        if response.result == OK:
+            result = {}
+            for it in response.item:
+                result[it.pair.first] = it.pair.second
+                
+        defer.returnValue(result)
+        
+        
+    @defer.inlineCallbacks
+    def set_params(self, content):
+
+        assert(isinstance(content, dict))
+        log.debug("set_params content: %s, keys: %s" %(str(content), str(content.keys)))
+        
+        args = [("port", self.port)]
+        args.extend( [ (key, content[key]) for key in content.keys()] )
+             
+        cmd = yield self._make_command("set_params", args)
+        response = yield self._rpc(cmd)
+        log.debug(show_message(response, "fetch_params response:"))
+        
+        result = "ERROR"
+        if response.result == OK:
+            result = {}
+            for it in response.item:
+                result[it.pair.first] = it.pair.second
+                
+        defer.returnValue(result)
         
         
 

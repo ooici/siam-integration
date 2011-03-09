@@ -6,8 +6,11 @@ import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Vector;
+import java.util.Map.Entry;
 
 import net.ooici.siamci.ISiam;
 
@@ -35,12 +38,14 @@ import org.mbari.siam.utils.PrintUtils;
  */
 public class Siam implements ISiam {
 	
-    private static Logger _logger = Logger.getLogger(Siam.class);
+    private static Logger log = Logger.getLogger(Siam.class);
     
     // Copied verbatim from NodeUtility
 	private static final String getNodeURL(String input) {
 
-		_logger.debug("getNodeURL(): input=" + input);
+		if ( log.isDebugEnabled() ) {
+			log.debug("getNodeURL(): input=" + input);
+		}
 
 		if (input.startsWith("rmi://")) {
 			return input;
@@ -139,6 +144,73 @@ public class Siam implements ISiam {
     }
 	
 	/**
+	 * Adapted from SIAM's PrintInstrumentProperties
+	 */
+	public Map<String,String> getPortProperties(String portName) throws Exception {
+		Instrument instrument = _getInstrument(portName);
+		
+		HashMap<String, String> result = new LinkedHashMap<String,String>();
+		@SuppressWarnings("unchecked")
+		Vector<byte[]> properties = instrument.getProperties();
+		for (int j = 0; j < properties.size(); j++) {
+		    byte[] property = properties.elementAt(j);
+		    String entry = new String(property);
+		    String[] toks = entry.split("=", 2);
+		    String key = toks[0].trim();
+		    String value = toks.length == 2 ? toks[1].trim() : "??";
+		    result.put(key, value);
+		}
+		
+		return result;
+	}
+	
+	/**
+	 * Adapted from SIAM's SetInstrumentProperty
+	 */
+	public Map<String, String> setPortProperties(String portName, Map<String, String> params) throws Exception {
+		Instrument instrument = _getInstrument(portName);
+		
+		StringBuilder sb = new StringBuilder();
+		for ( Entry<String, String> e : params.entrySet() ) {
+			sb.append(e.getKey()+ "=" +e.getValue()+ "\n");
+		}
+		String string = sb.toString();
+		
+		if ( log.isDebugEnabled() ) {
+			log.debug("properties string: " +string);
+		}
+		
+		HashMap<String, String> result = new LinkedHashMap<String,String>();
+		
+		// TODO: How to (easily) discriminate which properties are actually set and which are not?
+		//
+		try {
+			instrument.setProperty(string.getBytes(), new byte[0]);
+		}
+		catch (Exception ex) {
+			//
+			// for simplicity at the moment, return a dict with just ("ERROR", error_message)
+			//
+			result.put("ERROR", ex.getMessage());
+			if ( log.isDebugEnabled() ) {
+				log.debug("properties string: " +string);
+			}
+			return result;
+		}
+		
+		// everything OK.  For each param, indicate "OK"
+		for ( Entry<String, String> e : params.entrySet() ) {
+			result.put(e.getKey(), "OK");
+		}		
+		if ( log.isDebugEnabled() ) {
+			log.debug("Everything OK: " +result);
+		}
+		
+		return result;
+		
+	}
+	
+	/**
 	 *  test program:
 	 *  @param args   [host  [port]]
 	 */
@@ -171,6 +243,13 @@ public class Siam implements ISiam {
 		out.println("**getPortLastSample: port=" +port);
 		Map<String, String> sample = siam.getPortLastSample(port);
 		out.println("   result: " +sample);
+		out.println();
+		
+		///////////////////////////////////////////////////////////
+		// getPortLastSample:
+		out.println("**getPortProperties: port=" +port);
+		Map<String, String> portProps = siam.getPortProperties(port);
+		out.println("   result: " +portProps);
 		out.println();
 		
 	}

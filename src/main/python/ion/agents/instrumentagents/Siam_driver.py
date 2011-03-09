@@ -28,8 +28,15 @@ class SiamInstrumentDriver(InstrumentDriver):
     """
 
     def __init__(self, *args, **kwargs):
+        """
+        Creates an instance of the driver for a particular SIAM instrument given the 'port' the
+        instrument is associated to. The port is obtained from kwargs["spawnargs"]["port"], and
+        will be None if not defined.
+        """
         InstrumentDriver.__init__(self, *args, **kwargs)
-        self.siamci = SiamCiAdapterProxy()
+        port = kwargs["spawnargs"] and kwargs["spawnargs"]["port"] or None
+        log.debug("SiamInstrumentDriver __init__: port = '" +port+ "'")
+        self.siamci = SiamCiAdapterProxy(port)
 
 
     @defer.inlineCallbacks
@@ -45,7 +52,7 @@ class SiamInstrumentDriver(InstrumentDriver):
     def op_get_status(self, content, headers, msg):
         log.debug('In SiamDriver op_get_status')
         
-        response = yield self.siamci.get_status(content)
+        response = yield self.siamci.get_status()
         log.debug("get_status: %s -> %s " % (str(content), str(response)))
 
         result = response.result
@@ -77,16 +84,29 @@ class SiamInstrumentDriver(InstrumentDriver):
     def op_get_last_sample(self, content, headers, msg):
         log.debug('In SiamDriver op_get_last_sample')
         
-        response = yield self.siamci.get_last_sample(content)
+        response = yield self.siamci.get_last_sample()
+        log.debug('In SiamDriver op_get_last_sample --> ' +str(response))    
+        yield self.reply_ok(msg, response)
+
+
+    @defer.inlineCallbacks
+    def op_fetch_params(self, content, headers, msg):
+        log.debug('In SiamDriver op_fetch_params')
         
-        result = "ERROR"
-        if response.result == OK:
-            result = {}
-            for it in response.item:
-                result[it.pair.first] = it.pair.second
+        response = yield self.siamci.fetch_params(content)
+        log.debug('In SiamDriver op_fetch_params --> ' +str(response))    
+        yield self.reply_ok(msg, response)
+
+    @defer.inlineCallbacks
+    def op_set_params(self, content, headers, msg):
+        log.debug('In SiamDriver op_set_params')
         
-        log.debug('In SiamDriver op_get_last_sample --> ' +str(result))    
-        yield self.reply_ok(msg, result)
+        response = yield self.siamci.fetch_params(content)
+        log.debug('In SiamDriver op_set_params --> ' +str(response))    
+        yield self.reply_ok(msg, response)
+
+
+
 
 
 class SiamInstrumentDriverClient(InstrumentDriverClient):
@@ -98,21 +118,22 @@ class SiamInstrumentDriverClient(InstrumentDriverClient):
     @defer.inlineCallbacks
     def ping(self):
         log.debug("SiamInstrumentDriverClient ping ...")
-        # 'dummy' arg as required by rpc_send
+        # 'dummy': arg required by rpc_send
         (content, headers, message) = yield self.rpc_send('ping', 'dummy')
         defer.returnValue(content)
 
     @defer.inlineCallbacks
     def list_ports(self):
         log.debug("SiamInstrumentDriverClient list_ports ...")
-        # 'dummy' arg as required by rpc_send
+        # 'dummy': arg required by rpc_send
         (content, headers, message) = yield self.rpc_send('list_ports', 'dummy')
         defer.returnValue(content)
 
     @defer.inlineCallbacks
-    def get_last_sample(self, port):
-        log.debug("SiamInstrumentDriverClient get_last_sample port='%s' ..." % port)
-        (content, headers, message) = yield self.rpc_send('get_last_sample', port)
+    def get_last_sample(self):
+        log.debug("SiamInstrumentDriverClient get_last_sample ...")
+        # 'dummy': arg required by rpc_send
+        (content, headers, message) = yield self.rpc_send('get_last_sample', 'dummy')
         defer.returnValue(content)
 
 # Spawn of the process using the module name

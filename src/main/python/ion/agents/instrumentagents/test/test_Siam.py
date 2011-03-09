@@ -31,14 +31,16 @@ class TestSiam(IonTestCase):
 #            {'name':'pubsub_registry','module':'ion.services.dm.distribution.pubsub_registry','class':'DataPubSubRegistryService'},
 #            {'name':'pubsub_service','module':'ion.services.dm.distribution.pubsub_service','class':'DataPubsubService'},
 
-            {'name':'Siam_Driver','module':'ion.agents.instrumentagents.Siam_driver','class':'SiamInstrumentDriver'
-                # no need: ,'spawnargs':{'ipport':self.SimulatorPort}
+            {'name':'SiamInstrumentDriver_testPort',
+             'module':'ion.agents.instrumentagents.Siam_driver',
+             'class':'SiamInstrumentDriver',
+             'spawnargs':{'port':'testPort'}
              }
             ]
 
         self.sup = yield self._spawn_processes(services)
         
-        self.driver_pid = yield self.sup.get_child_id('Siam_Driver')
+        self.driver_pid = yield self.sup.get_child_id('SiamInstrumentDriver_testPort')
         log.debug("Driver pid %s" % (self.driver_pid))
 
         self.driver_client = SiamInstrumentDriverClient(proc=self.sup,
@@ -59,10 +61,7 @@ class TestSiam(IonTestCase):
 
     @defer.inlineCallbacks
     def test_get_status(self):
-        """
-        @todo: implement
-        """
-        yield self.driver_client.get_status("testPort")
+        ret = yield self.driver_client.get_status("dummy arg")
 
     @defer.inlineCallbacks
     def test_ping(self):
@@ -75,24 +74,49 @@ class TestSiam(IonTestCase):
 
     @defer.inlineCallbacks
     def test_get_last_sample(self):
-        ret = yield self.driver_client.get_last_sample("testPort")
+        ret = yield self.driver_client.get_last_sample()
+        self.assertIsInstance(ret, dict)
+
+    @defer.inlineCallbacks
+    def test_fetch_params_some(self):
+        ret = yield self.driver_client.fetch_params(['startDelayMsec', 'wrongParam'])
+        self.assertIsInstance(ret, dict)
+        
+    @defer.inlineCallbacks
+    def test_fetch_params_all(self):
+        ret = yield self.driver_client.fetch_params([])
+        self.assertIsInstance(ret, dict)
+        
 
 
-#    @defer.inlineCallbacks
-#    def test_fetch_set(self):
-#        raise unittest.SkipTest('Not implemented yet')
-#        """
-#        @todo: implement
-#        """
+    @defer.inlineCallbacks
+    def test_fetch_set(self):
+        """Note: these tests are for successful interaction with driver regarding the
+        set_params operation, but not necessarily that the parameter was actually set.
+        
+        @todo: A more complete test would involve the retrieval of the settable parameters,
+        ideally along with an indication of valid (range of) values, and then set the 
+        parameter with one such value.
+        """
+        
+        """these happen to be present in the TestInstrument1 instrument """
+        params = {'startDelayMsec':'600', 'packetSetSize' : '21'}
+        ret = yield self.driver_client.set_params(params)
+        self.assertIsInstance(ret, (dict, str))
+
+        """these might not be valid, but we just check the operation completes"""
+        params = {'baudrate':'19200', 'someWrongParam' : 'someValue'}
+        ret = yield self.driver_client.set_params(params)
+        self.assertIsInstance(ret, (dict, str))
 
 
-#    @defer.inlineCallbacks
-#    def test_execute(self):
-#        raise unittest.SkipTest('Needs new PubSub services')
-#        """
-#        Test the execute command to the Instrument Driver
-#        @todo: implement
-#        """
+    @defer.inlineCallbacks
+    def test_execute(self):
+        raise unittest.SkipTest('Not implemented yet')
+        """
+        Test the execute command to the Instrument Driver
+        @todo: implement
+        """
 
 
 #    @defer.inlineCallbacks

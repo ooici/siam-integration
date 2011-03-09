@@ -33,4 +33,8 @@ public interface ISiam {
 	public String getPortStatus(String port) throws Exception;
 	
 	public Map<String,String> getPortLastSample(String port) throws Exception;
+	
+	public Map<String,String> getPortProperties(String port) throws Exception;
+
+	public Map<String, String> setPortProperties(String port, Map<String, String> params) throws Exception;
 }

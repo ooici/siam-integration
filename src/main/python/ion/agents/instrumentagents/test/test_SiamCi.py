@@ -21,7 +21,7 @@ class TestSiamCi(IonTestCase):
     def setUp(self):
         yield self._start_container()
 
-        self.siamci = SiamCiAdapterProxy()
+        self.siamci = SiamCiAdapterProxy("testPort")
         yield self.siamci.start()
                 
 
@@ -41,8 +41,29 @@ class TestSiamCi(IonTestCase):
 
     @defer.inlineCallbacks
     def test_get_status(self):
-        ret = yield self.siamci.get_status("testPort")
+        ret = yield self.siamci.get_status()
 
     @defer.inlineCallbacks
     def test_get_last_sample(self):
-        ret = yield self.siamci.get_last_sample("testPort")
+        ret = yield self.siamci.get_last_sample()
+        self.assertIsInstance(ret, dict)
+        
+    @defer.inlineCallbacks
+    def test_fetch_params_some(self):
+        """fetch specific list of parameters"""
+        ret = yield self.siamci.fetch_params(['startDelayMsec', 'wrongParam'])
+        self.assertIsInstance(ret, dict)
+        
+    @defer.inlineCallbacks
+    def test_fetch_params_all(self):
+        """fetch all parameters"""
+        ret = yield self.siamci.fetch_params()
+        self.assertIsInstance(ret, dict)
+        
+    @defer.inlineCallbacks
+    def test_set_params(self):
+        ret = yield self.siamci.set_params({'startDelayMsec' : '1000'
+                                            , 'wrongParam' : 'fooVal'
+                                          })
+        self.assertIsInstance(ret, (dict, str))
+        
