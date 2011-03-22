@@ -19,7 +19,7 @@ from ion.core.process.process import ProcessFactory
 
 from ion.agents.instrumentagents.SiamCi_proxy import SiamCiAdapterProxy
 
-from net.ooici.play.instr.instrument_defs_pb2 import Command, SuccessFail, OK, ERROR
+from net.ooici.play.instr_driver_interface_pb2 import Command, SuccessFail, OK, ERROR
 
        
 class SiamInstrumentDriver(InstrumentDriver):

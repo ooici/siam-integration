@@ -13,7 +13,7 @@ import java.util.Map;
 
 import net.ooici.core.container.Container;
 import net.ooici.core.message.IonMessage.IonMsg;
-import net.ooici.play.instr.InstrumentDefs.Command;
+import net.ooici.play.InstrDriverInterface.Command;
 import net.ooici.siamci.IRequestProcessor;
 import net.ooici.siamci.SiamCiConstants;
 
@@ -112,25 +112,42 @@ class SiamCiServerIonMsg implements Runnable {
 		while ( keepRunning ) {
 			log.info("Waiting for request ...");
 			IonMessage msgin = ionClient.consumeMessage(queueName);
+			if ( msgin == null ) {
+				//
+				// TODO Note: consumeMessage should throw an exception when there is 
+				// a non-timeout problem with getting the message. Email sent to OOI folks 
+				// about this (2011-03-22).
+				//
+				// Assume timeout; just continue.
+				//
+				continue;
+			}
 
-			ionClient.ackMessage(msgin);
+			try {
+				ionClient.ackMessage(msgin);
+			}
+			catch ( Throwable e) {
+				Map<String,String> headers = _getIonHeaders(msgin);
+				log.warn("error while acknowledging message. headers = " +headers, e);
+				continue;
+			}
 			
 			if ( UNPACK ) {
 				_unpack(msgin);
 			}
 
-			Map<String,String> headers = _getIonHeaders(msgin);
+			Map<String,String> receivedHeaders = _getIonHeaders(msgin);
 			if ( log.isDebugEnabled() ) {
-				log.debug("headers: " + headers);
+				log.debug("headers: " + receivedHeaders);
 			}
-			final String sender = (String) headers.get("sender");
+			final String sender = (String) receivedHeaders.get("sender");
 			log.info("Request received from '" +sender+ "'");
 			
 			//
 			// to properly respond, we need the reply-to and conv-id property values:
 			//
-			final String toName = (String) headers.get("reply-to");
-			final String convId = (String) headers.get("conv-id");
+			final String toName = (String) receivedHeaders.get("reply-to");
+			final String convId = (String) receivedHeaders.get("conv-id");
 
 			if ( toName == null ) {
 				// nobody to reply to?
@@ -152,12 +169,29 @@ class SiamCiServerIonMsg implements Runnable {
 			
 			if ( convId == null ) {
 				log.info("Will reply but with no conv-id as it was not provided");
-				continue;
+			}
+			else {
+				log.info("convId received: " +convId);
+			}
+			
+			//
+			// 2011-03-22
+			// user-id and expiry were not needed initially, but are now required for proper handling on the python side.
+			// Use the values in the received message, if given;  set some value otherwise.
+			// TODO: these props should probably be handled in a more proper way.
+			//
+			String userId = (String) receivedHeaders.get("user-id");
+			String expiry = (String) receivedHeaders.get("expiry");
+			if ( userId == null ) {
+				userId = "ANONYMOUS";
+			}
+			if ( expiry == null ) {
+				expiry = "0";
 			}
 			
 			Container.Structure.Builder structureBuilder = ProtoUtils.addIonMessageContent(null, "myName", "Identity", response);
-			_sendReply(toName, convId, structureBuilder.build());
-			log.info("Reply sent to '" +toName+ "'  conv-id: " +convId);
+			_sendReply(toName, convId, userId, expiry, structureBuilder.build());
+			log.info("Reply sent to '" +toName+ "' conv-id: '" +convId+ "' user-id: '" +userId+ "' expiry: '" +expiry+ "'");
 		}
 	}
 	
@@ -166,9 +200,11 @@ class SiamCiServerIonMsg implements Runnable {
 	 * 
 	 * @param toName where the message is going
 	 * @param convId value for the "conv-id" header property; if null, no such property is set
+	 * @param expiry 
+	 * @param userId 
 	 * @param structure  See ProtoUtils.addIonMessageContent(Container.Structure.Builder structure, String name, String identity, GeneratedMessage content)
 	 */
-	private void _sendReply(String toName, String convId, Container.Structure structure) {
+	private void _sendReply(String toName, String convId, String userId, String expiry, Container.Structure structure) {
 		MessagingName to = new MessagingName(toName);
 		
 		IonMessage msg = ionClient.createMessage(from, to, "noop", structure.toByteArray());
@@ -180,6 +216,10 @@ class SiamCiServerIonMsg implements Runnable {
         }
 		headers.remove("accept-encoding");
 		headers.put("encoding", "ION R1 GPB");
+
+		headers.put("user-id", userId);
+		headers.put("expiry", expiry);
+		
 		
 		// set 'status' -- note that the following error message is printed on the python side
 		// if this property is not set:
@@ -203,7 +243,7 @@ class SiamCiServerIonMsg implements Runnable {
 	 * Returns a string with contents of the given message using a prefix for each line, like so:
 		<pre>
 		    --title goes here--
-		    class net.ooici.play.instr.InstrumentDefs$Command
+		    class net.ooici.play.InstrDriverInterface$Command
 		    | command: "echo"
 		    | args {
 		    |   channel: "myCh1"

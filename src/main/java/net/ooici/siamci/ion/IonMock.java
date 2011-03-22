@@ -13,8 +13,8 @@ import java.util.Map;
 
 import net.ooici.core.container.Container;
 import net.ooici.core.message.IonMessage.IonMsg;
-import net.ooici.play.instr.InstrumentDefs.ChannelParameterPair;
-import net.ooici.play.instr.InstrumentDefs.Command;
+import net.ooici.play.InstrDriverInterface.ChannelParameterPair;
+import net.ooici.play.InstrDriverInterface.Command;
 
 /**
  * Simple simulation of the ION side to send messages to the SiamCiAdapter

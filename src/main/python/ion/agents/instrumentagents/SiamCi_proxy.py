@@ -15,9 +15,9 @@ from ion.core.messaging import message_client
 
 from ion.core import bootstrap
 
-from net.ooici.play.instr.instrument_defs_pb2 import Command, SuccessFail, OK, ERROR
+from net.ooici.play.instr_driver_interface_pb2 import Command, SuccessFail, OK, ERROR
 
-Command_type = object_utils.create_type_identifier(object_id=22001, version=1)
+Command_type = object_utils.create_type_identifier(object_id=20034, version=1)
 
 
 class SiamCiAdapterProxy():

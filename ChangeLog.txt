@@ -2,6 +2,18 @@ SiamCi integration prototype
 Created 2/9/2011
 Carlos Rueda - MBARI
 
+2011-03-22
+	- Moved net.ooici.play.instr.instrument_defs.proto --> net.ooici.play.instr_driver_interface.proto
+	
+	- NOTE: upon refresh of the ioncore-python and ioncore-java clones, the python-java communication
+	  was broken.  It turns out the "user-id" and "expiry" headers are now required for proper handling on 
+	  the python side. Fixed now.  See SiamCiServerIonMsg._run().
+	  
+	
+2011-03-21
+	- Adjustments upon clone updates of ion-object-definitions, ioncore-python 
+	
+	
 2011-03-08
 	- organized logging output and added log4.properties
 	- SiamCiServerIonMsg: temporary use of System.setOut to a file as ioncore-java writes some messages to

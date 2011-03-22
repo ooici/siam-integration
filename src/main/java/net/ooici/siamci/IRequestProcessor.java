@@ -1,6 +1,6 @@
 package net.ooici.siamci;
 
-import net.ooici.play.instr.InstrumentDefs.Command;
+import net.ooici.play.InstrDriverInterface.Command;
 
 import com.google.protobuf.GeneratedMessage;
 

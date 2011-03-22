@@ -2,7 +2,7 @@ package net.ooici.siamci.impl.gpb;
 
 import java.io.IOException;
 
-import net.ooici.play.instr.InstrumentDefs.Command;
+import net.ooici.play.InstrDriverInterface.Command;
 import net.ooici.siamci.IRequestProcessor;
 import net.ooici.siamci.SiamCiConstants;
 

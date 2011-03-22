@@ -9,7 +9,7 @@ import ion.core.utils.StructureManager;
 import java.util.Map;
 
 import net.ooici.core.message.IonMessage.IonMsg;
-import net.ooici.play.instr.InstrumentDefs.Command;
+import net.ooici.play.InstrDriverInterface.Command;
 
 /**
  * A simple "echo" service using ION messaging. 
