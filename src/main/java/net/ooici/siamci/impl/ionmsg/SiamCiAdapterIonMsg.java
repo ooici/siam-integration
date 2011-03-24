@@ -31,13 +31,49 @@ public class SiamCiAdapterIonMsg implements ISiamCiAdapter {
 	public void start() throws Exception {
 		siamCiProcess = new SiamCiServerIonMsg(requestProcessor);	
 		thread = new Thread(siamCiProcess, siamCiProcess.getClass().getSimpleName());
-		log.info("starting process");
+		if ( log.isDebugEnabled() ) {
+			log.debug("Starting process thread");
+		}
 		thread.start();
 	}
 
+	/**
+	 * It requests that the process completes, and makes the current thread wait until that
+	 * process completes, but up to a maximum of a few seconds. If after this wait the
+	 * process seems to be still running, then {@code interrupt()} is called on the associated
+	 * process' thread.
+	 */
 	public void stop() {
 		siamCiProcess.stop();
-		thread.interrupt();
+		_waitAndInterruptIfNecessary();
+	}
+
+
+	/** 
+	 * Allows some time for the process to terminate by itself before interrupting the thread.
+	 */
+	private void _waitAndInterruptIfNecessary() {
+		try {
+			if ( log.isDebugEnabled() ) {
+				log.debug("Waiting for process to complete by itself...");
+			}
+			// wait a maximum of ~8 seconds
+			for ( int remaining = 8*1000; remaining > 0 && siamCiProcess.isRunning(); remaining -= 200 ) {
+				Thread.sleep(200);
+			}
+		}
+		catch (InterruptedException ignore) {
+			if ( log.isDebugEnabled() ) {
+				log.debug("Interrupted while waiting for process to complete");
+			}
+		}
+		
+		if ( siamCiProcess.isRunning() ) {
+			if ( log.isDebugEnabled() ) {
+				log.debug("Process still running. Interrupting thread...");
+			}
+			thread.interrupt();
+		}
 	}
 
 }

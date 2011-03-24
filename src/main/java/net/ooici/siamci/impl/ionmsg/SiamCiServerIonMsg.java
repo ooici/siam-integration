@@ -53,6 +53,11 @@ class SiamCiServerIonMsg implements Runnable {
 
 	/** TODO: use some parameter -- currently hard-code for convenience */
 	private static final String exchange = "magnet.topic";
+
+	/**
+	 * Timeout for waiting for a request.
+	 */
+	private static final long TIMEOUT = 3*1000;
 	
 
 	/** The queue this service is accepting requests at */
@@ -67,6 +72,7 @@ class SiamCiServerIonMsg implements Runnable {
 	private final MsgBrokerClient ionClient;
 	
 	private volatile boolean keepRunning;
+	private volatile boolean isRunning;
 	
 
 	/**
@@ -76,7 +82,9 @@ class SiamCiServerIonMsg implements Runnable {
 	 */
 	SiamCiServerIonMsg(IRequestProcessor requestProcessor) throws Exception {
 		this.requestProcessor = requestProcessor;
-		log.info("Creating SiamCiProcess");
+		if ( log.isDebugEnabled() ) {
+			log.debug("Creating SiamCiProcess");
+		}
 		ionClient = new MsgBrokerClient(brokerHost, brokerPort, exchange);
 		ionClient.attach();
         ionClient.declareQueue(queueName);
@@ -91,6 +99,7 @@ class SiamCiServerIonMsg implements Runnable {
 	public void run() {
 		log.info("Running " +getClass().getSimpleName());
 		keepRunning = true;
+		isRunning = true;
 		try {
 			_run();
 		}
@@ -100,7 +109,12 @@ class SiamCiServerIonMsg implements Runnable {
 		finally {
 			log.info("Ending " +getClass().getSimpleName());
 			ionClient.detach();
+			isRunning = false;
 		}
+	}
+	
+	boolean isRunning() {
+		return isRunning;
 	}
 
 	/**
@@ -111,90 +125,97 @@ class SiamCiServerIonMsg implements Runnable {
 		
 		while ( keepRunning ) {
 			log.info("Waiting for request ...");
-			IonMessage msgin = ionClient.consumeMessage(queueName);
-			if ( msgin == null ) {
+			
+			IonMessage msgin = null;
+			while ( keepRunning && null == (msgin = ionClient.consumeMessage(queueName, TIMEOUT)) ) {
+				// timeout -- just try again
 				//
-				// TODO Note: consumeMessage should throw an exception when there is 
+				// Note: consumeMessage should throw an exception when there is 
 				// a non-timeout problem with getting the message. Email sent to OOI folks 
 				// about this (2011-03-22).
-				//
-				// Assume timeout; just continue.
-				//
-				continue;
-			}
-
-			try {
-				ionClient.ackMessage(msgin);
-			}
-			catch ( Throwable e) {
-				Map<String,String> headers = _getIonHeaders(msgin);
-				log.warn("error while acknowledging message. headers = " +headers, e);
-				continue;
 			}
 			
-			if ( UNPACK ) {
-				_unpack(msgin);
+			if ( keepRunning && msgin != null ) {
+				_dispatchRequest(msgin);
 			}
-
-			Map<String,String> receivedHeaders = _getIonHeaders(msgin);
-			if ( log.isDebugEnabled() ) {
-				log.debug("headers: " + receivedHeaders);
-			}
-			final String sender = (String) receivedHeaders.get("sender");
-			log.info("Request received from '" +sender+ "'");
-			
-			//
-			// to properly respond, we need the reply-to and conv-id property values:
-			//
-			final String toName = (String) receivedHeaders.get("reply-to");
-			final String convId = (String) receivedHeaders.get("conv-id");
-
-			if ( toName == null ) {
-				// nobody to reply to?
-				log.info("NOT REPLYING as reply-to is null");
-				continue;
-			}
-			
-			Command cmd = _getCommand(msgin);
-			
-			if ( log.isDebugEnabled() ) {
-				log.debug(_showMessage(cmd, "Command received:"));
-			}
-			
-			GeneratedMessage response = requestProcessor.processRequest(cmd);
-
-			if ( log.isDebugEnabled() ) {
-				log.debug(_showMessage(response, "Response to be replied:"));
-			}
-			
-			if ( convId == null ) {
-				log.info("Will reply but with no conv-id as it was not provided");
-			}
-			else {
-				log.info("convId received: " +convId);
-			}
-			
-			//
-			// 2011-03-22
-			// user-id and expiry were not needed initially, but are now required for proper handling on the python side.
-			// Use the values in the received message, if given;  set some value otherwise.
-			// TODO: these props should probably be handled in a more proper way.
-			//
-			String userId = (String) receivedHeaders.get("user-id");
-			String expiry = (String) receivedHeaders.get("expiry");
-			if ( userId == null ) {
-				userId = "ANONYMOUS";
-			}
-			if ( expiry == null ) {
-				expiry = "0";
-			}
-			
-			Container.Structure.Builder structureBuilder = ProtoUtils.addIonMessageContent(null, "myName", "Identity", response);
-			_sendReply(toName, convId, userId, expiry, structureBuilder.build());
-			log.info("Reply sent to '" +toName+ "' conv-id: '" +convId+ "' user-id: '" +userId+ "' expiry: '" +expiry+ "'");
 		}
 	}
 	
+	/**
+	 * Dispatches the incoming request.
+	 */
+	private void _dispatchRequest(IonMessage msgin) {
+		try {
+			ionClient.ackMessage(msgin);
+		}
+		catch ( Throwable e) {
+			Map<String,String> headers = _getIonHeaders(msgin);
+			log.warn("error while acknowledging message. headers = " +headers, e);
+			return;
+		}
+		
+		if ( UNPACK ) {
+			_unpack(msgin);
+		}
+
+		Map<String,String> receivedHeaders = _getIonHeaders(msgin);
+		if ( log.isDebugEnabled() ) {
+			log.debug("headers: " + receivedHeaders);
+		}
+		final String sender = (String) receivedHeaders.get("sender");
+		log.info("Request received from '" +sender+ "'");
+		
+		//
+		// to properly respond, we need the reply-to and conv-id property values:
+		//
+		final String toName = (String) receivedHeaders.get("reply-to");
+		final String convId = (String) receivedHeaders.get("conv-id");
+
+		if ( toName == null ) {
+			// nobody to reply to?
+			log.info("NOT REPLYING as reply-to is null");
+			return;
+		}
+		
+		Command cmd = _getCommand(msgin);
+		
+		if ( log.isDebugEnabled() ) {
+			log.debug(_showMessage(cmd, "Command received:"));
+		}
+		
+		GeneratedMessage response = requestProcessor.processRequest(cmd);
+
+		if ( log.isDebugEnabled() ) {
+			log.debug(_showMessage(response, "Response to be replied:"));
+		}
+		
+		if ( convId == null ) {
+			log.info("Will reply but with no conv-id as it was not provided");
+		}
+		else {
+			log.info("convId received: " +convId);
+		}
+		
+		//
+		// 2011-03-22
+		// user-id and expiry were not needed initially, but are now required for proper handling on the python side.
+		// Use the values in the received message, if given;  set some value otherwise.
+		// TODO: these props should probably be handled in a more proper way.
+		//
+		String userId = (String) receivedHeaders.get("user-id");
+		String expiry = (String) receivedHeaders.get("expiry");
+		if ( userId == null ) {
+			userId = "ANONYMOUS";
+		}
+		if ( expiry == null ) {
+			expiry = "0";
+		}
+		
+		Container.Structure.Builder structureBuilder = ProtoUtils.addIonMessageContent(null, "myName", "Identity", response);
+		_sendReply(toName, convId, userId, expiry, structureBuilder.build());
+		log.info("Reply sent to '" +toName+ "' conv-id: '" +convId+ "' user-id: '" +userId+ "' expiry: '" +expiry+ "'");
+	}
+
 	/**
 	 * Sends the given content (structure).
 	 * 
@@ -233,11 +254,11 @@ class SiamCiServerIonMsg implements Runnable {
 	
 	/**
 	 * Requests that the service stop accepting further requests.
-	 * Note that it is possible that the processing does not actually terminate.
 	 */
 	public void stop() {
 		keepRunning = false;
 	}
+	
 	
 	/**
 	 * Returns a string with contents of the given message using a prefix for each line, like so:
