@@ -1,30 +1,28 @@
 #!/usr/bin/env python
 
 """
-@file ion/agents/instrumentagents/test/test_echo_service_in_java.py
+@file ion/agents/instrumentagents/siamci/test/test_echo_service_in_java.py
       Based on ion/core/messaging/test_message_client.py
 @author: Carlos Rueda
 @summary: tests the interaction between python and java by making requests to
-          an "EchoRpc" service in java, and verifying the response.
+          an echo service in java, and verifying the response.
 """
 import ion.util.ionlog
 log = ion.util.ionlog.getLogger(__name__)
 
 from twisted.internet import defer
-from ion.test.iontest import IonTestCase
 
-from ion.core.process.process import Process
 from ion.core import bootstrap
 
 from ion.core.object import object_utils
 from ion.core.messaging import message_client
 
-from net.ooici.play.instr.instrument_defs_pb2 import Command, SuccessFail, OK, ERROR
+from ion.agents.instrumentagents.siamci.test.siamcitest import SiamCiTestCase
 
-Command_type = object_utils.create_type_identifier(object_id=22001, version=1)
+Command_type = object_utils.create_type_identifier(object_id=20034, version=1)
 
-
-class MessageClientTest(IonTestCase):
+class JavaEchoTest(SiamCiTestCase):
+    
     @defer.inlineCallbacks
     def setUp(self):
         yield self._start_container()
@@ -34,15 +32,14 @@ class MessageClientTest(IonTestCase):
         yield self._stop_container()
 
 
-
     @defer.inlineCallbacks
-    def test_send_message_instance2(self):
+    def test_send_message_instance1(self):
         """
         Adapted from test_send_message_instance() in ion/core/messaging/test_message_client.py
         but here with communication with an echo service in java.
         See IonSimpleEcho.java, SiamCiServerIonMsg.java in the SIAM-CI project.
         
-        This test uses the support provided by IonTestCase, ie., self.test_sup.rpc_send(..),
+        This test uses the support provided by IonTestCase, ie., by using self.test_sup.rpc_send(..),
         """
         
         mc = message_client.MessageClient(proc=self.test_sup)
@@ -52,11 +49,7 @@ class MessageClientTest(IonTestCase):
         arg.channel = "myCh1"
         arg.parameter = "myParam1"
         
-        # pid: use "EchoRpc" to make the request against the IonSimpleEcho service in java.
-        #      use "SIAM-CI" to make the request against the SIAM-CI adapter in java, which accepts
-        #      the "echo" operation for this purpose.
-#        pid = "EchoRpc"
-        pid = "SIAM-CI"
+        pid = SiamCiTestCase.pid
         
         log.debug(show_message(message, "Sending command to " +pid))
         
@@ -74,12 +67,12 @@ class MessageClientTest(IonTestCase):
 
   
     @defer.inlineCallbacks
-    def test_send_message_instance3(self):
+    def test_send_message_instance2(self):
         """
         Tests the RPC request/response without using the support provided by IonTestCase,
         ie., not using self.test_sup.rpc_send(..), but instead by creating a bootstrap.create_supervisor() 
         and using its rpc_send method directly.  
-        This serves as a basis to implement the SiamCiAdapterProxy.
+        This served as a basis to implement the SiamCiAdapterProxy.
         """
         
         p1 = yield bootstrap.create_supervisor()
@@ -91,43 +84,16 @@ class MessageClientTest(IonTestCase):
         arg.channel = "myCh1"
         arg.parameter = "myParam1"
         
-        pid2 = "SIAM-CI"
+        pid = SiamCiTestCase.pid
 
-        (response, headers, msg) = yield p1.rpc_send(pid2, 'echo', message)
+        (response, headers, msg) = yield p1.rpc_send(pid, 'echo', message)
         
         self.assertIsInstance(response, message_client.MessageInstance)
         
         self.assertEqual(Command_type, response.MessageObject.ObjectType)
         
         self.assertEqual(response.command, 'echo')
-
-
-      
-
-#    @defer.inlineCallbacks
-#    def test_send_message_instance(self):
-#        """ Verbatim copy from test_message_client.py """
-#        
-#        processes = [
-#            {'name':'echo1','module':'ion.core.process.test.test_process','class':'EchoProcess'},
-#        ]
-#        sup = yield self._spawn_processes(processes)
-#        pid = sup.get_child_id('echo1')
-#            
-#        mc = message_client.MessageClient(proc=self.test_sup)
-#            
-##        addresslink_type = object_utils.create_type_identifier(object_id=20003, version=1)
-#        person_type = object_utils.create_type_identifier(object_id=20001, version=1)
-#
-#        message = yield mc.create_instance(person_type, MessageName='person message')
-#        message.name ='David'
-#        
-#        (response, headers, msg) = yield self.test_sup.rpc_send(pid, 'echo', message)
-#        
-#        self.assertIsInstance(response, message_client.MessageInstance)
-#        self.assertEqual(response.name, 'David')
-       
-    
+  
   
 def show_message(msg, title="Message:"):
     prefix = "    | "

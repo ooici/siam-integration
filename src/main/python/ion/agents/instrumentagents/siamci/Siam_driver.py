@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-@file ion/agents/instrumentagents/Siam_driver.py
+@file ion/agents/instrumentagents/siamci/Siam_driver.py
 @author Carlos Rueda
 @brief Driver code for SIAM
 """
@@ -17,7 +17,7 @@ from ion.agents.instrumentagents.instrument_agent import InstrumentDriverClient
 
 from ion.core.process.process import ProcessFactory
 
-from ion.agents.instrumentagents.SiamCi_proxy import SiamCiAdapterProxy
+from ion.agents.instrumentagents.siamci.SiamCi_proxy import SiamCiAdapterProxy
 
 from net.ooici.play.instr_driver_interface_pb2 import Command, SuccessFail, OK, ERROR
 
@@ -29,14 +29,23 @@ class SiamInstrumentDriver(InstrumentDriver):
 
     def __init__(self, *args, **kwargs):
         """
-        Creates an instance of the driver for a particular SIAM instrument given the 'port' the
-        instrument is associated to. The port is obtained from kwargs["spawnargs"]["port"], and
-        will be None if not defined.
+        Creates an instance of the driver.
+        
+        kwargs["spawnargs"]["pid"] will be used to connect to the SIAM-CI adapter service.
+        
+        This instance will be for a particular SIAM instrument if the 'port' parameter is given, which
+        is obtained from kwargs["spawnargs"]["port"] if defined.
         """
         InstrumentDriver.__init__(self, *args, **kwargs)
-        port = kwargs["spawnargs"] and kwargs["spawnargs"]["port"] or None
-        log.debug("SiamInstrumentDriver __init__: port = '" +port+ "'")
-        self.siamci = SiamCiAdapterProxy(port)
+        pid = None
+        port = None
+        if kwargs["spawnargs"]:
+            args = kwargs["spawnargs"];
+            if args.has_key('pid'): pid = args['pid']
+            if args.has_key('port'): port = args['port']
+            
+        log.debug("SiamInstrumentDriver __init__: pid = '" +str(pid)+ "' port = '" +str(port)+ "'")
+        self.siamci = SiamCiAdapterProxy(pid, port)
 
 
     @defer.inlineCallbacks

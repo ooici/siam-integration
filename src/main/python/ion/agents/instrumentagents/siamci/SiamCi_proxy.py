@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 """
-@file ion/agents/instrumentagents/SiamCi_proxy.py
+@file ion/agents/instrumentagents/siamci/SiamCi_proxy.py
 @author Carlos Rueda
-@brief Client to the SiamCi adapter server to support Siam_driver operations
+@brief Client to the SIAM-CI adapter service (in java) to support Siam_driver operations
 """
 import ion.util.ionlog
 log = ion.util.ionlog.getLogger(__name__)
@@ -22,20 +22,25 @@ Command_type = object_utils.create_type_identifier(object_id=20034, version=1)
 
 class SiamCiAdapterProxy():
     """
-    Communicates with a SiamCiAdapter to support SiamInstrumentDriver operations.
+    Communicates with a SIAM-CI adapter service to support SiamInstrumentDriver operations.
+    
     @note: the proxy has an associated port (given at construction time) for those
-    operations that are instrumentp-specific.  Note that other general, non-instrument
+    operations that are instrument-specific.  Note that other general, non-instrument
     specific operations are also provided.
+    
     @todo: under construction
     """
 
-    def __init__(self, port=None, queue='SIAM-CI'):
+    def __init__(self, queue, port=None):
         """
-        @param port: the port associated for those operations that are instrument specific.
-        @param queue: the routing key to send requests. By default, "SIAM-CI"
+        @param queue: the routing key to send requests against (aka "pid" of the SIAM-CI adapter service).
+        @param port: the port associated for those operations that are instrument specific. None by default.
         """
-        self.port = port
+        if not queue:
+            raise Exception("queue must be given")
+        
         self.queue = queue
+        self.port = port
         self.proc = None
         self.mc = None
 
