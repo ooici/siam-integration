@@ -14,7 +14,6 @@ import java.util.Map.Entry;
 
 import net.ooici.siamci.ISiam;
 
-import org.apache.log4j.Logger;
 import org.mbari.siam.distributed.Device;
 import org.mbari.siam.distributed.DeviceNotFound;
 import org.mbari.siam.distributed.Instrument;
@@ -24,6 +23,8 @@ import org.mbari.siam.distributed.PortNotFound;
 import org.mbari.siam.distributed.SensorDataPacket;
 import org.mbari.siam.utils.PrintUtils;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of the high-level API to access SIAM functionality.
@@ -38,7 +39,7 @@ import org.mbari.siam.utils.PrintUtils;
  */
 public class Siam implements ISiam {
 	
-    private static Logger log = Logger.getLogger(Siam.class);
+    private static Logger log = LoggerFactory.getLogger(Siam.class);
     
     // Copied verbatim from NodeUtility
 	private static final String getNodeURL(String input) {

@@ -123,8 +123,8 @@ class SiamCiServerIonMsg implements Runnable {
 	 */
 	private void _run() throws InvalidProtocolBufferException {
 		
-		while ( keepRunning ) {
-			log.info("Waiting for request ...");
+		for ( int r = 0; keepRunning ; r++ ) {
+			log.info("[" +r+ "] Waiting for request ...");
 			
 			IonMessage msgin = null;
 			while ( keepRunning && null == (msgin = ionClient.consumeMessage(queueName, TIMEOUT)) ) {
@@ -162,14 +162,14 @@ class SiamCiServerIonMsg implements Runnable {
 		if ( log.isDebugEnabled() ) {
 			log.debug("headers: " + receivedHeaders);
 		}
-		final String sender = (String) receivedHeaders.get("sender");
+		final String sender = receivedHeaders.get("sender");
 		log.info("Request received from '" +sender+ "'");
 		
 		//
 		// to properly respond, we need the reply-to and conv-id property values:
 		//
-		final String toName = (String) receivedHeaders.get("reply-to");
-		final String convId = (String) receivedHeaders.get("conv-id");
+		final String toName = receivedHeaders.get("reply-to");
+		final String convId = receivedHeaders.get("conv-id");
 
 		if ( toName == null ) {
 			// nobody to reply to?
@@ -202,8 +202,8 @@ class SiamCiServerIonMsg implements Runnable {
 		// Use the values in the received message, if given;  set some value otherwise.
 		// TODO: these props should probably be handled in a more proper way.
 		//
-		String userId = (String) receivedHeaders.get("user-id");
-		String expiry = (String) receivedHeaders.get("expiry");
+		String userId = receivedHeaders.get("user-id");
+		String expiry = receivedHeaders.get("expiry");
 		if ( userId == null ) {
 			userId = "ANONYMOUS";
 		}

@@ -1,16 +1,19 @@
 package siam;
 
 import java.io.PrintWriter;
+import java.rmi.UnmarshalException;
 import java.util.ArrayList;
 import java.util.List;
 
 import net.ooici.siamci.ISiam.PortItem;
 
-import org.apache.log4j.Logger;
 import org.mbari.siam.distributed.Device;
 import org.mbari.siam.distributed.DeviceNotFound;
 import org.mbari.siam.distributed.Node;
 import org.mbari.siam.distributed.Port;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 
@@ -18,7 +21,7 @@ import org.mbari.siam.distributed.Port;
  */
 public class PortLister {
 	
-    private static Logger _logger = Logger.getLogger(PortLister.class);
+    private static Logger log = LoggerFactory.getLogger(PortLister.class);
     
     private Node node;
     
@@ -51,10 +54,21 @@ public class PortLister {
 				pi.retryCount= device.getSamplingRetryCount();
 			}
 			catch (DeviceNotFound dnf) {
-				_logger.warn("device by id " +pi.deviceId+ " not found", dnf);
+				log.warn("device by id " +pi.deviceId+ " not found", dnf);
+			}
+			catch (UnmarshalException ex) {
+				// most likely the instrument jar is not in the classpath. 
+				String msg = "UnmarshalException with device by id '" +pi.deviceId+ "'. " +
+					"Is the instrument jar in the classpath?";
+				if ( log.isDebugEnabled() ) {
+					log.debug(msg, ex);
+				}
+				else {
+					log.warn(msg);
+				}
 			}
 			catch (Exception ex) {
-				_logger.warn("Error with device by id " +pi.deviceId, ex);
+				log.warn("Error with device by id " +pi.deviceId, ex);
 			}
 			
 			list.add(pi);

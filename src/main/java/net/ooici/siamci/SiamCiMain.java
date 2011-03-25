@@ -2,7 +2,9 @@ package net.ooici.siamci;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 
+import net.ooici.siamci.ISiam.PortItem;
 import net.ooici.siamci.impl.SiamCiFactoryImpl;
 
 import joptsimple.OptionParser;
@@ -111,9 +113,26 @@ public class SiamCiMain {
 	
 	private void _run() throws Exception {
 		_setShutdownHook();
+		_showPorts();
 		_startAdapter();
 	}
 	
+	private void _showPorts() {
+		log.info("Listing instruments in the SIAM node:");
+		List<PortItem> ports;
+		try {
+			ports = siam.listPorts();
+		}
+		catch (Exception e) {
+			log.warn("Error retrieving list of ports", e);
+			return;
+		}
+		
+		for ( PortItem pi : ports ) {
+			log.info(" * port='" +pi.portName+ "' device='" +pi.deviceId+ "' service='" +pi.serviceName+ "'");
+		}
+	}
+
 	private void _startAdapter() throws Exception {
 		log.info("Starting SIAM-CI adapter. SIAM node host: " +params.siamHost);
 		siamCiAdapter.start();

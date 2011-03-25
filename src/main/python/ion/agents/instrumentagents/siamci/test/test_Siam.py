@@ -91,7 +91,7 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
 
 
     @defer.inlineCallbacks
-    def test_fetch_set(self):
+    def test_fetch_set1(self):
         """Note: these tests are for successful interaction with driver regarding the
         set_params operation, but not necessarily that the parameter was actually set.
         
@@ -105,6 +105,8 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         ret = yield self.driver_client.set_params(params)
         self.assertIsInstance(ret, (dict, str))
 
+    @defer.inlineCallbacks
+    def test_fetch_set2(self):
         """these might not be valid, but we just check the operation completes"""
         params = {'baudrate':'19200', 'someWrongParam' : 'someValue'}
         ret = yield self.driver_client.set_params(params)

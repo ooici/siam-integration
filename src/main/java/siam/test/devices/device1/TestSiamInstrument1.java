@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.text.ParseException;
 
-import org.apache.log4j.Logger;
 import org.mbari.siam.core.PolledInstrumentService;
 import org.mbari.siam.distributed.Device;
 import org.mbari.siam.distributed.DevicePacket;
@@ -18,6 +17,9 @@ import org.mbari.siam.distributed.ScheduleSpecifier;
 import org.mbari.siam.distributed.SensorDataPacket;
 import org.mbari.siam.distributed.TimeoutException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * A simple SIAM instrument for basic tests.
  * @author carueda
@@ -27,7 +29,7 @@ public class TestSiamInstrument1 extends PolledInstrumentService implements Inst
 	
 	private static int _sequenceNumber = 0;
 	
-	protected static Logger _log4j = Logger.getLogger(TestSiamInstrument1.class);
+	protected static Logger _log4j = LoggerFactory.getLogger(TestSiamInstrument1.class);
     
     
 	public TestSiamInstrument1() throws RemoteException {
