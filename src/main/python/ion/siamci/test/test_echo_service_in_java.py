@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-@file ion/agents/instrumentagents/siamci/test/test_echo_service_in_java.py
+@file ion/siamci/test/test_echo_service_in_java.py
       Based on ion/core/messaging/test_message_client.py
 @author: Carlos Rueda
 @summary: tests the interaction between python and java by making requests to
@@ -17,7 +17,7 @@ from ion.core import bootstrap
 from ion.core.object import object_utils
 from ion.core.messaging import message_client
 
-from ion.agents.instrumentagents.siamci.test.siamcitest import SiamCiTestCase
+from ion.siamci.test.siamcitest import SiamCiTestCase
 
 Command_type = object_utils.create_type_identifier(object_id=20034, version=1)
 

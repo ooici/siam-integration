@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-@file ion/agents/instrumentagents/siamci/test/test_Siam.py
+@file ion/siamci/test/test_Siam.py
 @brief This module has test cases to test out the SIAM driver.
 @author Carlos Rueda (using test_SBE49.py as a basis)
 @see ion.agents.instrumentagents.test.test_instrument
@@ -11,8 +11,8 @@ from twisted.internet import defer
 
 from ion.test.iontest import IonTestCase
 
-from ion.agents.instrumentagents.siamci.Siam_driver import SiamInstrumentDriverClient
-from ion.agents.instrumentagents.siamci.test.siamcitest import SiamCiTestCase
+from ion.siamci.Siam_driver import SiamInstrumentDriverClient
+from ion.siamci.test.siamcitest import SiamCiTestCase
 
 #from ion.services.dm.distribution.pubsub_service import PubSubClient
 
@@ -33,7 +33,7 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
 #            {'name':'pubsub_service','module':'ion.services.dm.distribution.pubsub_service','class':'DataPubsubService'},
 
             {'name':'SiamInstrumentDriver_' + SiamCiTestCase.port,
-             'module':'ion.agents.instrumentagents.siamci.Siam_driver',
+             'module':'ion.siamci.Siam_driver',
              'class':'SiamInstrumentDriver',
              'spawnargs':{ 'pid':SiamCiTestCase.pid, 'port':SiamCiTestCase.port }
              }

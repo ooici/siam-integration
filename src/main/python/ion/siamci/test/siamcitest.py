@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-@file ion/agents/instrumentagents/siamci/test/siamcitest.py
+@file ion/siamci/test/siamcitest.py
 @brief A base class for SIAM-CI test cases.
 @author Carlos Rueda
 """
@@ -9,7 +9,7 @@ log = ion.util.ionlog.getLogger(__name__)
 
 from ion.test.iontest import IonTestCase
 
-from ion.agents.instrumentagents.siamci.SiamCi_proxy import SiamCiAdapterProxy
+from ion.siamci.SiamCi_proxy import SiamCiAdapterProxy
 
 from os import getenv
 

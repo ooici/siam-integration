@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-@file ion/agents/instrumentagents/siamci/test/test_SiamCi.py
+@file ion/siamci/test/test_SiamCi.py
 @brief This module has test cases to test out the SIAM-CI proxy class
 @author Carlos Rueda
 """
@@ -10,8 +10,8 @@ from twisted.internet import defer
 
 from ion.test.iontest import IonTestCase
 
-from ion.agents.instrumentagents.siamci.SiamCi_proxy import SiamCiAdapterProxy
-from ion.agents.instrumentagents.siamci.test.siamcitest import SiamCiTestCase
+from ion.siamci.SiamCi_proxy import SiamCiAdapterProxy
+from ion.siamci.test.siamcitest import SiamCiTestCase
 
 #from twisted.trial import unittest
 from os import getenv

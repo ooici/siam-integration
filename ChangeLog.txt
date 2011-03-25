@@ -6,9 +6,13 @@ Carlos Rueda - MBARI
 	- show the available ports at initialization of SiamCiMain.
 	- when unmarshalling error: log.warn with no exception and log.debug with the exception 
 	- consistent use of slf4j in the various sources
+	- Moved python elements to [src/main/python/]ion/siamci/
+	  Once the SIAM-CI adapter is running, the python tests can be run as follows:
+	  	$ cd /path/to/ioncore-python
+	  	$ ln -s /path/to/siamci/src/main/python/ion/siamci ion/
+	  	$ SIAM_CI="-" bin/trial ion/siamci/test/
 	
 2011-03-23
-	- Moved python elements to ion/agents/instrumentagents/siamci/
 	- new class SiamCiTestCase(IonTestCase) as the base class for all SIAM-CI tests in python.
 	  the SIAM_CI env variable is used to actually run the tests.
 	- SiamCiMain now accepts parameters using jopt-simple (currently --siam, and --help) 

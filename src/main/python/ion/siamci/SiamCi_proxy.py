@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-@file ion/agents/instrumentagents/siamci/SiamCi_proxy.py
+@file ion/siamci/SiamCi_proxy.py
 @author Carlos Rueda
 @brief Client to the SIAM-CI adapter service (in java) to support Siam_driver operations
 """
