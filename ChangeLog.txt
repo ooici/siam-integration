@@ -2,6 +2,14 @@ SiamCi integration prototype
 Created 2/9/2011
 Carlos Rueda - MBARI
 
+2011-03-28
+	- adding TestNG tests (*)
+	  - siamcitest.BaseTestCase: base class for tests in the project
+	  - siam.SiamTestCase: tests for the Siam class
+	
+	
+	(*) TestNG is more flexible than JUnit at least wrt skipping tests at runtime.
+	
 2011-03-24
 	- show the available ports at initialization of SiamCiMain.
 	- when unmarshalling error: log.warn with no exception and log.debug with the exception 

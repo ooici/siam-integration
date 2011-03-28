@@ -185,19 +185,7 @@ public class Siam implements ISiam {
 		
 		// TODO: How to (easily) discriminate which properties are actually set and which are not?
 		//
-		try {
-			instrument.setProperty(string.getBytes(), new byte[0]);
-		}
-		catch (Exception ex) {
-			//
-			// for simplicity at the moment, return a dict with just ("ERROR", error_message)
-			//
-			result.put("ERROR", ex.getMessage());
-			if ( log.isDebugEnabled() ) {
-				log.debug("properties string: " +string);
-			}
-			return result;
-		}
+		instrument.setProperty(string.getBytes(), new byte[0]);
 		
 		// everything OK.  For each param, indicate "OK"
 		for ( Entry<String, String> e : params.entrySet() ) {

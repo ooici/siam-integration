@@ -25,6 +25,10 @@ public interface ISiam {
 		public int sampleCount;
 		public int errorCount;
 		public int retryCount;
+		
+		public String toString() {
+			return portName;
+		}
 	}
 
 	
