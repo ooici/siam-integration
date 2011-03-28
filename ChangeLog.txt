@@ -5,8 +5,9 @@ Carlos Rueda - MBARI
 2011-03-28
 	- adding TestNG tests (*)
 	  - siamcitest.BaseTestCase: base class for tests in the project
+	  - siamcitest.ScTestListener: to shows some info (somewhat similar to Twisted Trial)
 	  - siam.SiamTestCase: tests for the Siam class
-	
+	  - siam.Siam: added getNodeInfo
 	
 	(*) TestNG is more flexible than JUnit at least wrt skipping tests at runtime.
 	

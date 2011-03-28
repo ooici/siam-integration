@@ -1,6 +1,7 @@
 package siamcitest;
 
 import org.testng.SkipException;
+import org.testng.annotations.Listeners;
 
 
 /**
@@ -8,11 +9,12 @@ import org.testng.SkipException;
  * 
  * @author carueda
  */
+@Listeners( { siamcitest.ScTestListener.class } )
 public abstract class BaseTestCase {
 
 	/**
 	 * Call this in a unit test to skip it if the condition is true.
-	 * This basically throws a {@link SkipException} with the given message if th
+	 * This basically throws a {@link SkipException} with the given message if the
 	 * condition is true. 
 	 * 
 	 * @param condition the condition 

@@ -44,9 +44,6 @@ public class SiamTestCase extends BaseTestCase {
 	
 	private Siam siam;
 	
-	private static void _print(String string) {
-		System.out.println(SiamTestCase.class.getSimpleName()+ ": " +string);
-	}
 	
 	private void _skipIfNotSiam() {
 		skipIf(siam == null, "Siam instance needed when " +SIAM_HOST_PROP+ " is set");
@@ -61,20 +58,22 @@ public class SiamTestCase extends BaseTestCase {
 	 */
 	@BeforeClass
 	void init() throws Exception {
+		StringBuilder sb = new StringBuilder();
 		if ( siamHost != null ) {
-			_print(SIAM_HOST_PROP+ " = " +siamHost);
+			sb.append(SIAM_HOST_PROP+ " = '" +siamHost+ "'; ");
 			siam = new Siam(siamHost);
 			
 			if ( siamInstrumentPort != null ) {
-				_print(SIAM_INSTRUMENT_PORT_PROP+ " = " +siamInstrumentPort);
+				sb.append(SIAM_INSTRUMENT_PORT_PROP+ " = '" +siamInstrumentPort+ "'");
 			}
 			else {
-				_print(SIAM_INSTRUMENT_PORT_PROP+ " not set; instrument tests will be ignored");
+				sb.append(SIAM_INSTRUMENT_PORT_PROP+ " not set so instrument tests will be skipped");
 			}
 		}
 		else {
-			_print(SIAM_HOST_PROP+ " not set; tests will be ignored");
+			sb.append(SIAM_HOST_PROP+ " not set so tests will be skipped");
 		}
+		System.out.println(SiamTestCase.class.getSimpleName()+ " (" +sb+ ")");
 	}
 
 	/**
@@ -83,8 +82,17 @@ public class SiamTestCase extends BaseTestCase {
 	@Test
 	public void testGetNodeId() {
 		_skipIfNotSiam();
-		long nodeId = siam.getNodeId();
-		_print("nodeId = " +nodeId);
+		siam.getNodeId();
+	}
+	
+	/**
+	 * Test method for {@link siam.Siam#getNodeInfo()}.
+	 */
+	@Test
+	public void testGetNodeInfo() {
+		_skipIfNotSiam();
+		String info = siam.getNodeInfo();
+		Assert.assertNotNull(info);
 	}
 	
 	/**
@@ -95,7 +103,7 @@ public class SiamTestCase extends BaseTestCase {
 	public void testListPorts() throws Exception {
 		_skipIfNotSiam();
 		List<PortItem> ports = siam.listPorts();
-		_print("ports = " +ports);
+		Assert.assertNotNull(ports);
 	}
 
 	/**
@@ -106,7 +114,7 @@ public class SiamTestCase extends BaseTestCase {
 	public void testGetPortStatus() throws Exception {
 		_skipIfNotInstrument();
 		String status = siam.getPortStatus(siamInstrumentPort);
-		_print("instrument status = " +status);
+		Assert.assertNotNull(status);
 	}
 
 	/**
@@ -117,7 +125,9 @@ public class SiamTestCase extends BaseTestCase {
 	public void testGetPortLastSample() throws Exception {
 		_skipIfNotInstrument();
 		Map<String, String> sample = siam.getPortLastSample(siamInstrumentPort);
-		_print("instrument last sample = " +sample);
+		Assert.assertNotNull(sample);
+		Assert.assertTrue(sample.containsKey("parentId"), "sample.containsKey parentId"); 
+		
 	}
 
 	/**
@@ -128,14 +138,14 @@ public class SiamTestCase extends BaseTestCase {
 	public void testGetPortProperties() throws Exception {
 		_skipIfNotInstrument();
 		Map<String, String> props = siam.getPortProperties(siamInstrumentPort);
-		_print("instrument properties = " +props);
+		Assert.assertNotNull(props);
 	}
 
 	/**
 	 * Test method for {@link siam.Siam#setPortProperties(java.lang.String, java.util.Map)}.
 	 * 
 	 * <p>
-	 * TODO Should we add a timeout? sometimes siam.setPortProperties seems takes a few seconds (~20 sec) 
+	 * TODO Should we add a timeout? sometimes siam.setPortProperties takes a few seconds (~20 sec) 
 	 * 
 	 * <p>
 	 * TODO this test tries to set the property "startDelayMsec", which is specific to "testPort" instrument.

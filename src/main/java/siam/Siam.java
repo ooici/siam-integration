@@ -19,10 +19,10 @@ import org.mbari.siam.distributed.DeviceNotFound;
 import org.mbari.siam.distributed.Instrument;
 import org.mbari.siam.distributed.NoDataException;
 import org.mbari.siam.distributed.Node;
+import org.mbari.siam.distributed.NodeInfo;
 import org.mbari.siam.distributed.PortNotFound;
 import org.mbari.siam.distributed.SensorDataPacket;
 import org.mbari.siam.utils.PrintUtils;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,6 +72,7 @@ public class Siam implements ISiam {
 	
     private final Node node;
     private final long nodeId;
+    private final NodeInfo nodeInfo;
 	
     /**
      * Creates a point of access to a SIAM node instance.
@@ -80,13 +81,18 @@ public class Siam implements ISiam {
      * @throws RemoteException 
      * @throws MalformedURLException 
      */
-	public Siam(String host) throws MalformedURLException, RemoteException, NotBoundException{
+	public Siam(String host) throws Exception {
 		node = _getNode(host);
 		nodeId = node.getId();
+		nodeInfo = node.getNodeInfo();
 	}
 	
 	public long getNodeId() {
 		return nodeId;
+	}
+	
+	public String getNodeInfo() {
+		return nodeInfo.toString();
 	}
 	
 	public List<PortItem> listPorts() throws Exception {
@@ -95,7 +101,7 @@ public class Siam implements ISiam {
 	
 	
 	/**
-	 * heloer
+	 * helper
 	 */
 	private Instrument _getInstrument(String portName) throws Exception {
 		try {
