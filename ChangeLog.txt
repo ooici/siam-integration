@@ -8,8 +8,16 @@ Carlos Rueda - MBARI
 	  - siamcitest.ScTestListener: to shows some info (somewhat similar to Twisted Trial)
 	  - siam.SiamTestCase: tests for the Siam class
 	  - siam.Siam: added getNodeInfo
-	
 	(*) TestNG is more flexible than JUnit at least wrt skipping tests at runtime.
+	
+	- SiamTestCase tests now with parameters from SIAM environmental variable.
+	  Example using maven:
+		    SIAM="host=localhost port=testPort" mvn test -Dtest=SiamTestCase
+	    where:
+		 host: The host where the SIAM node program is running
+		 port: the SIAM instrument port
+	  To use the default values, set SIAM=-
+	  All tests in SiamTestCase are skipped if SIAM is not set.
 
 	- Siam-Ci program now accepting more parameters:
 		$ mvn exec:java -Dsiam-ci -Dexec.args="--help"

@@ -11,71 +11,111 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import siamcitest.BaseTestCase;
+import siamcitest.ScTestUtils;
 
 
 /**
  * Tests for {@link Siam}.
  * 
- * Currently the tests are controlled by the environment variables SIAM_HOST and SIAM_INSTR_PORT
+ * Currently the tests are controlled by the environment variable SIAM, 
+ * for example, from maven, you can call:
+ * <pre>
+ *   SIAM="host=localhost port=testPort" mvn test -Dtest=SiamTestCase
+ * </pre>
  * 
  * <ul>
- * <li>SIAM_HOST: SIAM host; all tests are skipped if not set
- * <li>SIAM_INSTR_PORT: SIAM instrument port; instrument specific tests are skipped if not set
+ * <li>host: SIAM host; all tests are skipped if not set
+ * <li>port: SIAM instrument port; instrument specific tests are skipped if not set
  * </ul>
  * 
- * From maven, you can call:
- * <pre>
- *   SIAM_HOST=localhost SIAM_INSTR_PORT=testPort mvn test -Dtest=SiamTestCase
- * </pre>
+ * All tests are skipped if SIAM is not set.
  * 
  * @author carueda
  */
 public class SiamTestCase extends BaseTestCase {
 	
-	/** SIAM host env variable; all tests are skipped if not set. */
-	private static final String SIAM_HOST_PROP = "SIAM_HOST";
+	/** SIAM env variable; all tests are skipped if not set. */
+	private static final String SIAM_ENV_VAR = "SIAM";
 
-	/** SIAM instrument port env variable; instrument specific tests are skipped if not set. */
-	private static final String SIAM_INSTRUMENT_PORT_PROP = "SIAM_INSTR_PORT";
 	
+	private static final String DEFAULT_SIAM_HOST = "localhost";
+	private static final String DEFAULT_SIAM_INSTR_PORT = "testPort";
+        
+	private static final String MESSAGE_SKIPPED = 
+		SIAM_ENV_VAR+ " environment variable not set.\n" + 
+		"If defined, the value of this variable is parsed for some properties and the tests are run.\n" +
+		"Examples:\n" +
+		"- With explicit values:\n" +     
+        "    SIAM=\"host=" +DEFAULT_SIAM_HOST+ ", port=" +DEFAULT_SIAM_INSTR_PORT+ "\"\n" +
+        "- Using default values (values shown in the explicit value example above):\n" +     
+        "    SIAM=\"-\"\n" +
+        "\n" +
+        "The properties are:\n" +      
+        "  host: The host where the SIAM node program is running.\n" +
+        "  port: the SIAM instrument port\n" +
+        "\n" +
+        "See https://confluence.oceanobservatories.org/display/CIDev/SIAM-CI+status" +
+        "\n"
+    ;
+
 	
-	private final String siamHost = System.getenv(SIAM_HOST_PROP);
-	private final String siamInstrumentPort = System.getenv(SIAM_INSTRUMENT_PORT_PROP);
+	private final String siamEnvVar = System.getenv(SIAM_ENV_VAR);
+	
+	private String siamHost = null;
+	private String siamInstrumentPort = null;
 	
 	private Siam siam;
 	
-	
-	private void _skipIfNotSiam() {
-		skipIf(siam == null, "Siam instance needed when " +SIAM_HOST_PROP+ " is set");
-	}
-
-	private void _skipIfNotInstrument() {
-		skipIf(siam == null || siamInstrumentPort == null, "Instrument port needed");
-	}
 	
 	/**
 	 * @throws java.lang.Exception
 	 */
 	@BeforeClass
 	void init() throws Exception {
+		if ( siamEnvVar == null ) {
+			System.out.println(SiamTestCase.class.getSimpleName()+ ": Tests will be skipped. " +MESSAGE_SKIPPED);
+			return;
+		}
+		
 		StringBuilder sb = new StringBuilder();
-		if ( siamHost != null ) {
-			sb.append(SIAM_HOST_PROP+ " = '" +siamHost+ "'; ");
-			siam = new Siam(siamHost);
-			
-			if ( siamInstrumentPort != null ) {
-				sb.append(SIAM_INSTRUMENT_PORT_PROP+ " = '" +siamInstrumentPort+ "'");
-			}
-			else {
-				sb.append(SIAM_INSTRUMENT_PORT_PROP+ " not set so instrument tests will be skipped");
-			}
+		if ( siamEnvVar.equals("-") ) {
+			siamHost = DEFAULT_SIAM_HOST;
+			siamInstrumentPort = DEFAULT_SIAM_INSTR_PORT;
 		}
 		else {
-			sb.append(SIAM_HOST_PROP+ " not set so tests will be skipped");
+			Map<String, String> props = ScTestUtils.parseString(siamEnvVar);
+			if ( props.containsKey("host") ) {
+				siamHost = props.get("host");
+				props.remove("host");
+			}
+			if ( props.containsKey("port") ) {
+				siamInstrumentPort = props.get("port");
+				props.remove("port");
+			}
+			if ( props.size() > 0 ) {
+				sb.append("warning: unrecognized keys in " +SIAM_ENV_VAR+ " environment variable: " +props+ "\n");
+			}
 		}
-		System.out.println(SiamTestCase.class.getSimpleName()+ " (" +sb+ ")");
+		sb.append("SIAM host = '" +siamHost+ "'; ");
+		siam = new Siam(siamHost);
+
+		if ( siamInstrumentPort != null ) {
+			sb.append("port = '" +siamInstrumentPort+ "'");
+		}
+		else {
+			sb.append("port not set so instrument tests will be skipped");
+		}
+		System.out.println(SiamTestCase.class.getSimpleName()+ ": " +sb);
 	}
 
+	private void _skipIfNotSiam() {
+		skipIf(siam == null, "Siam instance needed when " +SIAM_ENV_VAR+ " is set");
+	}
+
+	private void _skipIfNotInstrument() {
+		skipIf(siam == null || siamInstrumentPort == null, "Instrument port needed");
+	}
+	
 	/**
 	 * Test method for {@link siam.Siam#getNodeId()}.
 	 */
