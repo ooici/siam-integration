@@ -8,7 +8,6 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Implementation using the ION messaging APIs.
- * TODO NOTE: incomplete
  * 
  * @author carueda
  */
@@ -16,6 +15,9 @@ public class SiamCiAdapterIonMsg implements ISiamCiAdapter {
 	
 	private static final Logger log = LoggerFactory.getLogger(SiamCiAdapterIonMsg.class);
 	
+	private final String brokerHost;
+	private final int brokerPort;
+	private final String queueName;
 	
 	private SiamCiServerIonMsg siamCiProcess;
 	private Thread thread;
@@ -23,13 +25,17 @@ public class SiamCiAdapterIonMsg implements ISiamCiAdapter {
 
 	private IRequestProcessor requestProcessor;
 	
-	public SiamCiAdapterIonMsg(IRequestProcessor requestProcessor) {
+	public SiamCiAdapterIonMsg(String brokerHost, int brokerPort, String queueName,
+			IRequestProcessor requestProcessor) {
+		this.brokerHost = brokerHost;
+		this.brokerPort = brokerPort;
+		this.queueName = queueName;
 		this.requestProcessor = requestProcessor;
 	}
 	
 
 	public void start() throws Exception {
-		siamCiProcess = new SiamCiServerIonMsg(requestProcessor);	
+		siamCiProcess = new SiamCiServerIonMsg(brokerHost, brokerPort, queueName, requestProcessor);	
 		thread = new Thread(siamCiProcess, siamCiProcess.getClass().getSimpleName());
 		if ( log.isDebugEnabled() ) {
 			log.debug("Starting process thread");
@@ -38,14 +44,17 @@ public class SiamCiAdapterIonMsg implements ISiamCiAdapter {
 	}
 
 	/**
-	 * It requests that the process completes, and makes the current thread wait until that
-	 * process completes, but up to a maximum of a few seconds. If after this wait the
+	 * It requests that the process complete, and makes the current thread wait until that
+	 * process completes, but only up to a maximum of a few seconds. If after this wait the
 	 * process seems to be still running, then {@code interrupt()} is called on the associated
 	 * process' thread.
 	 */
 	public void stop() {
-		siamCiProcess.stop();
-		_waitAndInterruptIfNecessary();
+		if ( siamCiProcess != null ) {
+			siamCiProcess.stop();
+			_waitAndInterruptIfNecessary();
+			siamCiProcess = null;
+		}
 	}
 
 

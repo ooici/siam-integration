@@ -31,13 +31,38 @@ public class SiamCiMain {
 	 */
 	private static class Params {
 		private static final String DEFAULT_SIAM_NODE_HOST = "localhost";
+		private static final String DEFAULT_BROKER_HOST = "localhost";
+		private static final int DEFAULT_BROKER_PORT = com.rabbitmq.client.AMQP.PROTOCOL.PORT;
+		private static final String DEFAULT_QUEUE_NAME = SiamCiConstants.DEFAULT_QUEUE_NAME;
 		
 		private static final OptionParser parser = new OptionParser();
+		
+		// siam
 		private static final OptionSpec<String> siamHostOpt = 
 			parser.accepts("siam", "SIAM node host")
 			.withRequiredArg()
 			.describedAs("host")
 			.defaultsTo(DEFAULT_SIAM_NODE_HOST);
+
+		// broker
+		private static final OptionSpec<String> brokerHostOpt = 
+			parser.accepts("brokerHost", "Broker host")
+			.withRequiredArg()
+			.describedAs("host")
+			.defaultsTo(DEFAULT_BROKER_HOST);
+		private static final OptionSpec<String> brokerPortOpt = 
+			parser.accepts("brokerPort", "Broker port")
+			.withRequiredArg()
+			.describedAs("port")
+			.defaultsTo(String.valueOf(DEFAULT_BROKER_PORT));
+		
+		// queue
+		private static final OptionSpec<String> queueNameOpt = 
+			parser.accepts("queue", "Queue name")
+			.withRequiredArg()
+			.describedAs("name")
+			.defaultsTo(DEFAULT_QUEUE_NAME);
+		
 		private static final OptionSpec<String> helpOpt = 
 			parser.acceptsAll(Arrays.asList("help", "?"), "print help message").withOptionalArg();
 
@@ -63,9 +88,15 @@ public class SiamCiMain {
 		}
 		
 		String siamHost;
+		String brokerHost;
+		int brokerPort;
+		String queueName;
 		
 		private Params(OptionSet options) {
 			siamHost = options.valueOf(siamHostOpt);
+			brokerHost = options.valueOf(brokerHostOpt);
+			brokerPort = Integer.parseInt(options.valueOf(brokerPortOpt));
+			queueName = options.valueOf(queueNameOpt);
 		}
 	}
 	
@@ -108,9 +139,15 @@ public class SiamCiMain {
 		siamCiFactory = new SiamCiFactoryImpl();
 		siam = siamCiFactory.createSiam(params.siamHost);
 		requestProcessor = siamCiFactory.createRequestProcessor(siam);
-		siamCiAdapter = siamCiFactory.createSiamCiAdapter(requestProcessor);
+		siamCiAdapter = _createSiamCiAdapter();
 	}
 	
+	private ISiamCiAdapter _createSiamCiAdapter() {
+		return siamCiFactory.createSiamCiAdapter(
+				params.brokerHost, params.brokerPort, params.queueName,
+				requestProcessor);
+	}
+
 	private void _run() throws Exception {
 		_setShutdownHook();
 		_showPorts();

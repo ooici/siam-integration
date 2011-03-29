@@ -10,7 +10,18 @@ Carlos Rueda - MBARI
 	  - siam.Siam: added getNodeInfo
 	
 	(*) TestNG is more flexible than JUnit at least wrt skipping tests at runtime.
+
+	- Siam-Ci program now accepting more parameters:
+		$ mvn exec:java -Dsiam-ci -Dexec.args="--help"
+		Option                                  Description                            
+		------                                  -----------                            
+		-?, --help                              print help message                     
+		--brokerHost <host>                     Broker host (default: localhost)       
+		--brokerPort <port>                     Broker port (default: 5672)            
+		--queue <name>                          Queue name (default: SIAM-CI)          
+		--siam <host>                           SIAM node host (default: localhost)    
 	
+		
 2011-03-24
 	- show the available ports at initialization of SiamCiMain.
 	- when unmarshalling error: log.warn with no exception and log.debug with the exception 

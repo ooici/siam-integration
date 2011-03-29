@@ -25,8 +25,12 @@ public interface ISiamCiFactory {
 	 * Gets the SIAM-CI adapter implementation.
 	 * 
 	 * @param siam interface to SIAM library
+	 * @param brokerHost
+	 * @param brokerPort
+	 * @param queueName
 	 * @param requestProcessor  processor
 	 * @return adapter
 	 */
-	public ISiamCiAdapter createSiamCiAdapter(IRequestProcessor requestProcessor);
+	public ISiamCiAdapter createSiamCiAdapter(String brokerHost, int brokerPort, String queueName,
+			IRequestProcessor requestProcessor);
 }

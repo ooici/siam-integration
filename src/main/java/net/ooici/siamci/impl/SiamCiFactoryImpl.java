@@ -33,11 +33,13 @@ public class SiamCiFactoryImpl implements ISiamCiFactory {
 		return new RequestProcessor(siam);
 	}
 
-	public ISiamCiAdapter createSiamCiAdapter(IRequestProcessor requestProcessor) {
+	public ISiamCiAdapter createSiamCiAdapter(String brokerHost, int brokerPort, String queueName,
+			IRequestProcessor requestProcessor) {
 		if ( USE_ION_MESSAGING ) {
-			return new SiamCiAdapterIonMsg(requestProcessor);
+			return new SiamCiAdapterIonMsg(brokerHost, brokerPort, queueName, requestProcessor);
 		}
 		else {
+			// Old code, not maintained
 			return new SiamCiAdapterGpb(requestProcessor);
 		}
 	}

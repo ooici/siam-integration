@@ -45,11 +45,9 @@ class SiamCiServerIonMsg implements Runnable {
 	private static final boolean UNPACK = false;
 
 	
-	/** TODO: use some parameter -- currently hard-code for convenience */
-	private static final String brokerHost = "localhost";
+	private final String brokerHost;
 
-	/** TODO: use some parameter -- currently hard-code for convenience */
-	private static final int brokerPort = com.rabbitmq.client.AMQP.PROTOCOL.PORT;
+	private final int brokerPort;
 
 	/** TODO: use some parameter -- currently hard-code for convenience */
 	private static final String exchange = "magnet.topic";
@@ -61,10 +59,10 @@ class SiamCiServerIonMsg implements Runnable {
 	
 
 	/** The queue this service is accepting requests at */
-	private final String queueName = SiamCiConstants.DEFAULT_QUEUE_NAME;
+	private final String queueName;
 	
 	/** The 'from' parameter when replying to a request */
-	private final MessagingName from = new MessagingName(queueName);
+	private final MessagingName from;
 	
 	/** The processor of requests */
 	private final IRequestProcessor requestProcessor;
@@ -77,15 +75,25 @@ class SiamCiServerIonMsg implements Runnable {
 
 	/**
 	 * Creates the Siam-Ci service.
+	 * @param brokerHost
+	 * @param brokerPort
+	 * @param queueName
 	 * @param requestProcessor   To process incoming requests.
 	 * @throws Exception     if something bad happens
 	 */
-	SiamCiServerIonMsg(IRequestProcessor requestProcessor) throws Exception {
+	SiamCiServerIonMsg(String brokerHost, int brokerPort, String queueName,
+			IRequestProcessor requestProcessor) 
+	throws Exception {
+		this.brokerHost = brokerHost;
+		this.brokerPort = brokerPort;
+		this.queueName = queueName;
+		this.from = new MessagingName(queueName);
 		this.requestProcessor = requestProcessor;
+		
 		if ( log.isDebugEnabled() ) {
 			log.debug("Creating SiamCiProcess");
 		}
-		ionClient = new MsgBrokerClient(brokerHost, brokerPort, exchange);
+		ionClient = new MsgBrokerClient(this.brokerHost, this.brokerPort, exchange);
 		ionClient.attach();
         ionClient.declareQueue(queueName);
         
@@ -97,7 +105,12 @@ class SiamCiServerIonMsg implements Runnable {
 	 * Runs this Siam-Ci service.
 	 */
 	public void run() {
-		log.info("Running " +getClass().getSimpleName());
+		log.info("Running " +getClass().getSimpleName()+ " (" +
+				"broker='" +brokerHost+ ":" +brokerPort+ "'" +
+				", queue='" +queueName+ "'," + 
+				" excahange='" +exchange+ "'" +
+				")"
+		);
 		keepRunning = true;
 		isRunning = true;
 		try {
