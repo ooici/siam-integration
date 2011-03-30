@@ -56,7 +56,8 @@ class SiamCiAdapterProxy():
         
         
     @defer.inlineCallbacks
-    def _make_command(self, cmd_name, args=[]):
+    def _make_command(self, cmd_name, args=None):
+        if args is None: args = [] 
         yield self.start()
         cmd = yield self.mc.create_instance(Command_type, MessageName='command sent message')
         cmd.command = cmd_name
@@ -138,13 +139,14 @@ class SiamCiAdapterProxy():
         defer.returnValue(result)
         
     @defer.inlineCallbacks
-    def fetch_params(self, param_list=[]):
+    def fetch_params(self, param_list=None):
         """
         Gets parameters associated with the instrument on the given "port"
         
         @param param_list: the list of desired parameters. If empty (the default), all parameters
               are requested.
         """
+        if param_list is None: param_list = [] 
         assert self.port, "No port provided"
         
         args = [("port", self.port)]
