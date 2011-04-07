@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import net.ooici.siamci.ISiam.PortItem;
 
 import org.testng.Assert;
 import org.testng.annotations.BeforeClass;

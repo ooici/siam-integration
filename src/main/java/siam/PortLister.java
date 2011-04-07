@@ -5,7 +5,6 @@ import java.rmi.UnmarshalException;
 import java.util.ArrayList;
 import java.util.List;
 
-import net.ooici.siamci.ISiam.PortItem;
 
 import org.mbari.siam.distributed.Device;
 import org.mbari.siam.distributed.DeviceNotFound;
@@ -14,6 +13,7 @@ import org.mbari.siam.distributed.Port;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 /**
  * 

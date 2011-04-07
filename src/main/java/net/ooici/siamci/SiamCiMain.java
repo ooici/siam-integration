@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-import net.ooici.siamci.ISiam.PortItem;
 import net.ooici.siamci.impl.SiamCiFactoryImpl;
 
 import joptsimple.OptionParser;
@@ -13,6 +12,9 @@ import joptsimple.OptionSpec;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import siam.ISiam;
+import siam.PortItem;
 
 
 /**

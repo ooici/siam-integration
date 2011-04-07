@@ -14,11 +14,12 @@ import net.ooici.play.InstrDriverInterface.SuccessFail;
 import net.ooici.play.InstrDriverInterface.SuccessFail.Builder;
 import net.ooici.play.InstrDriverInterface.SuccessFail.Item;
 import net.ooici.siamci.IRequestProcessor;
-import net.ooici.siamci.ISiam;
-import net.ooici.siamci.ISiam.PortItem;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import siam.ISiam;
+import siam.PortItem;
 
 import com.google.protobuf.GeneratedMessage;
 

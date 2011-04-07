@@ -2,6 +2,9 @@ SiamCi integration prototype
 Created 2/9/2011
 Carlos Rueda - MBARI
 
+2011-04-06
+	- Moved ISiam to siam package
+	
 2011-03-28
 	- adding TestNG tests (*)
 	  - siamcitest.BaseTestCase: base class for tests in the project

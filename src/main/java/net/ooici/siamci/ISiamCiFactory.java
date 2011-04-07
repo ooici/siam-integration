@@ -1,5 +1,7 @@
 package net.ooici.siamci;
 
+import siam.ISiam;
+
 
 /**
  * SiamCi factory.

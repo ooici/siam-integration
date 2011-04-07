@@ -1,4 +1,4 @@
-package net.ooici.siamci;
+package siam;
 
 import java.util.List;
 import java.util.Map;
@@ -15,20 +15,6 @@ import java.util.Map;
  * @author carueda
  */
 public interface ISiam {
-
-	public static class PortItem {
-		public String portName;
-		public long deviceId;
-		public String serviceName;
-		public String serviceStatus;
-		public int sampleCount;
-		public int errorCount;
-		public int retryCount;
-		
-		public String toString() {
-			return portName;
-		}
-	}
 
 	public long getNodeId() ;
 	

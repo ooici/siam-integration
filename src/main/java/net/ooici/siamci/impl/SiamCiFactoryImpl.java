@@ -1,11 +1,11 @@
 package net.ooici.siamci.impl;
 
 import net.ooici.siamci.IRequestProcessor;
-import net.ooici.siamci.ISiam;
 import net.ooici.siamci.ISiamCiAdapter;
 import net.ooici.siamci.ISiamCiFactory;
 import net.ooici.siamci.impl.gpb.SiamCiAdapterGpb;
 import net.ooici.siamci.impl.ionmsg.SiamCiAdapterIonMsg;
+import siam.ISiam;
 import siam.Siam;
 
 /**

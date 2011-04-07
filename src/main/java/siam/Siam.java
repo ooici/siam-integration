@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.Vector;
 import java.util.Map.Entry;
 
-import net.ooici.siamci.ISiam;
 
 import org.mbari.siam.distributed.Device;
 import org.mbari.siam.distributed.DeviceNotFound;
