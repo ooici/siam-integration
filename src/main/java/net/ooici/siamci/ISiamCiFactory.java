@@ -1,5 +1,6 @@
 package net.ooici.siamci;
 
+import siam.IAsyncSiam;
 import siam.ISiam;
 
 
@@ -15,6 +16,11 @@ public interface ISiamCiFactory {
 	 * Gets the SIAM hight-level interface implementation
 	 */
 	public ISiam createSiam(String host) throws Exception;
+	
+	/**
+	 * Gets the SIAM hight-level asynchronous interface implementation
+	 */
+	public IAsyncSiam createAsyncSiam(ISiam siam) throws Exception;
 	
 	/**
 	 * Gets the request processor implementation.

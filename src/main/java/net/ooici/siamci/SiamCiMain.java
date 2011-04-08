@@ -4,15 +4,15 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-import net.ooici.siamci.impl.SiamCiFactoryImpl;
-
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
+import net.ooici.siamci.impl.SiamCiFactoryImpl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import siam.IAsyncSiam;
 import siam.ISiam;
 import siam.PortItem;
 
@@ -128,6 +128,7 @@ public class SiamCiMain {
 	private final ISiamCiFactory siamCiFactory;
 
 	private final ISiam siam;
+	private final IAsyncSiam asyncSiam;
 	private final IRequestProcessor requestProcessor;
 	private final ISiamCiAdapter siamCiAdapter;
 
@@ -140,7 +141,9 @@ public class SiamCiMain {
 		this.params = params;
 		siamCiFactory = new SiamCiFactoryImpl();
 		siam = siamCiFactory.createSiam(params.siamHost);
+		asyncSiam = siamCiFactory.createAsyncSiam(siam);
 		requestProcessor = siamCiFactory.createRequestProcessor(siam);
+		requestProcessor.setAsyncSiam(asyncSiam);
 		siamCiAdapter = _createSiamCiAdapter();
 	}
 	

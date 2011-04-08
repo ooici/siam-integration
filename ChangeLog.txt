@@ -2,6 +2,19 @@ SiamCi integration prototype
 Created 2/9/2011
 Carlos Rueda - MBARI
 
+2011-04-07
+	- Recreating communication originating from java (based on Thom's example, 2/22/11 email) 
+	  in preparation for receiving asynchronous responses on the python side.
+	  See SiamCiReceiverTest.java
+	  
+	- Note about assertion in IonBootstrap.java (ioncore-java):
+        https://github.com/ooici/ioncore-java/blob/develop/src/ion/core/IonBootstrap.java#L98
+	  this assertion always fails if assertions are enabled.
+	  This assertion should be:
+		assert GeneratedMessage.class.isAssignableFrom(messageClazz);
+		
+	- Doing preparations for asynchronous reply to requests.	
+	
 2011-04-06
 	- Moved ISiam to siam package
 	

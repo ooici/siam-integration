@@ -5,6 +5,8 @@ import net.ooici.siamci.ISiamCiAdapter;
 import net.ooici.siamci.ISiamCiFactory;
 import net.ooici.siamci.impl.gpb.SiamCiAdapterGpb;
 import net.ooici.siamci.impl.ionmsg.SiamCiAdapterIonMsg;
+import siam.AsyncSiam;
+import siam.IAsyncSiam;
 import siam.ISiam;
 import siam.Siam;
 
@@ -29,6 +31,10 @@ public class SiamCiFactoryImpl implements ISiamCiFactory {
 		return new Siam(host);
 	}
 
+	public IAsyncSiam createAsyncSiam(ISiam siam) throws Exception {
+		return new AsyncSiam(siam);
+	}
+	
 	public IRequestProcessor createRequestProcessor(ISiam siam) {
 		return new RequestProcessor(siam);
 	}

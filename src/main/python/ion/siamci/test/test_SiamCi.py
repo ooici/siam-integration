@@ -29,6 +29,7 @@ class TestSiamCiAdapterProxy(SiamCiTestCase):
 
     @defer.inlineCallbacks
     def tearDown(self):
+        yield self.siamci.stop()
         yield self._stop_container()
 
 

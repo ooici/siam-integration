@@ -14,6 +14,7 @@ from ion.core.object import object_utils
 from ion.core.messaging import message_client
 
 from ion.core import bootstrap
+import ion.util.procutils as pu
 
 from net.ooici.play.instr_driver_interface_pb2 import Command, SuccessFail, OK, ERROR
 
@@ -51,8 +52,17 @@ class SiamCiAdapterProxy():
         Starts the proxy. Call this before any other operation on this object.
         """
         if not self.proc:
+            log.info("Starting SiamCiAdapterProxy")
             self.proc = yield bootstrap.create_supervisor()
             self.mc = message_client.MessageClient(proc=self.proc)
+     
+        
+    @defer.inlineCallbacks
+    def stop(self):
+        log.info("Stopping SiamCiAdapterProxy...")
+        # Sleep for a bit here to allow AMQP messages to complete
+        yield pu.asleep(2)
+        log.info("Stopping SiamCiAdapterProxy... done.")
         
         
     @defer.inlineCallbacks
@@ -115,6 +125,18 @@ class SiamCiAdapterProxy():
         """
         assert self.port, "No port provided"
         cmd = yield self._make_command("get_status", [("port", self.port)])
+        response = yield self._rpc(cmd)
+        log.debug(show_message(response, "get_status response:"))
+        
+        defer.returnValue(response)
+        
+    @defer.inlineCallbacks
+    def get_status_async(self):
+        """
+        Gets the status of a particular instrument as indicated by the given port
+        """
+        assert self.port, "No port provided"
+        cmd = yield self._make_command("get_status", [("port", self.port), ("publish", "siamci_receiver")])
         response = yield self._rpc(cmd)
         log.debug(show_message(response, "get_status response:"))
         
