@@ -33,7 +33,7 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
 #            {'name':'pubsub_service','module':'ion.services.dm.distribution.pubsub_service','class':'DataPubsubService'},
 
             {'name':'SiamInstrumentDriver_' + SiamCiTestCase.port,
-             'module':'ion.siamci.Siam_driver',
+             'module':'ion.siamci.siam_driver',
              'class':'SiamInstrumentDriver',
              'spawnargs':{ 'pid':SiamCiTestCase.pid, 'port':SiamCiTestCase.port }
              }

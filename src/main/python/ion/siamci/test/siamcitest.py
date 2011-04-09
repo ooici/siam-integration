@@ -9,7 +9,7 @@ log = ion.util.ionlog.getLogger(__name__)
 
 from ion.test.iontest import IonTestCase
 
-from ion.siamci.SiamCi_proxy import SiamCiAdapterProxy
+from ion.siamci.siamci_proxy import SiamCiAdapterProxy
 
 from os import getenv
 

@@ -61,7 +61,7 @@ class SiamCiAdapterProxy():
     def stop(self):
         log.info("Stopping SiamCiAdapterProxy...")
         # Sleep for a bit here to allow AMQP messages to complete
-        yield pu.asleep(2)
+        yield pu.asleep(1)
         log.info("Stopping SiamCiAdapterProxy... done.")
         
         
