@@ -6,6 +6,14 @@ Carlos Rueda - MBARI
 	- Successful build and tests against ionproto 0.3.15 and ioncore-jave 0.2.4.
 	  NOTE: now, instead of retrieving the ionproto library from the ion-object-definitions,
 	  this is retrieved from the version used by ioncore-java. See etc/build.xml
+	  
+	- Basic scheme for asynchronous handling of requests now completed. It is tested
+	  with the getPortStatus operation. (other operations to follow.)
+	  
+	  Integration test:
+	  	shell-1 $ mvn exec:java -Dsiam-ci
+	  	shell-2 $ SIAM_CI=- bin/trial ion/siamci/test/test_siamci_async.py
+	  
 	
 	
 2011-04-07

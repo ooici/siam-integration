@@ -18,6 +18,7 @@ import net.ooici.play.InstrDriverInterface.Command;
 import net.ooici.siamci.IRequestProcessor;
 import net.ooici.siamci.SiamCiConstants;
 import net.ooici.siamci.IRequestProcessor.IPublisher;
+import net.ooici.siamci.utils.ScUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -130,6 +131,13 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
 		}
 	}
 
+	/**
+	 * Requests that the service stop accepting further requests.
+	 */
+	public void stop() {
+		keepRunning = false;
+	}
+
 	boolean isRunning() {
 		return isRunning;
 	}
@@ -202,6 +210,11 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
 
 		Command cmd = _getCommand(msgin);
 
+		final String publishQueue = ScUtils.getPublishQueue(cmd);
+		if (publishQueue != null) {
+			log.info("Command with publish queue: " + publishQueue);
+		}
+
 		if (log.isDebugEnabled()) {
 			log.debug(_showMessage(cmd, "Command received:"));
 		}
@@ -239,8 +252,10 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
 		Container.Structure.Builder structureBuilder = ProtoUtils
 				.addIonMessageContent(null, "myName", "Identity", response);
 		_sendReply(toName, convId, userId, expiry, structureBuilder.build());
-		log.info("Reply sent to '" + toName + "' conv-id: '" + convId
-				+ "' user-id: '" + userId + "' expiry: '" + expiry + "'");
+		log
+				.info("Reply sent to '" + toName + "' conv-id: '" + convId
+						+ "' user-id: '" + userId + "' expiry: '" + expiry
+						+ "'" + "\n");
 	}
 
 	/**
@@ -251,8 +266,8 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
 	 * @param convId
 	 *            value for the "conv-id" header property; if null, no such
 	 *            property is set
-	 * @param expiry
 	 * @param userId
+	 * @param expiry
 	 * @param structure
 	 *            See
 	 *            ProtoUtils.addIonMessageContent(Container.Structure.Builder
@@ -291,63 +306,34 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
 	 * {@link IPublisher} operation.
 	 */
 	public void publish(GeneratedMessage response, String queue) {
-		log.info("Publishing reponse='" + response + "' to queue='" + queue
-				+ "'");
+		if (log.isDebugEnabled()) {
+			log.debug("Publishing to queue='" + queue + "'" + " reponse='"
+					+ response + "'");
+		}
 
-		Structure structure = ProtoUtils
-			.addIonMessageContent(null, "SomeName", "Identity", response).build();
+		// TODO: "SomeName", "Identity": determine appropriate values.
+		Structure structure = ProtoUtils.addIonMessageContent(null, "SomeName",
+				"Identity", response).build();
 
-		
-		
 		String toName = queue;
 		MessagingName to = new MessagingName(toName);
 
-		IonMessage msg = ionClient.createMessage(from, to, "acceptResponse", structure
-				.toByteArray());
+		IonMessage msg = ionClient.createMessage(from, to, "acceptResponse",
+				structure.toByteArray());
 
 		Map<String, String> headers = _getIonHeaders(msg);
-
-//		if (convId != null) {
-//			headers.put("conv-id", convId);
-//		}
 		headers.remove("accept-encoding");
 		headers.put("encoding", "ION R1 GPB");
 
 		headers.put("user-id", "ANONYMOUS");
 		headers.put("expiry", "0");
 
-		// set 'status' -- note that the following error message is printed on
-		// the python side if this property is not set:
-		// ERROR:RPC reply is not well formed. Header "status" must be set!
-		//
 		headers.put("status", "OK");
 
 		ionClient.sendMessage(msg);
-		
-		
-		
-//		// Messaging environment
-//
-//		BaseProcess baseProcess = new BaseProcess(ionClient);
-//		baseProcess.spawn();
-//
-//		MessagingName r1intSvc = new MessagingName("siamci", "siamci_receiver");
-//
-//		String userId = "ANONYMOUS";
-//		String expiry = String.valueOf(System.currentTimeMillis() + 30 * 1000);
-//
-//		IonMessage msgin = baseProcess.rpcSendContainerContent(r1intSvc,
-//				"acceptResponse", structureBuilder.build(), userId, expiry);
-//
-//		System.out.println("Got response from publish: " + msgin.getContent());
-
-	}
-
-	/**
-	 * Requests that the service stop accepting further requests.
-	 */
-	public void stop() {
-		keepRunning = false;
+		if (log.isDebugEnabled()) {
+			log.debug("Publish message sent.");
+		}
 	}
 
 	/**

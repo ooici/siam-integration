@@ -34,7 +34,8 @@ public interface IRequestProcessor {
 		 * @param response
 		 *            The response to be published
 		 * @param queue
-		 *            The queue where the reponse should be published.
+		 *            The queue (rounting key) where the reponse should be
+		 *            published.
 		 */
 		public void publish(GeneratedMessage response, String queue);
 

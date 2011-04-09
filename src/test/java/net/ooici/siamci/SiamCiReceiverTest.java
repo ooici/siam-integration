@@ -96,21 +96,12 @@ public class SiamCiReceiverTest extends BaseTestCase {
 		BaseProcess baseProcess = new BaseProcess(ionClient);
 		baseProcess.spawn();
 
-		Builder buildr = SuccessFail.newBuilder().setResult(Result.OK);
-
-		buildr.addItem(Item.newBuilder().setType(Item.Type.PAIR).setPair(
-				StringPair.newBuilder().setFirst("portName").setSecond(
-						"some-port-name")));
-
-		buildr.addItem(Item.newBuilder().setType(Item.Type.PAIR).setPair(
-				StringPair.newBuilder().setFirst("deviceId").setSecond(
-						String.valueOf("some-device-id"))));
-
+		SuccessFail someSuccessFail = _createSomeSuccessFailObject();
 		Container.Structure.Builder structureBuilder = ProtoUtils
-				.addIonMessageContent(null, "SomeName", "Identity", buildr
-						.build());
+				.addIonMessageContent(null, "SomeName", "Identity",
+						someSuccessFail);
 
-		MessagingName mn = new MessagingName("siamci", "siamci_receiver");
+		MessagingName mn = new MessagingName("siamci.siamci_receiver");
 
 		String userId = "ANONYMOUS";
 		String expiry = String.valueOf(System.currentTimeMillis() + 30 * 1000);
@@ -122,5 +113,19 @@ public class SiamCiReceiverTest extends BaseTestCase {
 		System.out.println("Response: " + response);
 
 		Assert.assertNotNull(response);
+	}
+
+	private SuccessFail _createSomeSuccessFailObject() {
+		Builder buildr = SuccessFail.newBuilder().setResult(Result.OK);
+
+		buildr.addItem(Item.newBuilder().setType(Item.Type.PAIR).setPair(
+				StringPair.newBuilder().setFirst("portName").setSecond(
+						"some-port-name")));
+
+		buildr.addItem(Item.newBuilder().setType(Item.Type.PAIR).setPair(
+				StringPair.newBuilder().setFirst("deviceId").setSecond(
+						String.valueOf("some-device-id"))));
+
+		return buildr.build();
 	}
 }

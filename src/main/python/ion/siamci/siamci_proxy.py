@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-@file ion/siamci/SiamCi_proxy.py
+@file ion/siamci/siamci_proxy.py
 @author Carlos Rueda
 @brief Client to the SIAM-CI adapter service (in java) to support Siam_driver operations
 """
@@ -136,7 +136,7 @@ class SiamCiAdapterProxy():
         Gets the status of a particular instrument as indicated by the given port
         """
         assert self.port, "No port provided"
-        cmd = yield self._make_command("get_status", [("port", self.port), ("publish", "siamci_receiver")])
+        cmd = yield self._make_command("get_status", [("port", self.port), ("publish", "siamci.siamci_receiver")])
         response = yield self._rpc(cmd)
         log.debug(show_message(response, "get_status response:"))
         

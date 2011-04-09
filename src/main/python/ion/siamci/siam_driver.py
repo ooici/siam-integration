@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-@file ion/siamci/Siam_driver.py
+@file ion/siamci/siam_driver.py
 @author Carlos Rueda
 @brief Driver code for SIAM
 """
@@ -17,7 +17,7 @@ from ion.agents.instrumentagents.instrument_agent import InstrumentDriverClient
 
 from ion.core.process.process import ProcessFactory
 
-from ion.siamci.SiamCi_proxy import SiamCiAdapterProxy
+from ion.siamci.siamci_proxy import SiamCiAdapterProxy
 
 from net.ooici.play.instr_driver_interface_pb2 import Command, SuccessFail, OK, ERROR
 

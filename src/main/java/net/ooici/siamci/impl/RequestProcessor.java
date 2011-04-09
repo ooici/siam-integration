@@ -14,6 +14,7 @@ import net.ooici.play.InstrDriverInterface.SuccessFail;
 import net.ooici.play.InstrDriverInterface.SuccessFail.Builder;
 import net.ooici.play.InstrDriverInterface.SuccessFail.Item;
 import net.ooici.siamci.IRequestProcessor;
+import net.ooici.siamci.utils.ScUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,7 +86,7 @@ class RequestProcessor implements IRequestProcessor {
 			String description = "Command '" + cmd.getCommand()
 					+ "' not implemented";
 			log.debug(description);
-			response = _createErrorResponse(description);
+			response = ScUtils.createFailResponse(description);
 		}
 
 		return response;
@@ -98,7 +99,8 @@ class RequestProcessor implements IRequestProcessor {
 		}
 		catch (Exception e) {
 			log.warn("_listPorts exception", e);
-			return _createErrorResponse("Exception: " + e.getMessage());
+			return ScUtils.createFailResponse(e.getClass().getName() + ": "
+					+ e.getMessage());
 		}
 
 		Builder buildr = SuccessFail.newBuilder().setResult(Result.OK);
@@ -122,65 +124,76 @@ class RequestProcessor implements IRequestProcessor {
 	 */
 	private GeneratedMessage _getStatus(Command cmd) {
 		if (cmd.getArgsCount() == 0) {
-			return _createErrorResponse("get_status command requires at least an argument");
+			return ScUtils.createFailResponse("get_status command requires at least an argument");
 		}
 		ChannelParameterPair cp = cmd.getArgs(0);
 		if (!"port".equals(cp.getChannel())) {
-			return _createErrorResponse("get_status command requires 'port' as first argument");
+			return ScUtils.createFailResponse("get_status command requires 'port' as first argument");
 		}
 		final String port = cp.getParameter();
 
-		final String publishQueue = _getPublishQueue(cmd);
+		final String publishQueue = ScUtils.getPublishQueue(cmd);
 		if (publishQueue != null) {
-			_checkAsyncSetup();
-			asyncSiam.getPortStatus(port, new AsyncCallback<String>() {
-
-				public void onSuccess(String result) {
-					GeneratedMessage response = _createStatusResponse(result);
-					respondSender.publish(response, publishQueue);
-				}
-
-				public void onFailure(Throwable e) {
-					GeneratedMessage response = _createErrorResponse("Exception: " + e.getMessage());
-					respondSender.publish(response, publishQueue);
-				}
-			});
-			
-			// respond with OK, ie., sucessfully submitted request:
-			Builder buildr = SuccessFail.newBuilder().setResult(Result.OK);
-			SuccessFail response = buildr.build();
+			// asynchronous handling.
+			//
+			GeneratedMessage response = _getPublishStatus(port, publishQueue);
 			return response;
-			
 		}
-		
-		// Else: synchronous response
+		else {
+			// synchronous response.
+			//
+			String status = null;
+			try {
+				status = siam.getPortStatus(port);
+			}
+			catch (Exception e) {
+				log.warn("_getStatus exception", e);
+				return ScUtils.createFailResponse(e.getClass().getName() + ": "
+						+ e.getMessage());
+			}
 
-		String status = null;
-		try {
-			status = siam.getPortStatus(port);
+			Builder buildr = SuccessFail.newBuilder().setResult(Result.OK);
+			buildr.addItem(Item.newBuilder().setType(Item.Type.STR).setStr(
+					status));
+
+			GeneratedMessage response = buildr.build();
+			return response;
 		}
-		catch (Exception e) {
-			log.warn("_getStatus exception", e);
-			return _createErrorResponse("Exception: " + e.getMessage());
-		}
-
-		Builder buildr = SuccessFail.newBuilder().setResult(Result.OK);
-		buildr.addItem(Item.newBuilder().setType(Item.Type.STR).setStr(status));
-
-		SuccessFail response = buildr.build();
-		return response;
 	}
-	
+
 	/**
-	 * creates an error response
+	 * Does the asynchronous dispatch of the get port status operation.
+	 * 
+	 * @param port
+	 *            the SIAM port associated with the instrument
+	 * @param publishQueue
+	 *            the queue (rounting key) to publish the response.
+	 * @return The {@link SuccessFail} result of the submission of the request.
 	 */
-	private GeneratedMessage _createStatusResponse(String status) {
-		Builder buildr = SuccessFail.newBuilder().setResult(Result.OK);
-		buildr.addItem(Item.newBuilder().setType(Item.Type.STR).setStr(status));
+	private GeneratedMessage _getPublishStatus(final String port,
+			final String publishQueue) {
+		_checkAsyncSetup();
 
-		SuccessFail response = buildr.build();
+		asyncSiam.getPortStatus(port, new AsyncCallback<String>() {
+
+			public void onSuccess(String result) {
+				GeneratedMessage response = ScUtils.createSuccessResponse(result);
+				respondSender.publish(response, publishQueue);
+			}
+
+			public void onFailure(Throwable e) {
+				GeneratedMessage response = ScUtils.createFailResponse(e.getClass()
+						.getName()
+						+ ": " + e.getMessage());
+				respondSender.publish(response, publishQueue);
+			}
+		});
+
+		// respond with OK, ie., sucessfully submitted request:
+		GeneratedMessage response = ScUtils.createSuccessResponse(null);
 		return response;
 	}
+
 
 	/**
 	 * throws {@link IllegalStateException} if any required object for
@@ -200,35 +213,15 @@ class RequestProcessor implements IRequestProcessor {
 	}
 
 	/**
-	 * Gets the value of the "publish" argument, if any.
-	 * 
-	 * @param cmd
-	 *            The command to examine.
-	 * 
-	 * @return the value of the "publish" argument; null if such argument is
-	 *         missing.
-	 */
-	private String _getPublishQueue(Command cmd) {
-		for (int i = 0, count = cmd.getArgsCount(); i < count; i++) {
-			ChannelParameterPair cp = cmd.getArgs(i);
-			if ("publish".equals(cp.getChannel())) {
-				String publish = cp.getParameter();
-				return publish;
-			}
-		}
-		return null;
-	}
-
-	/**
 	 * Get last sample
 	 */
 	private GeneratedMessage _getLastSample(Command cmd) {
 		if (cmd.getArgsCount() == 0) {
-			return _createErrorResponse("get_last_sample command requires at least an argument");
+			return ScUtils.createFailResponse("get_last_sample command requires at least an argument");
 		}
 		ChannelParameterPair cp = cmd.getArgs(0);
 		if (!"port".equals(cp.getChannel())) {
-			return _createErrorResponse("get_last_sample command only accepts 'port' argument");
+			return ScUtils.createFailResponse("get_last_sample command only accepts 'port' argument");
 		}
 		String port = cp.getParameter();
 
@@ -238,7 +231,8 @@ class RequestProcessor implements IRequestProcessor {
 		}
 		catch (Exception e) {
 			log.warn("_getLastSample exception", e);
-			return _createErrorResponse("Exception: " + e.getMessage());
+			return ScUtils.createFailResponse(e.getClass().getName() + ": "
+					+ e.getMessage());
 		}
 
 		Builder buildr = SuccessFail.newBuilder().setResult(Result.OK);
@@ -262,11 +256,11 @@ class RequestProcessor implements IRequestProcessor {
 	 */
 	private GeneratedMessage _fetchParams(Command cmd) {
 		if (cmd.getArgsCount() == 0) {
-			return _createErrorResponse("fetch_params command requires at least one argument");
+			return ScUtils.createFailResponse("fetch_params command requires at least one argument");
 		}
 		ChannelParameterPair cp = cmd.getArgs(0);
 		if (!"port".equals(cp.getChannel())) {
-			return _createErrorResponse("fetch_params: first argument must be 'port'");
+			return ScUtils.createFailResponse("fetch_params: first argument must be 'port'");
 		}
 		String port = cp.getParameter();
 
@@ -277,7 +271,8 @@ class RequestProcessor implements IRequestProcessor {
 		}
 		catch (Exception e) {
 			log.warn("fetch_params exception", e);
-			return _createErrorResponse("Could not fetch instrument parameters: "
+			return ScUtils.createFailResponse(e.getClass().getName()
+					+ ": Could not fetch instrument parameters: "
 					+ e.getMessage());
 		}
 
@@ -297,7 +292,7 @@ class RequestProcessor implements IRequestProcessor {
 					if (log.isDebugEnabled()) {
 						log.debug("_fetchParams: " + error);
 					}
-					return _createErrorResponse(error);
+					return ScUtils.createFailResponse(error);
 				}
 				requestedParams.add(pr);
 
@@ -339,11 +334,11 @@ class RequestProcessor implements IRequestProcessor {
 	 */
 	private GeneratedMessage _setParams(Command cmd) {
 		if (cmd.getArgsCount() == 0) {
-			return _createErrorResponse("set_params command requires at least two arguments");
+			return ScUtils.createFailResponse("set_params command requires at least two arguments");
 		}
 		ChannelParameterPair cp = cmd.getArgs(0);
 		if (!"port".equals(cp.getChannel())) {
-			return _createErrorResponse("set_params command: first argument must be 'port'");
+			return ScUtils.createFailResponse("set_params command: first argument must be 'port'");
 		}
 		String port = cp.getParameter();
 
@@ -360,7 +355,8 @@ class RequestProcessor implements IRequestProcessor {
 		}
 		catch (Exception e) {
 			log.warn("set_params exception", e);
-			return _createErrorResponse("Exception: " + e.getMessage());
+			return ScUtils.createFailResponse(e.getClass().getName() + ": "
+					+ e.getMessage());
 		}
 
 		Builder buildr = SuccessFail.newBuilder().setResult(Result.OK);
@@ -374,15 +370,5 @@ class RequestProcessor implements IRequestProcessor {
 		return response;
 	}
 
-	/**
-	 * creates an error response
-	 */
-	private GeneratedMessage _createErrorResponse(String description) {
-		SuccessFail sf = SuccessFail.newBuilder().setResult(Result.ERROR)
-				.addItem(
-						Item.newBuilder().setType(Item.Type.STR).setStr(
-								description).build()).build();
-		return sf;
-	}
 
 }
