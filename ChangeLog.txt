@@ -2,6 +2,12 @@ SiamCi integration prototype
 Created 2/9/2011
 Carlos Rueda - MBARI
 
+2011-04-08
+	- Successful build and tests against ionproto 0.3.15 and ioncore-jave 0.2.4.
+	  NOTE: now, instead of retrieving the ionproto library from the ion-object-definitions,
+	  this is retrieved from the version used by ioncore-java. See etc/build.xml
+	
+	
 2011-04-07
 	- Recreating communication originating from java (based on Thom's example, 2/22/11 email) 
 	  in preparation for receiving asynchronous responses on the python side.

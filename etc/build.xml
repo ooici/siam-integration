@@ -10,6 +10,13 @@
 	<!-- SIAM location  -->
 	<property name="siam" value="../../siam2" />
 	
+	<!-- ion-object-definitions location  -->
+	<property name="ion-object-definitions" value="../../ion-object-definitions" />
+	
+	<!-- ioncore-java location  -->
+	<property name="ioncore-java" value="../../ioncore-java" />
+	
+	
 	<!-- SIAM library version and library -->
 	<property name="siam_version" value="0.9" />
 	<property name="siam_jar" value="${siam}/jars/siam.jar" />
@@ -18,18 +25,14 @@
 	<property name="siam_instr_version" value="0.0.1" />
 	<property name="siam_instr_jar" value="${siam}/ports/TestSiamInstrument-1235.jar" />
 	
-	<!-- ion-object-definitions location  -->
-	<property name="ion-object-definitions" value="../../ion-object-definitions" />
-	
 	<!-- ion-object-definitions library version and library -->
-	<property name="ionproto_version" value="0.3.13" />
-	<property name="ionproto_jar" value="${ion-object-definitions}/dist/lib/ionproto-${ionproto_version}.jar" />
-	
-	<!-- ioncore-java location  -->
-	<property name="ioncore-java" value="../../ioncore-java" />
+	<!-- NOTE: get this library and corresponding version from the one used by ioncore-java -->
+	<property name="ionproto_version" value="0.3.15" />
+	<property name="ionproto_jar" value="${ioncore-java}/lib/ionproto-0.3.15-pl2.jar" />
+<!--<property name="ionproto_jar" value="${ion-object-definitions}/dist/lib/ionproto-${ionproto_version}.jar" />-->
 	
 	<!-- ioncore-java's library version and library -->
-	<property name="ioncore_version" value="0.2.1" />
+	<property name="ioncore_version" value="0.2.4" />
 	<property name="ioncore_jar" value="${ioncore-java}/dist/lib/ioncore-java-${ioncore_version}.jar" />
 	
 	<!-- msgpack library version and library -->
