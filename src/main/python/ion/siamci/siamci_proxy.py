@@ -14,7 +14,6 @@ from ion.core.object import object_utils
 from ion.core.messaging import message_client
 
 from ion.core import bootstrap
-import ion.util.procutils as pu
 
 from net.ooici.play.instr_driver_interface_pb2 import Command, SuccessFail, OK, ERROR
 
@@ -59,10 +58,11 @@ class SiamCiAdapterProxy():
         
     @defer.inlineCallbacks
     def stop(self):
-        log.info("Stopping SiamCiAdapterProxy...")
-        # Sleep for a bit here to allow AMQP messages to complete
-        yield pu.asleep(1)
-        log.info("Stopping SiamCiAdapterProxy... done.")
+        """
+        Shuts down the proxy.
+        """
+        log.debug("Stopping SiamCiAdapterProxy...")
+        yield self.proc.shutdown()
         
         
     @defer.inlineCallbacks

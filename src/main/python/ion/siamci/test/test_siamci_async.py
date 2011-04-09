@@ -18,6 +18,7 @@ from os import getenv
 
 from ion.core import ioninit
 from ion.core import bootstrap
+import ion.util.procutils as pu
 
 CONF = ioninit.config('startup.bootstrap-dx')
 
@@ -42,6 +43,8 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
 
     @defer.inlineCallbacks
     def tearDown(self):
+        # Sleep for a bit here to allow AMQP messages to complete
+        yield pu.asleep(0.5)
         yield self.siamci.stop()
         yield self._stop_container()
 
