@@ -17,18 +17,18 @@ import net.ooici.play.InstrDriverInterface.SuccessFail.Item;
 public class ScUtils {
 
 	/**
-	 * Gets the value of the "publish" argument, if any.
+	 * Gets the value of the "publish_stream" argument, if any.
 	 * 
 	 * @param cmd
 	 *            The command to examine.
 	 * 
-	 * @return the value of the "publish" argument; null if such argument is
-	 *         missing.
+	 * @return the value of the "publish_stream" argument; null if such argument
+	 *         is missing.
 	 */
-	public static String getPublishQueue(Command cmd) {
+	public static String getPublishStreamName(Command cmd) {
 		for (int i = 0, count = cmd.getArgsCount(); i < count; i++) {
 			ChannelParameterPair cp = cmd.getArgs(i);
-			if ("publish".equals(cp.getChannel())) {
+			if ("publish_stream".equals(cp.getChannel())) {
 				String publish = cp.getParameter();
 				return publish;
 			}

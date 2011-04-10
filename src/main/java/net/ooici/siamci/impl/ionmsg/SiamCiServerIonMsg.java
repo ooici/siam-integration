@@ -6,7 +6,6 @@ import ion.core.messaging.MsgBrokerClient;
 import ion.core.utils.GPBWrapper;
 import ion.core.utils.ProtoUtils;
 import ion.core.utils.StructureManager;
-import ion.example.IonSimpleEcho;
 
 import java.io.PrintStream;
 import java.util.Map;
@@ -34,10 +33,6 @@ import com.google.protobuf.Message;
  * {@link SiamCiConstants#DEFAULT_QUEUE_NAME}, uses the ICommandProcessor object
  * to process the incoming command, and replies the resulting response to the
  * routingKey indicated in the "reply-to" property of the request.
- * 
- * <p>
- * Initially based on {@link IonSimpleEcho}, but here with handling of the
- * structure.
  * 
  * @author carueda
  */
@@ -210,9 +205,9 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
 
 		Command cmd = _getCommand(msgin);
 
-		final String publishQueue = ScUtils.getPublishQueue(cmd);
-		if (publishQueue != null) {
-			log.info("Command with publish queue: " + publishQueue);
+		final String publishStreamName = ScUtils.getPublishStreamName(cmd);
+		if (publishStreamName != null) {
+			log.info("Command with publish stream name: " + publishStreamName);
 		}
 
 		if (log.isDebugEnabled()) {
@@ -298,6 +293,10 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
 		// ERROR:RPC reply is not well formed. Header "status" must be set!
 		//
 		headers.put("status", "OK");
+		
+		
+		
+		headers.put("MY_Header", "MY_someValue");
 
 		ionClient.sendMessage(msg);
 	}
@@ -305,9 +304,9 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
 	/**
 	 * {@link IPublisher} operation.
 	 */
-	public void publish(GeneratedMessage response, String queue) {
+	public void publish(String publishId, GeneratedMessage response, String streamName) {
 		if (log.isDebugEnabled()) {
-			log.debug("Publishing to queue='" + queue + "'" + " reponse='"
+			log.debug("Publishing to queue='" + streamName + "'" + " reponse='"
 					+ response + "'");
 		}
 
@@ -315,7 +314,7 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
 		Structure structure = ProtoUtils.addIonMessageContent(null, "SomeName",
 				"Identity", response).build();
 
-		String toName = queue;
+		String toName = streamName;
 		MessagingName to = new MessagingName(toName);
 
 		IonMessage msg = ionClient.createMessage(from, to, "acceptResponse",
@@ -329,6 +328,8 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
 		headers.put("expiry", "0");
 
 		headers.put("status", "OK");
+		
+		headers.put("publish_id", publishId);
 
 		ionClient.sendMessage(msg);
 		if (log.isDebugEnabled()) {

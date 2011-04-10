@@ -2,6 +2,18 @@ SiamCi integration prototype
 Created 2/9/2011
 Carlos Rueda - MBARI
 
+2011-04-09
+	- Some code clean-up and documentation after the basic scheme for async handling
+	  of requests. All tests (java, python, and java-python) pass.
+	  
+	- Initial test with checking of expected responses for async responses:
+		$ SIAM_CI=-  bin/trial ion/siamci/test/test_siamci_async.py
+	  SiamCiReceiverService keeps two sets, one with expected publish_is's and the
+	  other with received (accepted) publish_ids. A final check is that all
+	  expected id's were received. See the op_expect and op_acceptResponse operations.
+	  NOTE: this is working but is a preliminary approach.
+	   
+
 2011-04-08
 	- Successful build and tests against ionproto 0.3.15 and ioncore-jave 0.2.4.
 	  NOTE: now, instead of retrieving the ionproto library from the ion-object-definitions,

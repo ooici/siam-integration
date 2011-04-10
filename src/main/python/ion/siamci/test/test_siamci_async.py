@@ -12,9 +12,8 @@ from ion.test.iontest import IonTestCase
 
 from ion.siamci.siamci_proxy import SiamCiAdapterProxy
 from ion.siamci.test.siamcitest import SiamCiTestCase
-
-#from twisted.trial import unittest
-from os import getenv
+from ion.siamci.receiver_service import SiamCiReceiverServiceClient
+from net.ooici.play.instr_driver_interface_pb2 import OK, ERROR
 
 from ion.core import ioninit
 from ion.core import bootstrap
@@ -38,8 +37,10 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
         services = [
                     {'name':'siamci_receiver','module':'ion.siamci.receiver_service','class':'SiamCiReceiverService'}
         ]
-        yield bootstrap.bootstrap(ion_messaging, services)
-                
+        self.sup = yield bootstrap.bootstrap(ion_messaging, services)
+        self.svc_id = yield self.sup.get_child_id('siamci_receiver')
+        self.rs_client = SiamCiReceiverServiceClient(proc=self.sup,target=self.svc_id)
+    
 
     @defer.inlineCallbacks
     def tearDown(self):
@@ -51,5 +52,14 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
 
     @defer.inlineCallbacks
     def test_get_status_async(self):
-        ret = yield self.siamci.get_status_async()
+        publish_id = "port=" + SiamCiTestCase.port
+        yield self.rs_client.expect(publish_id);
+        ret = yield self.siamci.get_status(publish_stream="siamci.siamci_receiver")
+
+        self.assertIsSuccessFail(ret)
+        self.assertEquals(ret.result, OK)
+        
+        # check that all expected were received
+        r = yield self.rs_client.checkExpected()
+        self.assertEquals(len(r), 0)
 

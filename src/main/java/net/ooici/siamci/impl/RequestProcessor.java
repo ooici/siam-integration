@@ -38,7 +38,7 @@ class RequestProcessor implements IRequestProcessor {
 
 	private final ISiam siam;
 	private IAsyncSiam asyncSiam;
-	private IPublisher respondSender;
+	private IPublisher publisher;
 
 	RequestProcessor(ISiam siam) {
 		this.siam = siam;
@@ -50,8 +50,8 @@ class RequestProcessor implements IRequestProcessor {
 		this.asyncSiam = asyncSiam;
 	}
 
-	public void setPublisher(IPublisher respondSender) {
-		this.respondSender = respondSender;
+	public void setPublisher(IPublisher publisher) {
+		this.publisher = publisher;
 	}
 
 	public GeneratedMessage processRequest(Command cmd) {
@@ -124,19 +124,21 @@ class RequestProcessor implements IRequestProcessor {
 	 */
 	private GeneratedMessage _getStatus(Command cmd) {
 		if (cmd.getArgsCount() == 0) {
-			return ScUtils.createFailResponse("get_status command requires at least an argument");
+			return ScUtils
+					.createFailResponse("get_status command requires at least an argument");
 		}
 		ChannelParameterPair cp = cmd.getArgs(0);
 		if (!"port".equals(cp.getChannel())) {
-			return ScUtils.createFailResponse("get_status command requires 'port' as first argument");
+			return ScUtils
+					.createFailResponse("get_status command requires 'port' as first argument");
 		}
 		final String port = cp.getParameter();
 
-		final String publishQueue = ScUtils.getPublishQueue(cmd);
-		if (publishQueue != null) {
+		final String publishStream = ScUtils.getPublishStreamName(cmd);
+		if (publishStream != null) {
 			// asynchronous handling.
 			//
-			GeneratedMessage response = _getPublishStatus(port, publishQueue);
+			GeneratedMessage response = _getAndPublishStatus(port, publishStream);
 			return response;
 		}
 		else {
@@ -166,26 +168,29 @@ class RequestProcessor implements IRequestProcessor {
 	 * 
 	 * @param port
 	 *            the SIAM port associated with the instrument
-	 * @param publishQueue
+	 * @param publishStream
 	 *            the queue (rounting key) to publish the response.
 	 * @return The {@link SuccessFail} result of the submission of the request.
 	 */
-	private GeneratedMessage _getPublishStatus(final String port,
-			final String publishQueue) {
+	private GeneratedMessage _getAndPublishStatus(final String port,
+			final String publishStream) {
 		_checkAsyncSetup();
+		
+		final String publishId = "port=" +port;
 
 		asyncSiam.getPortStatus(port, new AsyncCallback<String>() {
 
 			public void onSuccess(String result) {
-				GeneratedMessage response = ScUtils.createSuccessResponse(result);
-				respondSender.publish(response, publishQueue);
+				GeneratedMessage response = ScUtils
+						.createSuccessResponse(result);
+				publisher.publish(publishId, response, publishStream);
 			}
 
 			public void onFailure(Throwable e) {
-				GeneratedMessage response = ScUtils.createFailResponse(e.getClass()
-						.getName()
+				GeneratedMessage response = ScUtils.createFailResponse(e
+						.getClass().getName()
 						+ ": " + e.getMessage());
-				respondSender.publish(response, publishQueue);
+				publisher.publish(publishId, response, publishStream);
 			}
 		});
 
@@ -193,7 +198,6 @@ class RequestProcessor implements IRequestProcessor {
 		GeneratedMessage response = ScUtils.createSuccessResponse(null);
 		return response;
 	}
-
 
 	/**
 	 * throws {@link IllegalStateException} if any required object for
@@ -205,7 +209,7 @@ class RequestProcessor implements IRequestProcessor {
 					+ IAsyncSiam.class.getSimpleName()
 					+ " object has been associated");
 		}
-		if (respondSender == null) {
+		if (publisher == null) {
 			throw new IllegalStateException("No "
 					+ IPublisher.class.getSimpleName()
 					+ " object has been associated");
@@ -217,11 +221,13 @@ class RequestProcessor implements IRequestProcessor {
 	 */
 	private GeneratedMessage _getLastSample(Command cmd) {
 		if (cmd.getArgsCount() == 0) {
-			return ScUtils.createFailResponse("get_last_sample command requires at least an argument");
+			return ScUtils
+					.createFailResponse("get_last_sample command requires at least an argument");
 		}
 		ChannelParameterPair cp = cmd.getArgs(0);
 		if (!"port".equals(cp.getChannel())) {
-			return ScUtils.createFailResponse("get_last_sample command only accepts 'port' argument");
+			return ScUtils
+					.createFailResponse("get_last_sample command only accepts 'port' argument");
 		}
 		String port = cp.getParameter();
 
@@ -256,11 +262,13 @@ class RequestProcessor implements IRequestProcessor {
 	 */
 	private GeneratedMessage _fetchParams(Command cmd) {
 		if (cmd.getArgsCount() == 0) {
-			return ScUtils.createFailResponse("fetch_params command requires at least one argument");
+			return ScUtils
+					.createFailResponse("fetch_params command requires at least one argument");
 		}
 		ChannelParameterPair cp = cmd.getArgs(0);
 		if (!"port".equals(cp.getChannel())) {
-			return ScUtils.createFailResponse("fetch_params: first argument must be 'port'");
+			return ScUtils
+					.createFailResponse("fetch_params: first argument must be 'port'");
 		}
 		String port = cp.getParameter();
 
@@ -334,11 +342,13 @@ class RequestProcessor implements IRequestProcessor {
 	 */
 	private GeneratedMessage _setParams(Command cmd) {
 		if (cmd.getArgsCount() == 0) {
-			return ScUtils.createFailResponse("set_params command requires at least two arguments");
+			return ScUtils
+					.createFailResponse("set_params command requires at least two arguments");
 		}
 		ChannelParameterPair cp = cmd.getArgs(0);
 		if (!"port".equals(cp.getChannel())) {
-			return ScUtils.createFailResponse("set_params command: first argument must be 'port'");
+			return ScUtils
+					.createFailResponse("set_params command: first argument must be 'port'");
 		}
 		String port = cp.getParameter();
 
@@ -369,6 +379,5 @@ class RequestProcessor implements IRequestProcessor {
 		SuccessFail response = buildr.build();
 		return response;
 	}
-
 
 }

@@ -13,6 +13,12 @@ from ion.siamci.siamci_proxy import SiamCiAdapterProxy
 
 from os import getenv
 
+from ion.core.object.object_utils import create_type_identifier
+
+Command_type = create_type_identifier(object_id=20034, version=1)
+ChannelParameterPair_type = create_type_identifier(object_id=20035, version=1)
+SuccessFail_type = create_type_identifier(object_id=20036, version=1)
+
 
 class SiamCiTestCase(IonTestCase):
     """
@@ -21,8 +27,8 @@ class SiamCiTestCase(IonTestCase):
     the class variable 'skip' to some string; this variable is used by 
     twisted trial to skip the whole class).
     
-    Subclasses should only refer to the 'pid' and 'port' class variables defined
-    in this class:
+    Besides some helper methods, subclasses should only refer to the 'pid' and 'port' 
+    class variables defined in this class:
         pid:  The queue associated with the SIAM-CI adapter service (in java)
               Note that this queue is assumed to be associated with the message broker
               used by the running capability container.
@@ -88,4 +94,12 @@ class SiamCiTestCase(IonTestCase):
     log.debug("Using: pid = '" +str(pid)+ "'  port = '" +str(port)+ "'")
     
 
+    def assertIsCommand(self, obj):
+        self.assertEquals(Command_type, obj.MessageType)
+    
+    def assertIsChannelParameterPair(self, obj):
+        self.assertEquals(ChannelParameterPair_type, obj.MessageType)
+    
+    def assertIsSuccessFail(self, obj):
+        self.assertEquals(SuccessFail_type, obj.MessageType)
     

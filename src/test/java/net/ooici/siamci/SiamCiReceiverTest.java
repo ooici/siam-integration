@@ -77,8 +77,8 @@ public class SiamCiReceiverTest extends BaseTestCase {
 
 	/**
 	 * It sends a message in RPC style (ie., with an expected reply), but the
-	 * idea is that that service is actually receiving a response from a request
-	 * originated by the SiamCiProxy class (on the the python side).
+	 * general scheme is that that service is actually receiving a response from
+	 * a request originated by the SiamCiProxy class (on the the python side).
 	 */
 	@Test
 	public void testSiamCiReceiver() {

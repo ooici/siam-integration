@@ -31,13 +31,15 @@ public interface IRequestProcessor {
 		 * Called to send a reponse, which has been requested to be published
 		 * asynchronously.
 		 * 
+		 * @param publishId
 		 * @param response
 		 *            The response to be published
-		 * @param queue
+		 * @param streamName
 		 *            The queue (rounting key) where the reponse should be
 		 *            published.
 		 */
-		public void publish(GeneratedMessage response, String queue);
+		public void publish(String publishId, GeneratedMessage response,
+				String streamName);
 
 	}
 
@@ -61,17 +63,17 @@ public interface IRequestProcessor {
 
 	/**
 	 * Processes the given request. If the request indicates an asynchronous
-	 * response (ie., a "publish" argument is present in the request), then the
-	 * object given by {@link #setAsyncSiam(IAsyncSiam)} will be used to notify
-	 * the response (a RuntimeException will be thrown if such object has not
-	 * been given).
+	 * response (ie., a "publish_stream" argument is present in the request),
+	 * then the object given by {@link #setAsyncSiam(IAsyncSiam)} will be used
+	 * to notify the response (a RuntimeException will be thrown if such object
+	 * has not been given).
 	 * 
 	 * <p>
 	 * The returned object will be the actual response for the request if no
 	 * asynchronous style has been indicated. Otherwise, the returned message
 	 * will be a SuccessFailure status indicating a successful or unsuccessful
 	 * submission of the request, and the actual response will be published to
-	 * the queue indicated in the "publish" argument of the request.
+	 * the queue indicated in the "publish_stream" argument of the request.
 	 * 
 	 * @param cmd
 	 *            The request (at this point, a command).

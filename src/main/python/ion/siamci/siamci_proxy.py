@@ -24,11 +24,17 @@ class SiamCiAdapterProxy():
     """
     Communicates with a SIAM-CI adapter service to support SiamInstrumentDriver operations.
     
-    @note: the proxy has an associated port (given at construction time) for those
-    operations that are instrument-specific.  Note that other general, non-instrument
-    specific operations are also provided.
+    @note: An instance of this proxy can have an associated port (given at construction time) 
+    for those operations that are instrument-specific. Other non-instrument specific operations
+    are also provided.
     
-    @todo: under construction
+    There are two main behaviors for the various operations depending on the value given to
+    the 'publish_stream' parameter: If the 'publish_stream' parameter in not None, this 
+    indicates that the result of the command should be published to the queue (routing key)
+    given by the parameter. In this case, the return of the method is a SuccessFail object
+    indicating whether the command has been or has not been successfully submitted.
+    If the 'publish_stream' is None (the default), then no such asynchronous behavior is enabled,
+    with the command result being returned by the method itself.
     """
 
     def __init__(self, queue, port=None):
@@ -66,7 +72,7 @@ class SiamCiAdapterProxy():
         
         
     @defer.inlineCallbacks
-    def _make_command(self, cmd_name, args=None):
+    def _make_command(self, cmd_name, args=None, publish_stream=None):
         if args is None: args = [] 
         yield self.start()
         cmd = yield self.mc.create_instance(Command_type, MessageName='command sent message')
@@ -75,6 +81,11 @@ class SiamCiAdapterProxy():
             arg = cmd.args.add()
             arg.channel = c
             arg.parameter = p
+            
+        if publish_stream:
+            arg = cmd.args.add()
+            arg.channel = "publish_stream"
+            arg.parameter = publish_stream
             
         defer.returnValue(cmd)
         
@@ -119,24 +130,19 @@ class SiamCiAdapterProxy():
     
     
     @defer.inlineCallbacks
-    def get_status(self):
+    def get_status(self, publish_stream=None):
         """
-        Gets the status of a particular instrument as indicated by the given port
+        Gets the status of a particular instrument as indicated by the given port at creation time.
+        
+        @param publish_stream: If not None, the result of the command will be published to this
+                  queue (routin queue). Otherwise, the result will be returned by this method.
+                  
+        @return: if publish_stream is None, the result of the command; otherwise a SuccessFail object
+                 indicating whether the command has been or has not been successfully submitted, with
+                 the actual result to be published in the given stream.
         """
         assert self.port, "No port provided"
-        cmd = yield self._make_command("get_status", [("port", self.port)])
-        response = yield self._rpc(cmd)
-        log.debug(show_message(response, "get_status response:"))
-        
-        defer.returnValue(response)
-        
-    @defer.inlineCallbacks
-    def get_status_async(self):
-        """
-        Gets the status of a particular instrument as indicated by the given port
-        """
-        assert self.port, "No port provided"
-        cmd = yield self._make_command("get_status", [("port", self.port), ("publish", "siamci.siamci_receiver")])
+        cmd = yield self._make_command("get_status", [("port", self.port)], publish_stream)
         response = yield self._rpc(cmd)
         log.debug(show_message(response, "get_status response:"))
         

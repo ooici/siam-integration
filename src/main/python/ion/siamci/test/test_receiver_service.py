@@ -3,6 +3,7 @@
 """
 @file ion/siamci/test/test_receiver_service.py
 @test ion.siam.receiver_service
+@brief basic tests of SiamCiReceiverService
 @author Carlos Rueda
 """
 
@@ -36,12 +37,10 @@ class SiamCiReceiverServiceTest(IonTestCase):
         services = [
             {'name':'siamci_receiver1','module':'ion.siamci.receiver_service','class':'SiamCiReceiverService'}
         ]
-
         sup = yield bootstrap.bootstrap(ion_messaging, services)
-
         client = SiamCiReceiverServiceClient(proc=sup)
-
-        yield client.acceptResponse()
+        result = yield client.acceptResponse()
+        self.assertTrue(result != None)
 
                 
 

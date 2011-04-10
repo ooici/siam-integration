@@ -49,8 +49,6 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
 
     @defer.inlineCallbacks
     def tearDown(self):
-#        yield self.simulator.stop()
-
         yield self._stop_container()
 
 
