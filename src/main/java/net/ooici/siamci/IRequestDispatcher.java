@@ -6,7 +6,7 @@ import net.ooici.play.InstrDriverInterface.Command;
 import com.google.protobuf.GeneratedMessage;
 
 /**
- * Processes requests. Used by the adapter implementation to process a request
+ * Dispatches requests. Used by the adapter implementation to dispatch a request
  * from a client and provide corresponding response.
  * 
  * <p>
@@ -17,7 +17,7 @@ import com.google.protobuf.GeneratedMessage;
  * @author carueda
  * 
  */
-public interface IRequestProcessor {
+public interface IRequestDispatcher {
 
 	/**
 	 * Interface for objects in charge of publishing responses for asynchronous
@@ -63,7 +63,7 @@ public interface IRequestProcessor {
 	public void setPublisher(IPublisher publisher);
 
 	/**
-	 * Processes the given request. If the request indicates an asynchronous
+	 * Dispatches the given request. If the request indicates an asynchronous
 	 * response (ie., a "publish_stream" argument is present in the request),
 	 * then the object given by {@link #setAsyncSiam(IAsyncSiam)} will be used
 	 * to notify the response (a RuntimeException will be thrown if such object
@@ -80,5 +80,5 @@ public interface IRequestProcessor {
 	 *            The request (at this point, a command).
 	 * @return The resulting message.
 	 */
-	public GeneratedMessage processRequest(Command cmd);
+	public GeneratedMessage dispatchRequest(Command cmd);
 }

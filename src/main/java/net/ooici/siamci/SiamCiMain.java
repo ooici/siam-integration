@@ -129,7 +129,7 @@ public class SiamCiMain {
 
 	private final ISiam siam;
 	private final IAsyncSiam asyncSiam;
-	private final IRequestProcessor requestProcessor;
+	private final IRequestDispatcher requestDispatcher;
 	private final ISiamCiAdapter siamCiAdapter;
 
 	/**
@@ -142,15 +142,15 @@ public class SiamCiMain {
 		siamCiFactory = new SiamCiFactoryImpl();
 		siam = siamCiFactory.createSiam(params.siamHost);
 		asyncSiam = siamCiFactory.createAsyncSiam(siam);
-		requestProcessor = siamCiFactory.createRequestProcessor(siam);
-		requestProcessor.setAsyncSiam(asyncSiam);
+		requestDispatcher = siamCiFactory.createRequestDispatcher(siam);
+		requestDispatcher.setAsyncSiam(asyncSiam);
 		siamCiAdapter = _createSiamCiAdapter();
 	}
 	
 	private ISiamCiAdapter _createSiamCiAdapter() {
 		return siamCiFactory.createSiamCiAdapter(
 				params.brokerHost, params.brokerPort, params.queueName,
-				requestProcessor);
+				requestDispatcher);
 	}
 
 	private void _run() throws Exception {

@@ -1,6 +1,6 @@
 package net.ooici.siamci.impl.ionmsg;
 
-import net.ooici.siamci.IRequestProcessor;
+import net.ooici.siamci.IRequestDispatcher;
 import net.ooici.siamci.ISiamCiAdapter;
 
 import org.slf4j.Logger;
@@ -23,10 +23,10 @@ public class SiamCiAdapterIonMsg implements ISiamCiAdapter {
 	private Thread thread;
 
 
-	private IRequestProcessor requestProcessor;
+	private IRequestDispatcher requestProcessor;
 	
 	public SiamCiAdapterIonMsg(String brokerHost, int brokerPort, String queueName,
-			IRequestProcessor requestProcessor) {
+			IRequestDispatcher requestProcessor) {
 		this.brokerHost = brokerHost;
 		this.brokerPort = brokerPort;
 		this.queueName = queueName;

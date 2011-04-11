@@ -14,9 +14,9 @@ import net.ooici.core.container.Container;
 import net.ooici.core.container.Container.Structure;
 import net.ooici.core.message.IonMessage.IonMsg;
 import net.ooici.play.InstrDriverInterface.Command;
-import net.ooici.siamci.IRequestProcessor;
+import net.ooici.siamci.IRequestDispatcher;
 import net.ooici.siamci.SiamCiConstants;
-import net.ooici.siamci.IRequestProcessor.IPublisher;
+import net.ooici.siamci.IRequestDispatcher.IPublisher;
 import net.ooici.siamci.utils.ScUtils;
 
 import org.slf4j.Logger;
@@ -64,7 +64,7 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
 	private final MessagingName from;
 
 	/** The processor of requests */
-	private final IRequestProcessor requestProcessor;
+	private final IRequestDispatcher requestProcessor;
 
 	private final MsgBrokerClient ionClient;
 
@@ -83,7 +83,7 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
 	 *             if something bad happens
 	 */
 	SiamCiServerIonMsg(String brokerHost, int brokerPort, String queueName,
-			IRequestProcessor requestProcessor) throws Exception {
+			IRequestDispatcher requestProcessor) throws Exception {
 		this.brokerHost = brokerHost;
 		this.brokerPort = brokerPort;
 		this.queueName = queueName;
@@ -214,7 +214,7 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
 			log.debug(_showMessage(cmd, "Command received:"));
 		}
 
-		GeneratedMessage response = requestProcessor.processRequest(cmd);
+		GeneratedMessage response = requestProcessor.dispatchRequest(cmd);
 
 		if (log.isDebugEnabled()) {
 			log.debug(_showMessage(response, "Response to be replied:"));

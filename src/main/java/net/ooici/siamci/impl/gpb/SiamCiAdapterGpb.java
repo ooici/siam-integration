@@ -1,6 +1,6 @@
 package net.ooici.siamci.impl.gpb;
 
-import net.ooici.siamci.IRequestProcessor;
+import net.ooici.siamci.IRequestDispatcher;
 import net.ooici.siamci.ISiamCiAdapter;
 
 import org.slf4j.Logger;
@@ -15,10 +15,10 @@ public class SiamCiAdapterGpb implements ISiamCiAdapter {
 	
 	private static final Logger log = LoggerFactory.getLogger(SiamCiAdapterGpb.class);
 	
-	private final IRequestProcessor requestProcessor;
+	private final IRequestDispatcher requestProcessor;
 	private SiamCiServerGpb siamCiProcess;
 	
-	public SiamCiAdapterGpb(IRequestProcessor requestProcessor) {
+	public SiamCiAdapterGpb(IRequestDispatcher requestProcessor) {
 		this.requestProcessor = requestProcessor;
 	}
 	

@@ -13,7 +13,7 @@ import net.ooici.play.InstrDriverInterface.StringPair;
 import net.ooici.play.InstrDriverInterface.SuccessFail;
 import net.ooici.play.InstrDriverInterface.SuccessFail.Builder;
 import net.ooici.play.InstrDriverInterface.SuccessFail.Item;
-import net.ooici.siamci.IRequestProcessor;
+import net.ooici.siamci.IRequestDispatcher;
 import net.ooici.siamci.utils.ScUtils;
 
 import org.slf4j.Logger;
@@ -27,20 +27,20 @@ import siam.PortItem;
 import com.google.protobuf.GeneratedMessage;
 
 /**
- * Processes requests.
+ * Dispatches requests.
  * 
  * @author carueda
  */
-class RequestProcessor implements IRequestProcessor {
+class RequestDispatcher implements IRequestDispatcher {
 
 	private static final Logger log = LoggerFactory
-			.getLogger(RequestProcessor.class);
+			.getLogger(RequestDispatcher.class);
 
 	private final ISiam siam;
 	private IAsyncSiam asyncSiam;
 	private IPublisher publisher;
 
-	RequestProcessor(ISiam siam) {
+	RequestDispatcher(ISiam siam) {
 		this.siam = siam;
 
 		log.debug("instance created.");
@@ -54,7 +54,7 @@ class RequestProcessor implements IRequestProcessor {
 		this.publisher = publisher;
 	}
 
-	public GeneratedMessage processRequest(Command cmd) {
+	public GeneratedMessage dispatchRequest(Command cmd) {
 		GeneratedMessage response;
 
 		if ("list_ports".equals(cmd.getCommand())) {

@@ -3,10 +3,8 @@ package net.ooici.siamci;
 import siam.IAsyncSiam;
 import siam.ISiam;
 
-
 /**
- * SiamCi factory.
- * It provides the implementation of central interfaces.
+ * SiamCi factory. It provides the implementation of central interfaces.
  * 
  * @author carueda
  */
@@ -16,29 +14,32 @@ public interface ISiamCiFactory {
 	 * Gets the SIAM hight-level interface implementation
 	 */
 	public ISiam createSiam(String host) throws Exception;
-	
+
 	/**
 	 * Gets the SIAM hight-level asynchronous interface implementation
 	 */
 	public IAsyncSiam createAsyncSiam(ISiam siam) throws Exception;
-	
+
 	/**
-	 * Gets the request processor implementation.
+	 * Gets the request dispatcher implementation.
 	 * 
-	 * @param siam interface to SIAM library
+	 * @param siam
+	 *            interface to SIAM library
 	 */
-	public IRequestProcessor createRequestProcessor(ISiam siam);
-	
+	public IRequestDispatcher createRequestDispatcher(ISiam siam);
+
 	/**
 	 * Gets the SIAM-CI adapter implementation.
 	 * 
-	 * @param siam interface to SIAM library
+	 * @param siam
+	 *            interface to SIAM library
 	 * @param brokerHost
 	 * @param brokerPort
 	 * @param queueName
-	 * @param requestProcessor  processor
+	 * @param requestDispatcher
 	 * @return adapter
 	 */
-	public ISiamCiAdapter createSiamCiAdapter(String brokerHost, int brokerPort, String queueName,
-			IRequestProcessor requestProcessor);
+	public ISiamCiAdapter createSiamCiAdapter(String brokerHost,
+			int brokerPort, String queueName,
+			IRequestDispatcher requestDispatcher);
 }

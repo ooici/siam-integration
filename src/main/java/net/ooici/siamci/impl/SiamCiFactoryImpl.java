@@ -1,6 +1,6 @@
 package net.ooici.siamci.impl;
 
-import net.ooici.siamci.IRequestProcessor;
+import net.ooici.siamci.IRequestDispatcher;
 import net.ooici.siamci.ISiamCiAdapter;
 import net.ooici.siamci.ISiamCiFactory;
 import net.ooici.siamci.impl.gpb.SiamCiAdapterGpb;
@@ -35,12 +35,12 @@ public class SiamCiFactoryImpl implements ISiamCiFactory {
 		return new AsyncSiam(siam);
 	}
 	
-	public IRequestProcessor createRequestProcessor(ISiam siam) {
-		return new RequestProcessor(siam);
+	public IRequestDispatcher createRequestDispatcher(ISiam siam) {
+		return new RequestDispatcher(siam);
 	}
 
 	public ISiamCiAdapter createSiamCiAdapter(String brokerHost, int brokerPort, String queueName,
-			IRequestProcessor requestProcessor) {
+			IRequestDispatcher requestProcessor) {
 		if ( USE_ION_MESSAGING ) {
 			return new SiamCiAdapterIonMsg(brokerHost, brokerPort, queueName, requestProcessor);
 		}

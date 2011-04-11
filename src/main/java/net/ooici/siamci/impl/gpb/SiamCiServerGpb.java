@@ -3,7 +3,7 @@ package net.ooici.siamci.impl.gpb;
 import java.io.IOException;
 
 import net.ooici.play.InstrDriverInterface.Command;
-import net.ooici.siamci.IRequestProcessor;
+import net.ooici.siamci.IRequestDispatcher;
 import net.ooici.siamci.SiamCiConstants;
 
 import org.slf4j.Logger;
@@ -25,7 +25,7 @@ class SiamCiServerGpb implements Runnable {
 	
 	private static final Logger log = LoggerFactory.getLogger(SiamCiServerGpb.class);
 	
-	private final IRequestProcessor requestProcessor;
+	private final IRequestDispatcher requestProcessor;
 
 	private final String queueName = SiamCiConstants.DEFAULT_QUEUE_NAME;
 	
@@ -35,7 +35,7 @@ class SiamCiServerGpb implements Runnable {
 	
 	private volatile boolean keepRunning;
 
-	SiamCiServerGpb(IRequestProcessor requestProcessor) throws Exception {
+	SiamCiServerGpb(IRequestDispatcher requestProcessor) throws Exception {
 		this.requestProcessor = requestProcessor;
 		
 		log.debug("Creating SiamCiProcess");
@@ -101,7 +101,7 @@ class SiamCiServerGpb implements Runnable {
 			BasicProperties props2 = new BasicProperties();
 			props2.setCorrelationId(corr_id);
 			
-			Message response = requestProcessor.processRequest(cmd);
+			Message response = requestProcessor.dispatchRequest(cmd);
 			
 			byte[] replyBody = response.toByteArray();
 			
