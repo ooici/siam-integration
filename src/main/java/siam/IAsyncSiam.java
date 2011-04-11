@@ -10,11 +10,10 @@ package siam;
  * >the SIAM utility reference</a> for a general description of the operations.
  * 
  * <p>
- * Note: this interface is very preliminary; it is just a quick basis for the
- * prototype.
+ * Note: this interface is preliminary.
  * 
  * <p>
- * In general, all methods expeecing a callback argument will throw
+ * In general, all methods expecting a callback argument will throw
  * IllegalArgumentException if such argument is null.
  * 
  * @author carueda
@@ -27,7 +26,7 @@ public interface IAsyncSiam {
 	 * @param port
 	 *            The port associated with the instrument
 	 * @param callback
-	 *            Called when the result of the request
+	 *            Called with the result of the request
 	 * 
 	 * @return null if the request was successfully submitted. Otherwise an
 	 *         error message

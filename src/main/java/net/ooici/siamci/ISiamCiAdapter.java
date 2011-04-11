@@ -1,11 +1,13 @@
 package net.ooici.siamci;
 
 /**
- * Abstracts the operations for the SIAM-CI interaction.
+ * High-level SIAM-CI adapter service interface, basically to just start and
+ * stop the service.
+ * 
  * @author carueda
  */
 public interface ISiamCiAdapter {
-	
+
 	/**
 	 * Starts the adapter process.
 	 */
@@ -15,5 +17,5 @@ public interface ISiamCiAdapter {
 	 * Requests that the adapter process terminate.
 	 */
 	public void stop();
-	
+
 }

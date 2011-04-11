@@ -10,7 +10,7 @@ import java.util.Map;
  * <p> See <a href="http://oidemo.mbari.org:1451/siam-site/content/utilityReference.html"
  * >the SIAM utility reference</a> for a general description of the operations.
  * 
- * <p>Note: this interface is very preliminary; it is just a quick basis for the prototype.
+ * <p>Note: this interface is preliminary.
  * 
  * @author carueda
  */

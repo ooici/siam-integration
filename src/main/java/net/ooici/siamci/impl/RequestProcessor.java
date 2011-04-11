@@ -176,7 +176,10 @@ class RequestProcessor implements IRequestProcessor {
 			final String publishStream) {
 		_checkAsyncSetup();
 		
-		final String publishId = "port=" +port;
+		//
+		// TODO more robust assignment of publish IDs
+		//
+		final String publishId = "get_status;port=" +port;
 
 		asyncSiam.getPortStatus(port, new AsyncCallback<String>() {
 

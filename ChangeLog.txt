@@ -2,6 +2,10 @@ SiamCi integration prototype
 Created 2/9/2011
 Carlos Rueda - MBARI
 
+2011-04-11
+	- some code clean-up and doc. 
+	- TODO publish_id still to be assigned in a more robust way.
+	
 2011-04-10
     - test_receiver_service.py with more complete unit tests for the receiver service.
     

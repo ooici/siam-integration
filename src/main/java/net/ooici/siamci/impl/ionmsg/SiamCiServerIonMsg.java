@@ -306,7 +306,7 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
 	 */
 	public void publish(String publishId, GeneratedMessage response, String streamName) {
 		if (log.isDebugEnabled()) {
-			log.debug("Publishing to queue='" + streamName + "'" + " reponse='"
+			log.debug("Publishing with publishId='" +publishId+ "' to queue='" + streamName + "'" + " reponse='"
 					+ response + "'");
 		}
 

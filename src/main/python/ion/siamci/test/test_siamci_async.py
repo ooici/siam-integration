@@ -57,7 +57,10 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
 
     @defer.inlineCallbacks
     def test_get_status_async(self):
-        publish_id = "port=" + SiamCiTestCase.port
+        #
+        # @todo: more robust assignment of publish IDs
+        #
+        publish_id = "get_status;port=" + SiamCiTestCase.port
         
         # prepare to receive result:
         yield self.client.expect(publish_id);

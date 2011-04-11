@@ -32,6 +32,7 @@ public interface IRequestProcessor {
 		 * asynchronously.
 		 * 
 		 * @param publishId
+		 *            ID to correlate the request and the response
 		 * @param response
 		 *            The response to be published
 		 * @param streamName
