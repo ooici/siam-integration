@@ -17,13 +17,16 @@ from net.ooici.play.instr_driver_interface_pb2 import OK, ERROR
 
 from ion.core import ioninit
 from ion.core import bootstrap
-import ion.util.procutils as pu
+#import ion.util.procutils as pu
 
 CONF = ioninit.config('startup.bootstrap-dx')
 
 # Static definition of message queues
 ion_messaging = ioninit.get_config('messaging_cfg', CONF)
 
+# Note the ``'spawnargs':{ 'servicename':receiver_service_name }'' below to properly name
+# the service; otherwise the default name in SiamCiReceiverService.declare would be used.
+receiver_service_name = 'siamci_receiver_test_async'
 
 class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
     
@@ -35,17 +38,19 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
         yield self.siamci.start()
         
         services = [
-                    {'name':'siamci_receiver','module':'ion.siamci.receiver_service','class':'SiamCiReceiverService'}
+            {'name':receiver_service_name,
+             'module':'ion.siamci.receiver_service',
+             'class':'SiamCiReceiverService',
+             'spawnargs':{ 'servicename':receiver_service_name }
+            }
         ]
-        self.sup = yield bootstrap.bootstrap(ion_messaging, services)
-        self.svc_id = yield self.sup.get_child_id('siamci_receiver')
-        self.rs_client = SiamCiReceiverServiceClient(proc=self.sup,target=self.svc_id)
+        sup = yield bootstrap.bootstrap(ion_messaging, services)
+        svc_id = yield sup.get_child_id(receiver_service_name)
+        self.client = SiamCiReceiverServiceClient(proc=sup,target=svc_id)
     
 
     @defer.inlineCallbacks
     def tearDown(self):
-        # Sleep for a bit here to allow AMQP messages to complete
-        yield pu.asleep(0.5)
         yield self.siamci.stop()
         yield self._stop_container()
 
@@ -53,13 +58,17 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
     @defer.inlineCallbacks
     def test_get_status_async(self):
         publish_id = "port=" + SiamCiTestCase.port
-        yield self.rs_client.expect(publish_id);
-        ret = yield self.siamci.get_status(publish_stream="siamci.siamci_receiver")
+        
+        # prepare to receive result:
+        yield self.client.expect(publish_id);
+        
+        # make request:
+        ret = yield self.siamci.get_status(publish_stream="siamci." + receiver_service_name)
 
         self.assertIsSuccessFail(ret)
         self.assertEquals(ret.result, OK)
         
         # check that all expected were received
-        r = yield self.rs_client.checkExpected()
-        self.assertEquals(len(r), 0)
+        expected = yield self.client.checkExpected()
+        self.assertEquals(len(expected), 0)
 

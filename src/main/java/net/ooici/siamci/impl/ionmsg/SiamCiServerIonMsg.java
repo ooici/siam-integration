@@ -207,7 +207,7 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
 
 		final String publishStreamName = ScUtils.getPublishStreamName(cmd);
 		if (publishStreamName != null) {
-			log.info("Command with publish stream name: " + publishStreamName);
+			log.info("Command with publish stream name: '" + publishStreamName+ "'");
 		}
 
 		if (log.isDebugEnabled()) {

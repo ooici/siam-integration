@@ -21,18 +21,21 @@ from ion.siamci.test.siamcitest import SiamCiTestCase
 
 from twisted.trial import unittest
 
+
 class TestSiamInstrumentDriver(SiamCiTestCase):
     
     @defer.inlineCallbacks
     def setUp(self):
         yield self._start_container()
 
+        driver_name = 'SiamInstrumentDriver_' + SiamCiTestCase.port
+        
         services = [
             # not publishing data yet
 #            {'name':'pubsub_registry','module':'ion.services.dm.distribution.pubsub_registry','class':'DataPubSubRegistryService'},
 #            {'name':'pubsub_service','module':'ion.services.dm.distribution.pubsub_service','class':'DataPubsubService'},
 
-            {'name':'SiamInstrumentDriver_' + SiamCiTestCase.port,
+            {'name': driver_name,
              'module':'ion.siamci.siam_driver',
              'class':'SiamInstrumentDriver',
              'spawnargs':{ 'pid':SiamCiTestCase.pid, 'port':SiamCiTestCase.port }
@@ -41,7 +44,7 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
 
         self.sup = yield self._spawn_processes(services)
         
-        self.driver_pid = yield self.sup.get_child_id('SiamInstrumentDriver_testPort')
+        self.driver_pid = yield self.sup.get_child_id(driver_name)
         log.debug("Driver pid %s" % (self.driver_pid))
 
         self.driver_client = SiamInstrumentDriverClient(proc=self.sup,

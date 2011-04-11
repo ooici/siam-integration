@@ -56,7 +56,55 @@ class SiamCiReceiverService(ServiceProcess):
             log.info('---- expect: "%s"' % (e))
         for a in self.accepted:
             log.info('---accepted: "%s"' % (a))
+
+
+    def _get_publish_id(self, content, headers, msg):
+        """
+        Gets the publish_id from the headers or the content.
+        Note: the java client puts the publish_id in the headers; we check there first.        
+        If not in the headers, we check in the content; this is basically to support 
+        python-side clients for testing purposes.
+        
+        @return: the publish ID; None if not found
+        """
+        publish_id = None
+        if 'publish_id' in headers.keys():
+            publish_id = headers['publish_id']
+            log.info('_get_publish_id: publish_id = "'+publish_id+ '" (from headers)')
+        elif 'publish_id' in content.keys():
+            publish_id = content['publish_id']
+            log.info('_get_publish_id: publish_id = "'+publish_id+ '" (from content)')
+            
+        return publish_id
        
+    @defer.inlineCallbacks
+    def op_expect(self, content, headers, msg):
+        log.info('op_expect: ' +str(content))
+        
+        publish_id = yield self._get_publish_id(content, headers, msg)
+        if publish_id:
+            self.expect.add(publish_id)
+        else:
+            log.warn('op_expect: publish_id not given')
+        
+        yield self.reply_ok(msg, {'value' : "TODO-some-result"})
+
+
+    @defer.inlineCallbacks
+    def op_acceptResponse(self, content, headers, msg):
+        log.info('op_acceptResponse: ' +str(headers))
+#        
+#        from IPython.Shell import IPShellEmbed
+#        ipshell = IPShellEmbed()
+#        ipshell()
+#
+        publish_id = yield self._get_publish_id(content, headers, msg)
+        if publish_id:
+            self.accepted.add(publish_id)
+        else:
+            log.warn('op_acceptResponse: publish_id not given')
+
+        yield self.reply_ok(msg, {'value' : "TODO-some-result"})
 
     @defer.inlineCallbacks
     def op_checkExpected(self, content, headers, msg):
@@ -68,43 +116,17 @@ class SiamCiReceiverService(ServiceProcess):
         r = []
         for e in self.expect:
             if not e in self.accepted:
-                r.add(e)
+                r.append(e)
                 
         yield self.reply_ok(msg, r)
 
-        
-    @defer.inlineCallbacks
-    def op_expect(self, content, headers, msg):
-        log.info('op_expect: ' +str(content))
-        
-        publish_id = content['publish_id']
-        self.expect.add(publish_id)
-        
-        yield self.reply_ok(msg, {'value' : "TODO-some-result"})
-
-
-        
-    @defer.inlineCallbacks
-    def op_acceptResponse(self, content, headers, msg):
-        log.info('op_acceptResponse: ' +str(headers))
-        
-        publish_id = headers['publish_id']
-        
-        log.info('op_acceptResponse: publish_id = "'+publish_id+ '"')
-        
-        publish_id = headers['publish_id']
-        self.accepted.add(publish_id)
-        
-#        
-#        from IPython.Shell import IPShellEmbed
-#        ipshell = IPShellEmbed()
-#        ipshell()
-#
-        
-        yield self.reply_ok(msg, {'value' : "TODO-some-result"})
 
 
 class SiamCiReceiverServiceClient(ServiceClient):
+    """
+    This client is mainly for testing purposes within python. (The actual client
+    of the service is the SIAM-CI adapter.)
+    """
     def __init__(self, proc=None, **kwargs):
         if not 'targetname' in kwargs:
             kwargs['targetname'] = "siamci_receiver"
@@ -120,8 +142,13 @@ class SiamCiReceiverServiceClient(ServiceClient):
         defer.returnValue(content)
         
     @defer.inlineCallbacks
-    def acceptResponse(self):
-        payload = {}
+    def acceptResponse(self, publish_id):
+        """
+        This method on the python side is mainly for testing purposes
+        """
+        if publish_id is None:
+            raise Exception("publish_id cannot be None")
+        payload = { "publish_id" : publish_id }
         (content, headers, payload) = yield self.rpc_send('acceptResponse', payload)
         log.debug('acceptResponse service reply: ' + str(content))
         defer.returnValue(content)

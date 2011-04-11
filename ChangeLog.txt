@@ -2,13 +2,219 @@ SiamCi integration prototype
 Created 2/9/2011
 Carlos Rueda - MBARI
 
+2011-04-10
+    - test_receiver_service.py with more complete unit tests for the receiver service.
+    
+    - Adjustments to test_siamci_async.py
+    
+    - Note that there might multiple instances of the same service in the python CC.
+      In particular, there will be a receiver service instance for each SIAM-CI proxy
+      instance (such that publish replies go the corresponding queue). I found out that 
+	  to name a service properly, the 'name' parameter is not sufficient; the 
+	  'servicename' property should be included. For example, test_siamci_async.py does this:
+		  	receiver_service_name = 'siamci_receiver_test_async'
+		  	...
+	        services = [
+	            {'name':receiver_service_name,             # <-- not enough
+	             'module':'ion.siamci.receiver_service',
+	             'class':'SiamCiReceiverService',
+	             'spawnargs':{ 
+	                 'servicename':receiver_service_name   # <-- also needed
+	              }
+	            }
+	        ]
+	        
+	- Integration tests go as follows at this point:
+	
+	  Under siamci/:
+		$ mvn clean compile exec:java -Dsiam-ci 
+		...
+		04-10-2011 21:08:37,103 [SiamCiMain        ] INFO  net.ooici.siamci.SiamCiMain - Listing instruments in the SIAM node:
+		04-10-2011 21:08:37,110 [SiamCiMain        ] WARN  siam.PortLister - UnmarshalException with device by id '1151'. Is the instrument jar in the classpath?
+		04-10-2011 21:08:37,123 [SiamCiMain        ] INFO  net.ooici.siamci.SiamCiMain -  * port='Foo' device='1151' service='Dummy'
+		04-10-2011 21:08:37,123 [SiamCiMain        ] INFO  net.ooici.siamci.SiamCiMain -  * port='testPort' device='1235' service='TEstSiamInstrument'
+		04-10-2011 21:08:37,123 [SiamCiMain        ] INFO  net.ooici.siamci.SiamCiMain - Starting SIAM-CI adapter. SIAM node host: localhost
+		04-10-2011 21:08:37,232 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Running SiamCiServerIonMsg (broker='localhost:5672', queue='SIAM-CI', exchange='magnet.topic')
+		04-10-2011 21:08:37,233 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [0] Waiting for request ...
+		                
+	Under ioncore-python/ (with the usual symbolic link to python stuff in siamci):
+		$ SIAM_CI=-  bin/trial ion/siamci/test/
+		ion.siamci.test.test_echo_service_in_java
+		  JavaEchoTest
+		    test_send_message_instance1 ...                                        [OK]
+		    test_send_message_instance2 ...                                        [OK]
+		ion.siamci.test.test_receiver_service
+		  SiamCiReceiverServiceTest
+		    test_expect_1 ...                                                      [OK]
+		    test_expect_accept_1 ...                                               [OK]
+		ion.siamci.test.test_siam
+		  TestSiamInstrumentDriver
+		    test_execute ...                                                  [SKIPPED]
+		    test_fetch_params_all ...                                              [OK]
+		    test_fetch_params_some ...                                             [OK]
+		    test_fetch_set1 ...                                                    [OK]
+		    test_fetch_set2 ...                                                    [OK]
+		    test_get_last_sample ...                                               [OK]
+		    test_get_status ...                                                    [OK]
+		    test_initialize ...                                               [SKIPPED]
+		    test_list_ports ...                                                    [OK]
+		    test_ping ...                                                          [OK]
+		ion.siamci.test.test_siamci
+		  TestSiamCiAdapterProxy
+		    test_fetch_params_all ...                                              [OK]
+		    test_fetch_params_some ...                                             [OK]
+		    test_get_last_sample ...                                               [OK]
+		    test_get_status ...                                                    [OK]
+		    test_list_ports ...                                                    [OK]
+		    test_ping ...                                                          [OK]
+		    test_set_params ...                                                    [OK]
+		ion.siamci.test.test_siamci_async
+		  TestSiamCiAdapterProxyAsync
+		    test_get_status_async ...                                              [OK]
+		
+		===============================================================================
+		[SKIPPED]
+		Not implemented yet
+		
+		ion.siamci.test.test_siam.TestSiamInstrumentDriver.test_execute
+		ion.siamci.test.test_siam.TestSiamInstrumentDriver.test_initialize
+		-------------------------------------------------------------------------------
+		Ran 22 tests in 4.313s
+		
+      while in siamci (note, the excpetion below is expected):
+		04-10-2011 21:09:56,968 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Request received from 'carueda.28453.1b'
+		04-10-2011 21:09:57,514 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - convId received: #1
+		04-10-2011 21:09:57,521 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Reply sent to 'carueda.28453.1b' conv-id: '#1' user-id: 'ANONYMOUS' expiry: '0'
+		
+		04-10-2011 21:09:57,521 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [1] Waiting for request ...
+		04-10-2011 21:09:57,645 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Request received from 'carueda.28453.6b'
+		04-10-2011 21:09:57,646 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - convId received: #4
+		04-10-2011 21:09:57,646 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Reply sent to 'carueda.28453.6b' conv-id: '#4' user-id: 'ANONYMOUS' expiry: '0'
+		
+		04-10-2011 21:09:57,646 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [2] Waiting for request ...
+		04-10-2011 21:09:58,269 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Request received from 'carueda.28453.32b'
+		04-10-2011 21:09:58,277 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - convId received: #19
+		04-10-2011 21:09:58,290 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Reply sent to 'carueda.28453.32b' conv-id: '#19' user-id: 'ANONYMOUS' expiry: '0'
+		
+		04-10-2011 21:09:58,290 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [3] Waiting for request ...
+		04-10-2011 21:09:58,451 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Request received from 'carueda.28453.39b'
+		04-10-2011 21:09:58,454 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - convId received: #23
+		04-10-2011 21:09:58,455 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Reply sent to 'carueda.28453.39b' conv-id: '#23' user-id: 'ANONYMOUS' expiry: '0'
+		
+		04-10-2011 21:09:58,455 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [4] Waiting for request ...
+		04-10-2011 21:09:58,603 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Request received from 'carueda.28453.46b'
+		04-10-2011 21:09:58,607 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - convId received: #27
+		04-10-2011 21:09:58,608 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Reply sent to 'carueda.28453.46b' conv-id: '#27' user-id: 'ANONYMOUS' expiry: '0'
+		
+		04-10-2011 21:09:58,608 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [5] Waiting for request ...
+		04-10-2011 21:09:58,760 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Request received from 'carueda.28453.53b'
+		04-10-2011 21:09:58,763 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - convId received: #31
+		04-10-2011 21:09:58,764 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Reply sent to 'carueda.28453.53b' conv-id: '#31' user-id: 'ANONYMOUS' expiry: '0'
+		
+		04-10-2011 21:09:58,764 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [6] Waiting for request ...
+		04-10-2011 21:09:58,917 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Request received from 'carueda.28453.60b'
+		04-10-2011 21:09:58,921 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - convId received: #35
+		04-10-2011 21:09:58,922 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Reply sent to 'carueda.28453.60b' conv-id: '#35' user-id: 'ANONYMOUS' expiry: '0'
+		
+		04-10-2011 21:09:58,922 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [7] Waiting for request ...
+		04-10-2011 21:09:59,072 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Request received from 'carueda.28453.67b'
+		04-10-2011 21:09:59,074 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - convId received: #39
+		04-10-2011 21:09:59,074 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Reply sent to 'carueda.28453.67b' conv-id: '#39' user-id: 'ANONYMOUS' expiry: '0'
+		
+		04-10-2011 21:09:59,074 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [8] Waiting for request ...
+		04-10-2011 21:09:59,423 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Request received from 'carueda.28453.81b'
+		04-10-2011 21:09:59,426 [SiamCiServerIonMsg] WARN  siam.PortLister - UnmarshalException with device by id '1151'. Is the instrument jar in the classpath?
+		04-10-2011 21:09:59,429 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - convId received: #45
+		04-10-2011 21:09:59,430 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Reply sent to 'carueda.28453.81b' conv-id: '#45' user-id: 'ANONYMOUS' expiry: '0'
+		
+		04-10-2011 21:09:59,430 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [9] Waiting for request ...
+		04-10-2011 21:09:59,581 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Request received from 'carueda.28453.88b'
+		04-10-2011 21:09:59,581 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - convId received: #49
+		04-10-2011 21:09:59,582 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Reply sent to 'carueda.28453.88b' conv-id: '#49' user-id: 'ANONYMOUS' expiry: '0'
+		
+		04-10-2011 21:09:59,582 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [10] Waiting for request ...
+		04-10-2011 21:09:59,719 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Request received from 'carueda.28453.95b'
+		04-10-2011 21:09:59,723 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - convId received: #52
+		04-10-2011 21:09:59,724 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Reply sent to 'carueda.28453.95b' conv-id: '#52' user-id: 'ANONYMOUS' expiry: '0'
+		
+		04-10-2011 21:09:59,724 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [11] Waiting for request ...
+		04-10-2011 21:09:59,860 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Request received from 'carueda.28453.100b'
+		04-10-2011 21:09:59,864 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - convId received: #55
+		04-10-2011 21:09:59,864 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Reply sent to 'carueda.28453.100b' conv-id: '#55' user-id: 'ANONYMOUS' expiry: '0'
+		
+		04-10-2011 21:09:59,864 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [12] Waiting for request ...
+		04-10-2011 21:09:59,991 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Request received from 'carueda.28453.105b'
+		04-10-2011 21:09:59,993 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - convId received: #58
+		04-10-2011 21:09:59,994 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Reply sent to 'carueda.28453.105b' conv-id: '#58' user-id: 'ANONYMOUS' expiry: '0'
+		
+		04-10-2011 21:09:59,994 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [13] Waiting for request ...
+		04-10-2011 21:10:00,119 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Request received from 'carueda.28453.110b'
+		04-10-2011 21:10:00,121 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - convId received: #61
+		04-10-2011 21:10:00,122 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Reply sent to 'carueda.28453.110b' conv-id: '#61' user-id: 'ANONYMOUS' expiry: '0'
+		
+		04-10-2011 21:10:00,122 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [14] Waiting for request ...
+		04-10-2011 21:10:00,250 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Request received from 'carueda.28453.115b'
+		04-10-2011 21:10:00,253 [SiamCiServerIonMsg] WARN  siam.PortLister - UnmarshalException with device by id '1151'. Is the instrument jar in the classpath?
+		04-10-2011 21:10:00,256 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - convId received: #64
+		04-10-2011 21:10:00,256 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Reply sent to 'carueda.28453.115b' conv-id: '#64' user-id: 'ANONYMOUS' expiry: '0'
+		
+		04-10-2011 21:10:00,256 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [15] Waiting for request ...
+		04-10-2011 21:10:00,390 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Request received from 'carueda.28453.120b'
+		04-10-2011 21:10:00,391 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - convId received: #67
+		04-10-2011 21:10:00,393 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Reply sent to 'carueda.28453.120b' conv-id: '#67' user-id: 'ANONYMOUS' expiry: '0'
+		
+		04-10-2011 21:10:00,393 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [16] Waiting for request ...
+		04-10-2011 21:10:00,516 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Request received from 'carueda.28453.125b'
+		04-10-2011 21:10:00,528 [SiamCiServerIonMsg] WARN  net.ooici.siamci.impl.RequestProcessor - set_params exception
+		org.mbari.siam.distributed.InvalidPropertyException: 
+		Unknown property: wrongParam
+		
+		
+			at org.mbari.siam.core.BaseInstrumentService.setProperty(BaseInstrumentService.java:1630)
+			at sun.reflect.GeneratedMethodAccessor13.invoke(Unknown Source)
+			at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:25)
+			at java.lang.reflect.Method.invoke(Method.java:597)
+			at sun.rmi.server.UnicastServerRef.dispatch(UnicastServerRef.java:305)
+			at sun.rmi.transport.Transport$1.run(Transport.java:159)
+			at java.security.AccessController.doPrivileged(Native Method)
+			at sun.rmi.transport.Transport.serviceCall(Transport.java:155)
+			at sun.rmi.transport.tcp.TCPTransport.handleMessages(TCPTransport.java:535)
+			at sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run0(TCPTransport.java:790)
+			at sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run(TCPTransport.java:649)
+			at java.util.concurrent.ThreadPoolExecutor$Worker.runTask(ThreadPoolExecutor.java:886)
+			at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:908)
+			at java.lang.Thread.run(Thread.java:680)
+			at sun.rmi.transport.StreamRemoteCall.exceptionReceivedFromServer(StreamRemoteCall.java:255)
+			at sun.rmi.transport.StreamRemoteCall.executeCall(StreamRemoteCall.java:233)
+			at sun.rmi.server.UnicastRef.invoke(UnicastRef.java:142)
+			at siam.test.devices.device1.TestSiamInstrument1_Stub.setProperty(Unknown Source)
+			at siam.Siam.setPortProperties(Siam.java:193)
+			at net.ooici.siamci.impl.RequestProcessor._setParams(RequestProcessor.java:364)
+			at net.ooici.siamci.impl.RequestProcessor.processRequest(RequestProcessor.java:73)
+			at net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg._dispatchRequest(SiamCiServerIonMsg.java:217)
+			at net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg._run(SiamCiServerIonMsg.java:163)
+			at net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg.run(SiamCiServerIonMsg.java:117)
+			at java.lang.Thread.run(Thread.java:680)
+		04-10-2011 21:10:00,529 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - convId received: #70
+		04-10-2011 21:10:00,530 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Reply sent to 'carueda.28453.125b' conv-id: '#70' user-id: 'ANONYMOUS' expiry: '0'
+		
+		04-10-2011 21:10:00,530 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [17] Waiting for request ...
+		04-10-2011 21:10:00,691 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Request received from 'carueda.28453.130b'
+		04-10-2011 21:10:00,691 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Command with publish stream name: 'siamci.siamci_receiver_test_async'
+		04-10-2011 21:10:00,692 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - convId received: #74
+		04-10-2011 21:10:00,694 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Reply sent to 'carueda.28453.130b' conv-id: '#74' user-id: 'ANONYMOUS' expiry: '0'
+		
+		04-10-2011 21:10:00,695 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [18] Waiting for request ...
+
+      
+		
 2011-04-09
 	- Some code clean-up and documentation after the basic scheme for async handling
 	  of requests. All tests (java, python, and java-python) pass.
 	  
 	- Initial test with checking of expected responses for async responses:
 		$ SIAM_CI=-  bin/trial ion/siamci/test/test_siamci_async.py
-	  SiamCiReceiverService keeps two sets, one with expected publish_is's and the
+	  SiamCiReceiverService keeps two sets, one with expected publish_id's and the
 	  other with received (accepted) publish_ids. A final check is that all
 	  expected id's were received. See the op_expect and op_acceptResponse operations.
 	  NOTE: this is working but is a preliminary approach.
