@@ -14,7 +14,7 @@
 
 		<siam_version>0.9</siam_version>
 		<siam_instr_version>0.0.1</siam_instr_version>
-		<ionproto_version>0.3.15</ionproto_version>
+		<ionproto_version>0.3.16</ionproto_version>
 		<ioncore_version>0.2.4</ioncore_version>
 		<msgpack_version>0.3</msgpack_version>
 	</properties>

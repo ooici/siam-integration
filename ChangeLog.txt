@@ -2,6 +2,32 @@ SiamCi integration prototype
 Created 2/9/2011
 Carlos Rueda - MBARI
 
+2011-04-12
+	- ion-object-definitions: pushed addition of publish_stream field in Command.
+	- ioncore-java: pushed dependency on ionproto version 0.3.16-pl5 and rebuilt ioncore-java
+	- siamci: etc/buid.xml and pom.xml updated with the new ionproto version
+	- siamci succesfully rebuilt:
+	  	$ ant -f etc/build.xml install-ion-object-definitions install-ioncore-java
+	  	$ mvn clean compile
+	  	
+	  TODO: do similar upgrade with ioncore-python. I already started looking into this
+	  but unfortunately tests are failing because of recent changes in ioncore-python.
+	  Basically, when a reply to a request is sent from the SIAM-CI adapter, the python 
+	  side is now complaining about receiving an unexpected message:
+	  	...
+	  	2011-04-12 12:29:00.829 [conversation   :171] ERROR:Conversation ERROR: UNEXPECTED MSG
+	  (I did this test under a temporary ioncore-python cloned today.)
+	  Email sent to MM about this issue.
+	  In the meantime, I can continue working with the updated ioncore-java/ion-object-definitions
+	  but without being able to use the new Command.publish_stream field on the python side.
+	  
+	- Adjusted test_receiver_service.py so it runs fine with both my current and latest 
+	  ioncore-python images. Basically, instead of:
+	  		yield bootstrap.bootstrap(ion_messaging, services)
+	  now it does
+	  		yield self._spawn_processes(services)
+	   
+	
 2011-04-11
 	- Code clean-up and doc. 
 	- Type/operation renamings for concept: from "request processor" to "request dispatcher"

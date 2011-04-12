@@ -304,9 +304,11 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
 		//
 		headers.put("status", "OK");
 
-		headers.put("MY_Header", "MY_someValue");
-
 		ionClient.sendMessage(msg);
+		
+		if ( log.isDebugEnabled() ) {
+			log.debug("headers of message sent: " +headers);
+		}
 	}
 
 	/**

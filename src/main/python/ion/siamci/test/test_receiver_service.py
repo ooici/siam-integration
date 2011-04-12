@@ -12,14 +12,14 @@ from twisted.internet import defer
 from ion.test.iontest import IonTestCase
 import ion.util.ionlog
 from ion.core import ioninit
-from ion.core import bootstrap
+#from ion.core import bootstrap #-
 
 from ion.siamci.receiver_service import SiamCiReceiverServiceClient
 
-CONF = ioninit.config('startup.bootstrap-dx')
+#CONF = ioninit.config('startup.bootstrap-dx') #-
 
 # Static definition of message queues
-ion_messaging = ioninit.get_config('messaging_cfg', CONF)
+#ion_messaging = ioninit.get_config('messaging_cfg', CONF) #-
 
 # Note the ``'spawnargs':{ 'servicename':receiver_service_name }'' below to properly name
 # the service; otherwise the default name in SiamCiReceiverService.declare would be used.
@@ -40,7 +40,8 @@ class SiamCiReceiverServiceTest(IonTestCase):
              'spawnargs':{ 'servicename':receiver_service_name }
              }
         ]
-        sup = yield bootstrap.bootstrap(ion_messaging, services)
+        sup = yield self._spawn_processes(services) #=
+#        sup = yield bootstrap.bootstrap(ion_messaging, services) #-
         svc_id = yield sup.get_child_id(receiver_service_name)
         self.client = SiamCiReceiverServiceClient(proc=sup,target=svc_id)
         
