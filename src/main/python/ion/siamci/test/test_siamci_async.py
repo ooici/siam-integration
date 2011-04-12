@@ -46,8 +46,8 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
         sup = yield bootstrap.bootstrap(ion_messaging, services)
         svc_id = yield sup.get_child_id(receiver_service_name)
         self.client = SiamCiReceiverServiceClient(proc=sup,target=svc_id)
-        # set a deafult expected timeout:
-        self.client.setExpectedTimeout(1)
+        # set a default expected timeout:
+        self.client.setExpectedTimeout(2)
     
 
     @defer.inlineCallbacks
@@ -223,7 +223,7 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
         self.assertEquals(ret.result, OK)
         
         # check that all expected were received
-        expected = yield self.client.getExpected()
+        expected = yield self.client.getExpected(timeout=30)
         self.assertEquals(len(expected), 0)
         
         # actual response should indicate OK: 

@@ -140,26 +140,32 @@ class SiamCiReceiverService(ServiceProcess):
         @return: a list with expected id's that have not been received
         """
         
+        log.info('op_getExpected: ' +str(headers))
+        
         timeout = None
         if 'timeout' in content.keys() and content['timeout']:
-            timeout = content['timeout']   # content takes precedence
+            timeout = content['timeout']   # content in this operation takes precedence
         else:
-            timeout = self.checkTimeout
+            timeout = self.checkTimeout    # use the overall timeout, if any
             
-        if timeout:
-            """@todo: Needs to be done in a more robust, elegant way. For the moment,
-            sleep for the timeout time."""
-            log.debug("sleeping for " +str(timeout))
-            yield pu.asleep(timeout);
-
+        # the total time in seconds we will wait while there is still expected id's
+        remaining = timeout if timeout else 0.0
         
-        log.info('op_getExpected: ' +str(headers))
-        r = []
+        expected = self._get_still_expected()
+        while len(expected) > 0 and remaining > 0.0:
+            yield pu.asleep(0.2);   # sleep for a moment
+            remaining -= 0.2
+            expected = self._get_still_expected()
+
+        yield self.reply_ok(msg, expected)
+
+
+    def _get_still_expected(self):
+        expected = []
         for e in self.expect:
             if not e in self.accepted.keys():
-                r.append(e)
-                
-        yield self.reply_ok(msg, r)
+                expected.append(e)
+        return expected
 
 
     @defer.inlineCallbacks
@@ -233,14 +239,21 @@ class SiamCiReceiverServiceClient(ServiceClient):
         """
         Returns a list with expected id's that have not been received.
         
-        @param timeout: If given, this takes precedence for the operation. If not, 
-        the timeout indicated in the last call to setExpectedTimeout, if any, will be used. 
-        Otherwise, no timeout at all is used.
+        @param timeout: A timeout in seconds, to wait for the expected id's to be received.
+                If given, this takes precedence for the operation. If not, 
+                the timeout indicated in the last call to setExpectedTimeout, if any, will be used. 
+                Otherwise, no timeout at all is used.
         
         @return: a list with expected id's that have not been received.
         """
+        # note: we pass the timeout as it is directly to our own payload:
         payload = {'timeout':timeout}
-        (content, headers, payload) = yield self.rpc_send('getExpected', payload)
+        
+        # but we need to explicitly indicate it for purposes of ION processing:
+        if timeout is None:
+            timeout = 15.0
+            
+        (content, headers, payload) = yield self.rpc_send('getExpected', payload, timeout=timeout)
         log.info('getExpected service reply: ' + str(content))
         defer.returnValue(content)
         

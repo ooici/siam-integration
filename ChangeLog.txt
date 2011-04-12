@@ -26,6 +26,11 @@ Carlos Rueda - MBARI
 	  		yield bootstrap.bootstrap(ion_messaging, services)
 	  now it does
 	  		yield self._spawn_processes(services)
+	  		
+	  		
+	- receiver service's getExpected operation now does a more appropriate handling of the
+	  given timeout: in a loop while there are still pending id's it sleeps for a fraction
+	  and recomputes the pending list; all of this for a maximum of the given timeout (approx.) 
 	   
 	
 2011-04-11
