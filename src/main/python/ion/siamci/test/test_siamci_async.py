@@ -208,7 +208,7 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
         self.assertEquals(response.result, OK)
 
     @defer.inlineCallbacks
-    def test_set_params_good_async(self):
+    def test_set_params_good_async_timeout_30(self):
         #
         # @todo: more robust assignment of publish IDs
         #

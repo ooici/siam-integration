@@ -1,13 +1,12 @@
 package net.ooici.siamci.utils;
 
-import com.google.protobuf.GeneratedMessage;
-
-import net.ooici.play.InstrDriverInterface.ChannelParameterPair;
 import net.ooici.play.InstrDriverInterface.Command;
 import net.ooici.play.InstrDriverInterface.Result;
 import net.ooici.play.InstrDriverInterface.SuccessFail;
 import net.ooici.play.InstrDriverInterface.SuccessFail.Builder;
 import net.ooici.play.InstrDriverInterface.SuccessFail.Item;
+
+import com.google.protobuf.GeneratedMessage;
 
 /**
  * Misc utilities.
@@ -17,23 +16,16 @@ import net.ooici.play.InstrDriverInterface.SuccessFail.Item;
 public class ScUtils {
 
 	/**
-	 * Gets the value of the "publish_stream" argument, if any.
+	 * Gets the value of the "publish_stream" field, if any.
 	 * 
 	 * @param cmd
 	 *            The command to examine.
 	 * 
-	 * @return the value of the "publish_stream" argument; null if such argument
-	 *         is missing.
+	 * @return the value of the "publish_stream" field; null if such argument is
+	 *         missing.
 	 */
 	public static String getPublishStreamName(Command cmd) {
-		for (int i = 0, count = cmd.getArgsCount(); i < count; i++) {
-			ChannelParameterPair cp = cmd.getArgs(i);
-			if ("publish_stream".equals(cp.getChannel())) {
-				String publish = cp.getParameter();
-				return publish;
-			}
-		}
-		return null;
+		return cmd.hasPublishStream() ? cmd.getPublishStream() : null;
 	}
 
 	/**

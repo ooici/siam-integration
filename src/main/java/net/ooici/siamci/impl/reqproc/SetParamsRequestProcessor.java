@@ -52,11 +52,6 @@ public class SetParamsRequestProcessor extends BaseRequestProcessor {
 		for (int i = 1; i < cmd.getArgsCount(); i++) {
 			cp = cmd.getArgs(i);
 			String ch = cp.getChannel();
-			if ("publish_stream".equals(ch)) {
-				// OK. accept but ignore this for the moment
-				// TODO the publish_stream should be indicated in another way.
-				continue;
-			}
 			String pr = cp.getParameter();
 			params.put(ch, pr);
 		}

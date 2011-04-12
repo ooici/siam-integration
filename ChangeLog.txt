@@ -18,8 +18,18 @@ Carlos Rueda - MBARI
 	  	2011-04-12 12:29:00.829 [conversation   :171] ERROR:Conversation ERROR: UNEXPECTED MSG
 	  (I did this test under a temporary ioncore-python cloned today.)
 	  Email sent to MM about this issue.
-	  In the meantime, I can continue working with the updated ioncore-java/ion-object-definitions
-	  but without being able to use the new Command.publish_stream field on the python side.
+	  
+	  I updated my current ioncore-python image with a reference to ionproto 0.3.16-pl5 to be
+	  able to use the new Command.publish_stream field in python:
+	  		updated development.cfg with:
+	  				[versions]
+					ionproto=0.3.16-pl5
+	  		then:
+	  			$ bin/mypython bootstrap.py
+	  			$ ant clean
+	  			$ bin/buildout -c development.cfg
+	  Now both the python and java sides use the new field Command.publish_stream.
+	  			
 	  
 	- Adjusted test_receiver_service.py so it runs fine with both my current and latest 
 	  ioncore-python images. Basically, instead of:

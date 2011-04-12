@@ -155,11 +155,6 @@ public class FetchParamsRequestProcessor extends BaseRequestProcessor {
 				if ("instrument".equals(ch)) {
 					requestedParams.add(pr);
 				}
-				else if ("publish_stream".equals(ch)) {
-					// OK. accept but ignore this for the moment
-					// TODO the publish_stream should be indicated in another way.
-					continue;
-				}
 				else {
 					String error = CMD_NAME
 							+ ": first element in tuple must be 'instrument'. "

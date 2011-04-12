@@ -83,13 +83,7 @@ class SiamCiAdapterProxy():
             arg.parameter = p
             
         if publish_stream:
-            #
-            # @todo: the publish_stream should go in a more proper place, not as
-            # one more channel!!
-            #
-            arg = cmd.args.add()
-            arg.channel = "publish_stream"
-            arg.parameter = publish_stream
+            cmd.publish_stream = publish_stream
             
         defer.returnValue(cmd)
         

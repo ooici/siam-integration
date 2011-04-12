@@ -15,7 +15,8 @@ import com.google.protobuf.GeneratedMessage;
  * interface gets more stabilized.
  * 
  * @author carueda
- * @deprecated use new interfaces {@link IRequestProcessors} and {@link IRequestProcessor}.
+ * @deprecated use new interfaces {@link IRequestProcessors} and
+ *             {@link IRequestProcessor}.
  */
 public interface IRequestDispatcher {
 
@@ -39,7 +40,7 @@ public interface IRequestDispatcher {
 
 	/**
 	 * Dispatches the given request. If the request indicates an asynchronous
-	 * response (ie., a "publish_stream" argument is present in the request),
+	 * response (ie., the "publish_stream" field is present in the request),
 	 * then the object given by {@link #setAsyncSiam(IAsyncSiam)} will be used
 	 * to notify the response (a RuntimeException will be thrown if such object
 	 * has not been given).
@@ -49,7 +50,7 @@ public interface IRequestDispatcher {
 	 * asynchronous style has been indicated. Otherwise, the returned message
 	 * will be a SuccessFailure status indicating a successful or unsuccessful
 	 * submission of the request, and the actual response will be published to
-	 * the queue indicated in the "publish_stream" argument of the request.
+	 * the queue indicated in the "publish_stream" field of the request.
 	 * 
 	 * @param cmd
 	 *            The request (at this point, a command).
