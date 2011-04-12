@@ -14,9 +14,10 @@ import net.ooici.core.container.Container;
 import net.ooici.core.container.Container.Structure;
 import net.ooici.core.message.IonMessage.IonMsg;
 import net.ooici.play.InstrDriverInterface.Command;
-import net.ooici.siamci.IRequestDispatcher;
+import net.ooici.siamci.IPublisher;
+import net.ooici.siamci.IRequestProcessor;
+import net.ooici.siamci.IRequestProcessors;
 import net.ooici.siamci.SiamCiConstants;
-import net.ooici.siamci.IRequestDispatcher.IPublisher;
 import net.ooici.siamci.utils.ScUtils;
 
 import org.slf4j.Logger;
@@ -63,8 +64,8 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
 	/** The 'from' parameter when replying to a request */
 	private final MessagingName from;
 
-	/** The processor of requests */
-	private final IRequestDispatcher requestProcessor;
+	/** The processors for the requests */
+	private final IRequestProcessors requestProcessors;
 
 	private final MsgBrokerClient ionClient;
 
@@ -83,14 +84,15 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
 	 *             if something bad happens
 	 */
 	SiamCiServerIonMsg(String brokerHost, int brokerPort, String queueName,
-			IRequestDispatcher requestProcessor) throws Exception {
+			IRequestProcessors requestProcessors) throws Exception {
+
 		this.brokerHost = brokerHost;
 		this.brokerPort = brokerPort;
 		this.queueName = queueName;
 		this.from = new MessagingName(queueName);
-		this.requestProcessor = requestProcessor;
+		this.requestProcessors = requestProcessors;
 
-		this.requestProcessor.setPublisher(this);
+		this.requestProcessors.setPublisher(this);
 
 		if (log.isDebugEnabled()) {
 			log.debug("Creating SiamCiProcess");
@@ -160,7 +162,7 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
 			}
 
 			if (keepRunning && msgin != null) {
-				_dispatchRequest(msgin);
+				_dispatchIncomingRequest(msgin);
 			}
 		}
 	}
@@ -168,7 +170,7 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
 	/**
 	 * Dispatches the incoming request.
 	 */
-	private void _dispatchRequest(IonMessage msgin) {
+	private void _dispatchIncomingRequest(IonMessage msgin) {
 		try {
 			ionClient.ackMessage(msgin);
 		}
@@ -207,14 +209,15 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
 
 		final String publishStreamName = ScUtils.getPublishStreamName(cmd);
 		if (publishStreamName != null) {
-			log.info("Command with publish stream name: '" + publishStreamName+ "'");
+			log.info("Command with publish stream name: '" + publishStreamName
+					+ "'");
 		}
 
 		if (log.isDebugEnabled()) {
 			log.debug(_showMessage(cmd, "Command received:"));
 		}
 
-		GeneratedMessage response = requestProcessor.dispatchRequest(cmd);
+		GeneratedMessage response = _dispatchRequest(cmd);
 
 		if (log.isDebugEnabled()) {
 			log.debug(_showMessage(response, "Response to be replied:"));
@@ -251,6 +254,13 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
 				.info("Reply sent to '" + toName + "' conv-id: '" + convId
 						+ "' user-id: '" + userId + "' expiry: '" + expiry
 						+ "'" + "\n");
+	}
+
+	private GeneratedMessage _dispatchRequest(Command cmd) {
+		final String reqId = cmd.getCommand();
+		IRequestProcessor reqProc = requestProcessors
+				.getRequestProcessor(reqId);
+		return reqProc.processRequest(cmd);
 	}
 
 	/**
@@ -293,9 +303,7 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
 		// ERROR:RPC reply is not well formed. Header "status" must be set!
 		//
 		headers.put("status", "OK");
-		
-		
-		
+
 		headers.put("MY_Header", "MY_someValue");
 
 		ionClient.sendMessage(msg);
@@ -304,9 +312,11 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
 	/**
 	 * {@link IPublisher} operation.
 	 */
-	public void publish(String publishId, GeneratedMessage response, String streamName) {
+	public void publish(String publishId, GeneratedMessage response,
+			String streamName) {
 		if (log.isDebugEnabled()) {
-			log.debug("Publishing with publishId='" +publishId+ "' to queue='" + streamName + "'" + " reponse='"
+			log.debug("Publishing with publishId='" + publishId
+					+ "' to queue='" + streamName + "'" + " reponse='"
 					+ response + "'");
 		}
 
@@ -328,7 +338,7 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
 		headers.put("expiry", "0");
 
 		headers.put("status", "OK");
-		
+
 		headers.put("publish_id", publishId);
 
 		ionClient.sendMessage(msg);

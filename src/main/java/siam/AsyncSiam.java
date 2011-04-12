@@ -1,5 +1,7 @@
 package siam;
 
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -30,8 +32,43 @@ public class AsyncSiam implements IAsyncSiam {
 		this.siam = siam;
 	}
 
+	public String listPorts(final AsyncCallback<List<PortItem>> callback) {
+		if (callback == null) {
+			throw new IllegalArgumentException();
+		}
+
+		if (log.isDebugEnabled()) {
+			log.debug("submitting request for listPorts");
+		}
+
+		es.submit(new Runnable() {
+			public void run() {
+				try {
+					List<PortItem> result = siam.listPorts();
+					if (log.isTraceEnabled()) {
+						log.trace("To call callback with list of ports. "
+								+ "result=" + result);
+					}
+					callback.onSuccess(result);
+				}
+				catch (Throwable e) {
+					if (log.isTraceEnabled()) {
+						log.trace(
+								"To call callback with listPorts failure. "
+										+ "exception=" + e, e);
+					}
+					callback.onFailure(e);
+				}
+			}
+		});
+
+		// we always return null assuming the submission is always successful.
+		return null;
+	}
+
 	public String getPortStatus(final String port,
 			final AsyncCallback<String> callback) {
+
 		if (callback == null) {
 			throw new IllegalArgumentException();
 		}
@@ -46,7 +83,7 @@ public class AsyncSiam implements IAsyncSiam {
 					String result = siam.getPortStatus(port);
 					if (log.isTraceEnabled()) {
 						log.trace("To call callback with port status. port="
-								+ port + "  status=" + result);
+								+ port + "  result=" + result);
 					}
 					callback.onSuccess(result);
 				}
@@ -61,8 +98,120 @@ public class AsyncSiam implements IAsyncSiam {
 			}
 		});
 
-		// for the moment, we always return null assuming the submission is
-		// always successful.
+		// we always return null assuming the submission is always successful.
+		return null;
+	}
+
+	public String getPortLastSample(final String port,
+			final AsyncCallback<Map<String, String>> callback) {
+
+		if (callback == null) {
+			throw new IllegalArgumentException();
+		}
+
+		if (log.isDebugEnabled()) {
+			log.debug("submitting request for port last sample. port=" + port);
+		}
+
+		es.submit(new Runnable() {
+			public void run() {
+				try {
+					Map<String, String> result = siam.getPortLastSample(port);
+					if (log.isTraceEnabled()) {
+						log
+								.trace("To call callback with port last sample. port="
+										+ port + "  result=" + result);
+					}
+					callback.onSuccess(result);
+				}
+				catch (Throwable e) {
+					if (log.isTraceEnabled()) {
+						log.trace(
+								"To call callback with port last sample failure. port="
+										+ port + "  exception=" + e, e);
+					}
+					callback.onFailure(e);
+				}
+			}
+		});
+
+		// we always return null assuming the submission is always successful.
+		return null;
+	}
+
+	public String getPortProperties(final String port,
+			final AsyncCallback<Map<String, String>> callback) {
+
+		if (callback == null) {
+			throw new IllegalArgumentException();
+		}
+
+		if (log.isDebugEnabled()) {
+			log.debug("submitting request for port properties. port=" + port);
+		}
+
+		es.submit(new Runnable() {
+			public void run() {
+				try {
+					Map<String, String> result = siam.getPortProperties(port);
+					if (log.isTraceEnabled()) {
+						log.trace("To call callback with properties. port="
+								+ port + "  result=" + result);
+					}
+					callback.onSuccess(result);
+				}
+				catch (Throwable e) {
+					if (log.isTraceEnabled()) {
+						log.trace(
+								"To call callback with port properties failure. port="
+										+ port + "  exception=" + e, e);
+					}
+					callback.onFailure(e);
+				}
+			}
+		});
+
+		// we always return null assuming the submission is always successful.
+		return null;
+	}
+
+	public String setPortProperties(final String port,
+			final Map<String, String> params,
+			final AsyncCallback<Map<String, String>> callback) {
+
+		if (callback == null) {
+			throw new IllegalArgumentException();
+		}
+
+		if (log.isDebugEnabled()) {
+			log.debug("submitting request for setting port properties. port="
+					+ port);
+		}
+
+		es.submit(new Runnable() {
+			public void run() {
+				try {
+					Map<String, String> result = siam.setPortProperties(port,
+							params);
+					if (log.isTraceEnabled()) {
+						log
+								.trace("To call callback with setted properties. port="
+										+ port + "  result=" + result);
+					}
+					callback.onSuccess(result);
+				}
+				catch (Throwable e) {
+					if (log.isTraceEnabled()) {
+						log.trace(
+								"To call callback with set port properties failure. port="
+										+ port + "  exception=" + e, e);
+					}
+					callback.onFailure(e);
+				}
+			}
+		});
+
+		// we always return null assuming the submission is always successful.
 		return null;
 	}
 

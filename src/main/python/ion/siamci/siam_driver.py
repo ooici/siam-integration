@@ -144,6 +144,38 @@ class SiamInstrumentDriverClient(InstrumentDriverClient):
         # 'dummy': arg required by rpc_send
         (content, headers, message) = yield self.rpc_send('get_last_sample', 'dummy')
         defer.returnValue(content)
+        
+        
+    @defer.inlineCallbacks
+    def fetch_params(self, param_list):
+        """
+        NOTE: we override the method in the superclass because tha method expects the
+        resulting content to be a dict: assert(isinstance(content, dict))
+        In my current design, we work with the GPBs directly (with the idea that
+        any necessary conversions to more native python structures should be outside
+        of the driver). But all of this is TBD
+        """
+                
+        log.debug("SiamInstrumentDriverClient fetch_params " +str(param_list))
+        (content, headers, message) = yield self.rpc_send('fetch_params',
+                                                          param_list)
+        defer.returnValue(content)
+
+    @defer.inlineCallbacks
+    def set_params(self, param_dict):
+        """
+        NOTE: we override the method in the superclass because tha method expects the
+        resulting content to be a dict: assert(isinstance(content, dict))
+        In my current design, we work with the GPBs directly (with the idea that
+        any necessary conversions to more native python structures should be outside
+        of the driver). But all of this is TBD
+        """
+        
+        log.debug("SiamInstrumentDriverClient set_params " +str(param_dict))
+        (content, headers, message) = yield self.rpc_send('set_params',
+                                                          param_dict)
+        defer.returnValue(content)
+        
 
 # Spawn of the process using the module name
 factory = ProcessFactory(SiamInstrumentDriver)

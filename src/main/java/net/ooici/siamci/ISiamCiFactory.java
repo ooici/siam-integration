@@ -20,14 +20,16 @@ public interface ISiamCiFactory {
 	 */
 	public IAsyncSiam createAsyncSiam(ISiam siam) throws Exception;
 
+
 	/**
-	 * Gets the request dispatcher implementation.
+	 * Gets the request processors implementation.
 	 * 
 	 * @param siam
 	 *            interface to SIAM library
 	 */
-	public IRequestDispatcher createRequestDispatcher(ISiam siam);
+	public IRequestProcessors createRequestProcessors(ISiam siam);
 
+	
 	/**
 	 * Gets the SIAM-CI adapter implementation.
 	 * 
@@ -41,5 +43,5 @@ public interface ISiamCiFactory {
 	 */
 	public ISiamCiAdapter createSiamCiAdapter(String brokerHost,
 			int brokerPort, String queueName,
-			IRequestDispatcher requestDispatcher);
+			IRequestProcessors requestProcessors);
 }

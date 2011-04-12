@@ -83,6 +83,10 @@ class SiamCiAdapterProxy():
             arg.parameter = p
             
         if publish_stream:
+            #
+            # @todo: the publish_stream should go in a more proper place, not as
+            # one more channel!!
+            #
             arg = cmd.args.add()
             arg.channel = "publish_stream"
             arg.parameter = publish_stream
@@ -94,7 +98,7 @@ class SiamCiAdapterProxy():
         """
         Generic call and handling of response.
         @param message: the payload to be sent
-        @return: the response from the server
+        @return: the response from the SIAM-CI adapter
         """
         
         log.debug(show_message(message, "Sending command to " +self.queue))
@@ -107,7 +111,7 @@ class SiamCiAdapterProxy():
     def ping(self):
         """
         A simple check of communication with the SiamCi server, it issues an "echo" command
-        and returns true if the replied command is, hmm, "echo".
+        and returns true if the replied command is "echo".
         """
         cmd = yield self._make_command("echo")
         response = yield self._rpc(cmd)
@@ -118,11 +122,11 @@ class SiamCiAdapterProxy():
         defer.returnValue(response.command == "echo")
         
     @defer.inlineCallbacks
-    def list_ports(self):
+    def list_ports(self, publish_stream=None):
         """
         Retrieves the ports (instrument services) running on the SIAM node
         """
-        cmd = yield self._make_command("list_ports")
+        cmd = yield self._make_command("list_ports", publish_stream=publish_stream)
         response = yield self._rpc(cmd)
         log.debug(show_message(response, "list_ports response:"))
         
@@ -135,7 +139,7 @@ class SiamCiAdapterProxy():
         Gets the status of a particular instrument as indicated by the given port at creation time.
         
         @param publish_stream: If not None, the result of the command will be published to this
-                  queue (routin queue). Otherwise, the result will be returned by this method.
+                  queue (routing queue). Otherwise, the result will be returned by this method.
                   
         @return: if publish_stream is None, the result of the command; otherwise a SuccessFail object
                  indicating whether the command has been or has not been successfully submitted, with
@@ -149,30 +153,34 @@ class SiamCiAdapterProxy():
         defer.returnValue(response)
         
     @defer.inlineCallbacks
-    def get_last_sample(self):
+    def get_last_sample(self, publish_stream=None):
         """
         Gets the last sample from the instrument on the given "port"
         """
         assert self.port, "No port provided"
-        cmd = yield self._make_command("get_last_sample", [("port", self.port)])
+        cmd = yield self._make_command("get_last_sample", [("port", self.port)], publish_stream)
         response = yield self._rpc(cmd)
         log.debug(show_message(response, "get_last_sample response:"))
         
-        result = "ERROR"
-        if response.result == OK:
-            result = {}
-            for it in response.item:
-                result[it.pair.first] = it.pair.second
-                
+        result = response
+        
+        # TODO remove this conversion to python type. If such kind of conversions are needed,
+        # provide that functionality in some helper class.
+#        result = "ERROR"
+#        if response.result == OK:
+#            result = {}
+#            for it in response.item:
+#                result[it.pair.first] = it.pair.second
+            
         defer.returnValue(result)
         
     @defer.inlineCallbacks
-    def fetch_params(self, param_list=None):
+    def fetch_params(self, param_list=None, publish_stream=None):
         """
         Gets parameters associated with the instrument on the given "port"
         
-        @param param_list: the list of desired parameters. If empty (the default), all parameters
-              are requested.
+        @param param_list: the list of desired parameters. If None (which is the default), 
+              all parameters are requested.
         """
         if param_list is None: param_list = [] 
         assert self.port, "No port provided"
@@ -188,37 +196,41 @@ class SiamCiAdapterProxy():
                 # see https://confluence.oceanobservatories.org/display/CIDev/Instrument+Driver+Interface#InstrumentDriverInterface-getmessage
                 args.extend( [ ('instrument', it) ])
                 
-        cmd = yield self._make_command("fetch_params", args)
+        cmd = yield self._make_command("fetch_params", args, publish_stream)
         response = yield self._rpc(cmd)
         log.debug(show_message(response, "fetch_params response:"))
         
-        result = "ERROR"
-        if response.result == OK:
-            result = {}
-            for it in response.item:
-                result[it.pair.first] = it.pair.second
+        result = response
+        
+#        result = "ERROR"
+#        if response.result == OK:
+#            result = {}
+#            for it in response.item:
+#                result[it.pair.first] = it.pair.second
                 
         defer.returnValue(result)
         
         
     @defer.inlineCallbacks
-    def set_params(self, content):
+    def set_params(self, content, publish_stream=None):
 
         assert(isinstance(content, dict))
-        log.debug("set_params content: %s, keys: %s" %(str(content), str(content.keys)))
+        log.debug("set_params: " + str(content))
         
         args = [("port", self.port)]
         args.extend( [ (key, content[key]) for key in content.keys()] )
              
-        cmd = yield self._make_command("set_params", args)
+        cmd = yield self._make_command("set_params", args, publish_stream)
         response = yield self._rpc(cmd)
         log.debug(show_message(response, "fetch_params response:"))
         
-        result = "ERROR"
-        if response.result == OK:
-            result = {}
-            for it in response.item:
-                result[it.pair.first] = it.pair.second
+        result = response
+        
+#        result = "ERROR"
+#        if response.result == OK:
+#            result = {}
+#            for it in response.item:
+#                result[it.pair.first] = it.pair.second
                 
         defer.returnValue(result)
         

@@ -17,7 +17,6 @@ from net.ooici.play.instr_driver_interface_pb2 import OK, ERROR
 
 from ion.core import ioninit
 from ion.core import bootstrap
-#import ion.util.procutils as pu
 
 CONF = ioninit.config('startup.bootstrap-dx')
 
@@ -47,12 +46,40 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
         sup = yield bootstrap.bootstrap(ion_messaging, services)
         svc_id = yield sup.get_child_id(receiver_service_name)
         self.client = SiamCiReceiverServiceClient(proc=sup,target=svc_id)
+        # set a deafult expected timeout:
+        self.client.setExpectedTimeout(1)
     
 
     @defer.inlineCallbacks
     def tearDown(self):
         yield self.siamci.stop()
         yield self._stop_container()
+
+
+    @defer.inlineCallbacks
+    def test_list_ports_async(self):
+        #
+        # @todo: more robust assignment of publish IDs
+        #
+        publish_id = "list_ports;"
+        
+        # prepare to receive result:
+        yield self.client.expect(publish_id);
+        
+        # make request:
+        ret = yield self.siamci.list_ports(publish_stream="siamci." + receiver_service_name)
+
+        self.assertIsSuccessFail(ret)
+        self.assertEquals(ret.result, OK)
+        
+        # check that all expected were received
+        expected = yield self.client.getExpected()
+        self.assertEquals(len(expected), 0)
+        
+        # actual response should indicate OK: 
+        response = yield self.client.getAccepted(publish_id)
+        self.assertIsSuccessFail(response)
+        self.assertEquals(response.result, OK)
 
 
     @defer.inlineCallbacks
@@ -72,6 +99,160 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
         self.assertEquals(ret.result, OK)
         
         # check that all expected were received
-        expected = yield self.client.checkExpected()
+        expected = yield self.client.getExpected()
+        self.assertEquals(len(expected), 0)
+        
+        # actual response should indicate OK: 
+        response = yield self.client.getAccepted(publish_id)
+        self.assertIsSuccessFail(response)
+        self.assertEquals(response.result, OK)
+
+
+    @defer.inlineCallbacks
+    def test_get_last_sample_async(self):
+        #
+        # @todo: more robust assignment of publish IDs
+        #
+        publish_id = "get_last_sample;port=" + SiamCiTestCase.port
+        
+        # prepare to receive result:
+        yield self.client.expect(publish_id);
+        
+        # make request:
+        ret = yield self.siamci.get_last_sample(publish_stream="siamci." + receiver_service_name)
+
+        self.assertIsSuccessFail(ret)
+        self.assertEquals(ret.result, OK)
+        
+        # check that all expected were received
+        expected = yield self.client.getExpected()
+        self.assertEquals(len(expected), 0)
+        
+        # actual response should indicate OK: 
+        response = yield self.client.getAccepted(publish_id)
+        self.assertIsSuccessFail(response)
+        self.assertEquals(response.result, OK)
+        
+
+    @defer.inlineCallbacks
+    def test_fetch_params_some_good_async(self):
+        #
+        # @todo: more robust assignment of publish IDs
+        #
+        publish_id = "fetch_params;port=" + SiamCiTestCase.port
+        
+        # prepare to receive result:
+        yield self.client.expect(publish_id);
+        
+        ret = yield self.siamci.fetch_params(['startDelayMsec'], 
+                                             publish_stream="siamci." + receiver_service_name)
+        self.assertIsSuccessFail(ret)
+        self.assertEquals(ret.result, OK)
+        
+        # check that all expected were received
+        expected = yield self.client.getExpected()
         self.assertEquals(len(expected), 0)
 
+        # actual response should indicate OK: 
+        response = yield self.client.getAccepted(publish_id)
+        self.assertIsSuccessFail(response)
+        self.assertEquals(response.result, OK)
+        
+        
+    @defer.inlineCallbacks
+    def test_fetch_params_some_wrong_async(self):
+        #
+        # @todo: more robust assignment of publish IDs
+        #
+        publish_id = "fetch_params;port=" + SiamCiTestCase.port
+        
+        # prepare to receive result:
+        yield self.client.expect(publish_id);
+        
+        ret = yield self.siamci.fetch_params(['startDelayMsec', 'WRONG_PARAM'], 
+                                             publish_stream="siamci." + receiver_service_name)
+        self.assertIsSuccessFail(ret)
+        self.assertEquals(ret.result, OK)  # NOTE the immediate reply should be OK ...
+        
+        # check that all expected were received
+        expected = yield self.client.getExpected()
+        self.assertEquals(len(expected), 0)
+        
+        # ... but the actual response should indicate ERROR: 
+        response = yield self.client.getAccepted(publish_id)
+        self.assertIsSuccessFail(response)
+        self.assertEquals(response.result, ERROR)
+
+        
+    @defer.inlineCallbacks
+    def test_fetch_params_all_async(self):
+        #
+        # @todo: more robust assignment of publish IDs
+        #
+        publish_id = "fetch_params;port=" + SiamCiTestCase.port
+        
+        # prepare to receive result:
+        yield self.client.expect(publish_id);
+        
+        ret = yield self.siamci.fetch_params(publish_stream="siamci." + receiver_service_name)
+        self.assertIsSuccessFail(ret)
+        self.assertEquals(ret.result, OK)
+        
+        # check that all expected were received
+        expected = yield self.client.getExpected()
+        self.assertEquals(len(expected), 0)
+        
+        # actual response should indicate OK: 
+        response = yield self.client.getAccepted(publish_id)
+        self.assertIsSuccessFail(response)
+        self.assertEquals(response.result, OK)
+
+    @defer.inlineCallbacks
+    def test_set_params_good_async(self):
+        #
+        # @todo: more robust assignment of publish IDs
+        #
+        publish_id = "set_params;port=" + SiamCiTestCase.port
+        
+        # prepare to receive result:
+        yield self.client.expect(publish_id);
+        
+        ret = yield self.siamci.set_params({'startDelayMsec' : '1000' }, 
+                                           publish_stream="siamci." + receiver_service_name)
+        self.assertIsSuccessFail(ret)
+        self.assertEquals(ret.result, OK)
+        
+        # check that all expected were received
+        expected = yield self.client.getExpected()
+        self.assertEquals(len(expected), 0)
+        
+        # actual response should indicate OK: 
+        response = yield self.client.getAccepted(publish_id)
+        self.assertIsSuccessFail(response)
+        self.assertEquals(response.result, OK)
+
+    @defer.inlineCallbacks
+    def test_set_params_wrong_async(self):
+        #
+        # @todo: more robust assignment of publish IDs
+        #
+        publish_id = "set_params;port=" + SiamCiTestCase.port
+        
+        # prepare to receive result:
+        yield self.client.expect(publish_id);
+        
+        ret = yield self.siamci.set_params({'startDelayMsec' : '1000'
+                                            , 'WRONG_PARAM' : 'fooVal'
+                                          },
+                                          publish_stream="siamci." + receiver_service_name)
+        self.assertIsSuccessFail(ret)
+        self.assertEquals(ret.result, OK)
+        
+        # check that all expected were received
+        expected = yield self.client.getExpected()
+        self.assertEquals(len(expected), 0)
+        
+        # actual response should indicate OK: 
+        response = yield self.client.getAccepted(publish_id)
+        self.assertIsSuccessFail(response)
+        self.assertEquals(response.result, ERROR)

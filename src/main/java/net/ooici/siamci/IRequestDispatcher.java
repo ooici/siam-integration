@@ -1,7 +1,7 @@
 package net.ooici.siamci;
 
-import siam.IAsyncSiam;
 import net.ooici.play.InstrDriverInterface.Command;
+import siam.IAsyncSiam;
 
 import com.google.protobuf.GeneratedMessage;
 
@@ -15,34 +15,9 @@ import com.google.protobuf.GeneratedMessage;
  * interface gets more stabilized.
  * 
  * @author carueda
- * 
+ * @deprecated use new interfaces {@link IRequestProcessors} and {@link IRequestProcessor}.
  */
 public interface IRequestDispatcher {
-
-	/**
-	 * Interface for objects in charge of publishing responses for asynchronous
-	 * requests.
-	 * 
-	 * @author carueda
-	 */
-	public interface IPublisher {
-
-		/**
-		 * Called to send a reponse, which has been requested to be published
-		 * asynchronously.
-		 * 
-		 * @param publishId
-		 *            ID to correlate the request and the response
-		 * @param response
-		 *            The response to be published
-		 * @param streamName
-		 *            The queue (rounting key) where the reponse should be
-		 *            published.
-		 */
-		public void publish(String publishId, GeneratedMessage response,
-				String streamName);
-
-	}
 
 	/**
 	 * Sets the object for making asynchronous calls to SIAM.

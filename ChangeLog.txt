@@ -3,9 +3,35 @@ Created 2/9/2011
 Carlos Rueda - MBARI
 
 2011-04-11
-	- some code clean-up and doc. 
-	- TODO publish_id still to be assigned in a more robust way.
+	- Code clean-up and doc. 
 	- Type/operation renamings for concept: from "request processor" to "request dispatcher"
+	- Refactoring for better dispatch of requests (strategy pattern in essence):
+		- new interfaces IRequestProcessors, and IRequestProcessor, and corresponding
+		  implementation classes, RequestProcessors and the varios classes under reqproc.
+		- IRequestDispatcher deprecated (in fact ready to be removed in a next code clean-up)
+	- All operations that were implemented for the synchronous style are now enabled
+	  for asynchronous notification of results as well.
+	
+	Some TODOS	
+		- publish_id still to be assigned in a more robust way.
+		- capture publish_stream explicitly in the protobuff for Command. Currently, this
+		  is captured as one element in the ChannelParameterPair list, which is of course
+		  inappropriate.
+		- SiamCiReceiverService.op_getExpected: robust handling of timeout
+	
+		- **NOTE**
+			In the SIAM driver (SiamInstrumentDriver class in python) the various
+			responses are handled as GPBs and NOT as native python structures (like dict),
+			which is currently the suggested style in the ION InstrumentDriver class.
+			My current approach is that any conversion to/from python structures should be
+			handled outside of the driver.  BUT all of this is to be decided when
+			working on the integration with the Intrument Agent.
+			
+			
+	- NOTE about SIAM: I'm noticing that the setPortProperties operation in SIAM sometimes
+	  takes several seconds causing a timeout on the python side -- why is such operation 
+	  taking too long for the fake instrument I'm using?
+	  
 	
 2011-04-10
     - test_receiver_service.py with more complete unit tests for the receiver service.

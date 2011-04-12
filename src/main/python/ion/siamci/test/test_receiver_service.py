@@ -53,7 +53,7 @@ class SiamCiReceiverServiceTest(IonTestCase):
     def test_expect_1(self):
         publish_id = "some_publish_id"
         yield self.client.expect(publish_id)
-        expected = yield self.client.checkExpected()
+        expected = yield self.client.getExpected()
         self.assertEquals(len(expected), 1)
         self.assertTrue(publish_id in expected)
 
@@ -62,7 +62,7 @@ class SiamCiReceiverServiceTest(IonTestCase):
         publish_id = "some_publish_id"
         yield self.client.expect(publish_id)
         yield self.client.acceptResponse(publish_id)
-        expected = yield self.client.checkExpected()
+        expected = yield self.client.getExpected()
         self.assertEquals(len(expected), 0)
 
                 

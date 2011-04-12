@@ -13,6 +13,7 @@ import net.ooici.play.InstrDriverInterface.StringPair;
 import net.ooici.play.InstrDriverInterface.SuccessFail;
 import net.ooici.play.InstrDriverInterface.SuccessFail.Builder;
 import net.ooici.play.InstrDriverInterface.SuccessFail.Item;
+import net.ooici.siamci.IPublisher;
 import net.ooici.siamci.IRequestDispatcher;
 import net.ooici.siamci.utils.ScUtils;
 
@@ -57,34 +58,35 @@ class RequestDispatcher implements IRequestDispatcher {
 	public GeneratedMessage dispatchRequest(Command cmd) {
 		GeneratedMessage response;
 
-		if ("list_ports".equals(cmd.getCommand())) {
+		String reqId = cmd.getCommand();
+
+		if ("list_ports".equals(reqId)) {
 			response = _listPorts();
 		}
-		else if ("get_status".equals(cmd.getCommand())) {
+		else if ("get_status".equals(reqId)) {
 			response = _getStatus(cmd);
 		}
-		else if ("get_last_sample".equals(cmd.getCommand())) {
+		else if ("get_last_sample".equals(reqId)) {
 			response = _getLastSample(cmd);
 		}
-		else if ("fetch_params".equals(cmd.getCommand())) {
+		else if ("fetch_params".equals(reqId)) {
 			response = _fetchParams(cmd);
 		}
-		else if ("set_params".equals(cmd.getCommand())) {
+		else if ("set_params".equals(reqId)) {
 			response = _setParams(cmd);
 		}
-		else if ("ping".equals(cmd.getCommand())) {
+		else if ("ping".equals(reqId)) {
 			SuccessFail sf = SuccessFail.newBuilder().setResult(Result.OK)
 					.build();
 			response = sf;
 		}
-		else if ("echo".equals(cmd.getCommand())) {
+		else if ("echo".equals(reqId)) {
 			// mainly for testing purposes; return the given command:
 			response = cmd;
 		}
 		else {
 			// TODO others
-			String description = "Command '" + cmd.getCommand()
-					+ "' not implemented";
+			String description = "Command '" + reqId + "' not implemented";
 			log.debug(description);
 			response = ScUtils.createFailResponse(description);
 		}
@@ -138,7 +140,8 @@ class RequestDispatcher implements IRequestDispatcher {
 		if (publishStream != null) {
 			// asynchronous handling.
 			//
-			GeneratedMessage response = _getAndPublishStatus(port, publishStream);
+			GeneratedMessage response = _getAndPublishStatus(port,
+					publishStream);
 			return response;
 		}
 		else {
@@ -175,11 +178,11 @@ class RequestDispatcher implements IRequestDispatcher {
 	private GeneratedMessage _getAndPublishStatus(final String port,
 			final String publishStream) {
 		_checkAsyncSetup();
-		
+
 		//
 		// TODO more robust assignment of publish IDs
 		//
-		final String publishId = "get_status;port=" +port;
+		final String publishId = "get_status;port=" + port;
 
 		asyncSiam.getPortStatus(port, new AsyncCallback<String>() {
 
@@ -224,35 +227,49 @@ class RequestDispatcher implements IRequestDispatcher {
 	 */
 	private GeneratedMessage _getLastSample(Command cmd) {
 		if (cmd.getArgsCount() == 0) {
-			return ScUtils
-					.createFailResponse("get_last_sample command requires at least an argument");
+			String msg = "get_last_sample command requires at least an argument";
+			log.warn(msg);
+			return ScUtils.createFailResponse(msg);
 		}
 		ChannelParameterPair cp = cmd.getArgs(0);
 		if (!"port".equals(cp.getChannel())) {
-			return ScUtils
-					.createFailResponse("get_last_sample command only accepts 'port' argument");
+			String msg = "get_last_sample command only accepts 'port' argument";
+			log.warn(msg);
+			return ScUtils.createFailResponse(msg);
 		}
-		String port = cp.getParameter();
+		final String port = cp.getParameter();
 
-		Map<String, String> sample = null;
-		try {
-			sample = siam.getPortLastSample(port);
+		final String publishStream = ScUtils.getPublishStreamName(cmd);
+		if (publishStream != null) {
+			// asynchronous handling.
+			//
+			GeneratedMessage response = _getAndPublishStatus(port,
+					publishStream);
+			return response;
 		}
-		catch (Exception e) {
-			log.warn("_getLastSample exception", e);
-			return ScUtils.createFailResponse(e.getClass().getName() + ": "
-					+ e.getMessage());
-		}
+		else {
+			// synchronous response.
+			//
+			Map<String, String> sample = null;
+			try {
+				sample = siam.getPortLastSample(port);
+			}
+			catch (Exception e) {
+				log.warn("_getLastSample exception", e);
+				return ScUtils.createFailResponse(e.getClass().getName() + ": "
+						+ e.getMessage());
+			}
 
-		Builder buildr = SuccessFail.newBuilder().setResult(Result.OK);
-		for (Entry<String, String> es : sample.entrySet()) {
-			buildr.addItem(Item.newBuilder().setType(Item.Type.PAIR).setPair(
-					StringPair.newBuilder().setFirst(es.getKey()).setSecond(
-							es.getValue())));
-		}
+			Builder buildr = SuccessFail.newBuilder().setResult(Result.OK);
+			for (Entry<String, String> es : sample.entrySet()) {
+				buildr.addItem(Item.newBuilder().setType(Item.Type.PAIR).setPair(
+						StringPair.newBuilder().setFirst(es.getKey()).setSecond(
+								es.getValue())));
+			}
 
-		SuccessFail response = buildr.build();
-		return response;
+			SuccessFail response = buildr.build();
+			return response;
+		}
 	}
 
 	/**
@@ -276,9 +293,9 @@ class RequestDispatcher implements IRequestDispatcher {
 		String port = cp.getParameter();
 
 		// get all instrument parameters:
-		Map<String, String> params = null;
+		Map<String, String> props = null;
 		try {
-			params = siam.getPortProperties(port);
+			props = siam.getPortProperties(port);
 		}
 		catch (Exception e) {
 			log.warn("fetch_params exception", e);
@@ -309,7 +326,7 @@ class RequestDispatcher implements IRequestDispatcher {
 
 			}
 			for (String reqParam : requestedParams) {
-				String value = params.get(reqParam);
+				String value = props.get(reqParam);
 
 				if (value == null) {
 					//
@@ -328,7 +345,7 @@ class RequestDispatcher implements IRequestDispatcher {
 		}
 		else {
 			// ALL parameters are being requested.
-			for (Entry<String, String> es : params.entrySet()) {
+			for (Entry<String, String> es : props.entrySet()) {
 				buildr.addItem(Item.newBuilder().setType(Item.Type.PAIR)
 						.setPair(
 								StringPair.newBuilder().setFirst(es.getKey())

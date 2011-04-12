@@ -12,6 +12,7 @@ from ion.test.iontest import IonTestCase
 
 from ion.siamci.siamci_proxy import SiamCiAdapterProxy
 from ion.siamci.test.siamcitest import SiamCiTestCase
+from net.ooici.play.instr_driver_interface_pb2 import OK, ERROR
 
 #from twisted.trial import unittest
 from os import getenv
@@ -41,6 +42,8 @@ class TestSiamCiAdapterProxy(SiamCiTestCase):
     @defer.inlineCallbacks
     def test_list_ports(self):
         ret = yield self.siamci.list_ports()
+        self.assertIsSuccessFail(ret)
+        self.assertEquals(ret.result, OK)
 
     @defer.inlineCallbacks
     def test_get_status(self):
@@ -49,24 +52,41 @@ class TestSiamCiAdapterProxy(SiamCiTestCase):
     @defer.inlineCallbacks
     def test_get_last_sample(self):
         ret = yield self.siamci.get_last_sample()
-        self.assertIsInstance(ret, dict)
+        self.assertIsSuccessFail(ret)
+        self.assertEquals(ret.result, OK)
         
     @defer.inlineCallbacks
-    def test_fetch_params_some(self):
+    def test_fetch_params_some_good(self):
         """fetch specific list of parameters"""
-        ret = yield self.siamci.fetch_params(['startDelayMsec', 'wrongParam'])
-        self.assertIsInstance(ret, dict)
+        ret = yield self.siamci.fetch_params(['startDelayMsec'])
+        self.assertIsSuccessFail(ret)
+        self.assertEquals(ret.result, OK)
+        
+    @defer.inlineCallbacks
+    def test_fetch_params_some_wrong(self):
+        """fetch specific list of parameters"""
+        ret = yield self.siamci.fetch_params(['startDelayMsec', 'WRONG_PARAM'])
+        self.assertIsSuccessFail(ret)
+        self.assertEquals(ret.result, ERROR)
         
     @defer.inlineCallbacks
     def test_fetch_params_all(self):
         """fetch all parameters"""
         ret = yield self.siamci.fetch_params()
-        self.assertIsInstance(ret, dict)
+        self.assertIsSuccessFail(ret)
+        self.assertEquals(ret.result, OK)
         
     @defer.inlineCallbacks
-    def test_set_params(self):
+    def test_set_params_good(self):
+        ret = yield self.siamci.set_params({'startDelayMsec' : '1000' })
+        self.assertIsSuccessFail(ret)
+        self.assertEquals(ret.result, OK)
+        
+    @defer.inlineCallbacks
+    def test_set_params_wrong(self):
         ret = yield self.siamci.set_params({'startDelayMsec' : '1000'
-                                            , 'wrongParam' : 'fooVal'
+                                            , 'WRONG_PARAM' : 'fooVal'
                                           })
-        self.assertIsInstance(ret, (dict, str))
+        self.assertIsSuccessFail(ret)
+        self.assertEquals(ret.result, ERROR)
         
