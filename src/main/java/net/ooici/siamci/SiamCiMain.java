@@ -106,9 +106,16 @@ public class SiamCiMain {
 	 * Launches the SIAM-CI adapter program.
 	 * 
 	 * @param args
-	 * 		Currently, only the host of the SIAM node is accepted. By default, "localhost".
-	 *      --help prints a usage message.
-	 * 
+	 * 		Here is the usage message: (mvn exec:java -Dsiam-ci -Dexec.args=--help)
+	 * <pre>
+		Option                                  Description                            
+		------                                  -----------                            
+		-?, --help                              print help message                     
+		--brokerHost &lt;host>                     Broker host (default: localhost)       
+		--brokerPort &lt;port>                     Broker port (default: 5672)            
+		--queue &lt;name>                          Queue name (default: SIAM-CI)          
+		--siam &lt;host>                           SIAM node host (default: localhost)    
+	 * </pre> 
 	 * @throws Exception
 	 */
 	public static void main(String[] args) throws Exception {
