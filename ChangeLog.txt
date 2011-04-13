@@ -37,6 +37,9 @@ Carlos Rueda - MBARI
 	  now it does
 	  		yield self._spawn_processes(services)
 	  		
+	 - Did same adjustment for test_siamci_async.py because it also works fine with my current 
+	   image although it is failing with latest image (but is a preparation for later upgrade). 
+	  		
 	  		
 	- receiver service's getExpected operation now does a more appropriate handling of the
 	  given timeout: in a loop while there are still pending id's it sleeps for a fraction

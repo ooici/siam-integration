@@ -16,12 +16,12 @@ from ion.siamci.receiver_service import SiamCiReceiverServiceClient
 from net.ooici.play.instr_driver_interface_pb2 import OK, ERROR
 
 from ion.core import ioninit
-from ion.core import bootstrap
+#from ion.core import bootstrap
 
-CONF = ioninit.config('startup.bootstrap-dx')
+#CONF = ioninit.config('startup.bootstrap-dx') #-
 
 # Static definition of message queues
-ion_messaging = ioninit.get_config('messaging_cfg', CONF)
+#ion_messaging = ioninit.get_config('messaging_cfg', CONF) #-
 
 # Note the ``'spawnargs':{ 'servicename':receiver_service_name }'' below to properly name
 # the service; otherwise the default name in SiamCiReceiverService.declare would be used.
@@ -43,7 +43,8 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
              'spawnargs':{ 'servicename':receiver_service_name }
             }
         ]
-        sup = yield bootstrap.bootstrap(ion_messaging, services)
+        sup = yield self._spawn_processes(services) #=
+#        sup = yield bootstrap.bootstrap(ion_messaging, services) #-
         svc_id = yield sup.get_child_id(receiver_service_name)
         self.client = SiamCiReceiverServiceClient(proc=sup,target=svc_id)
         # set a default expected timeout:
@@ -252,7 +253,7 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
         expected = yield self.client.getExpected()
         self.assertEquals(len(expected), 0)
         
-        # actual response should indicate OK: 
+        # actual response should indicate ERROR: 
         response = yield self.client.getAccepted(publish_id)
         self.assertIsSuccessFail(response)
         self.assertEquals(response.result, ERROR)
