@@ -14,6 +14,8 @@ public interface IPublisher {
 	 * Called to send a response, which has been requested to be published
 	 * asynchronously.
 	 * 
+     * @param reqId
+     *            ID of the request
 	 * @param publishId
 	 *            ID to correlate the request and the response
 	 * @param response
@@ -22,7 +24,7 @@ public interface IPublisher {
 	 *            The queue (rounting key) where the response should be
 	 *            published.
 	 */
-	public void publish(String publishId, GeneratedMessage response,
+	public void publish(int reqId, String publishId, GeneratedMessage response,
 			String streamName);
 
 }

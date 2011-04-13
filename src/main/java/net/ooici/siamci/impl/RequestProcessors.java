@@ -97,9 +97,9 @@ class RequestProcessors implements IRequestProcessors {
 	}
 
 	private static BaseRequestProcessor _unrecognizedRequestProcessor = new BaseRequestProcessor() {
-		public GeneratedMessage processRequest(Command cmd) {
-			String reqId = cmd.getCommand();
-			String description = "Command '" + reqId + "' not recognized";
+		public GeneratedMessage processRequest(int reqId, Command cmd) {
+			String cmdName = cmd.getCommand();
+			String description = _rid(reqId) + "Command '" + cmdName + "' not recognized";
 			log.debug(description);
 			return ScUtils.createFailResponse(description);
 		}

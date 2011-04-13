@@ -32,16 +32,16 @@ public class SetParamsRequestProcessor extends BaseRequestProcessor {
 
 	private static final String CMD_NAME = "set_params";
 
-	public GeneratedMessage processRequest(Command cmd) {
+	public GeneratedMessage processRequest(int reqId, Command cmd) {
 
 		if (cmd.getArgsCount() < 2) {
-			String msg = CMD_NAME + ": command requires at least two arguments";
+			String msg = _rid(reqId) + CMD_NAME + ": command requires at least two arguments";
 			log.warn(msg);
 			return ScUtils.createFailResponse(msg);
 		}
 		ChannelParameterPair cp = cmd.getArgs(0);
 		if (!"port".equals(cp.getChannel())) {
-			String msg = CMD_NAME + ": first argument must be 'port'";
+			String msg = _rid(reqId) + CMD_NAME + ": first argument must be 'port'";
 			log.warn(msg);
 			return ScUtils.createFailResponse(msg);
 		}
@@ -60,7 +60,7 @@ public class SetParamsRequestProcessor extends BaseRequestProcessor {
 		if (publishStream != null) {
 			// asynchronous handling.
 			//
-			GeneratedMessage response = _getAndPublishResult(cmd, port, params,
+			GeneratedMessage response = _getAndPublishResult(reqId, cmd, port, params,
 					publishStream);
 			return response;
 		}
@@ -71,12 +71,12 @@ public class SetParamsRequestProcessor extends BaseRequestProcessor {
 				params = siam.setPortProperties(port, params);
 			}
 			catch (Exception e) {
-				log.warn("setPortProperties exception", e);
-				return ScUtils.createFailResponse(e.getClass().getName() + ": "
+				log.warn(_rid(reqId) + "setPortProperties exception", e);
+				return ScUtils.createFailResponse(_rid(reqId) + e.getClass().getName() + ": "
 						+ e.getMessage());
 			}
 
-			GeneratedMessage response = _createResultResponse(cmd, params);
+			GeneratedMessage response = _createResultResponse(reqId, cmd, params);
 			return response;
 		}
 	}
@@ -93,7 +93,7 @@ public class SetParamsRequestProcessor extends BaseRequestProcessor {
 	 *            the queue (rounting key) to publish the response.
 	 * @return The {@link SuccessFail} result of the submission of the request.
 	 */
-	private GeneratedMessage _getAndPublishResult(final Command cmd,
+	private GeneratedMessage _getAndPublishResult(final int reqId, final Command cmd,
 			final String port, final Map<String, String> params,
 			final String publishStream) {
 		_checkAsyncSetup();
@@ -107,16 +107,16 @@ public class SetParamsRequestProcessor extends BaseRequestProcessor {
 				new AsyncCallback<Map<String, String>>() {
 
 					public void onSuccess(Map<String, String> result) {
-						GeneratedMessage response = _createResultResponse(cmd,
+						GeneratedMessage response = _createResultResponse(reqId, cmd,
 								result);
-						publisher.publish(publishId, response, publishStream);
+						publisher.publish(reqId, publishId, response, publishStream);
 					}
 
 					public void onFailure(Throwable e) {
 						GeneratedMessage response = ScUtils
 								.createFailResponse(e.getClass().getName()
 										+ ": " + e.getMessage());
-						publisher.publish(publishId, response, publishStream);
+						publisher.publish(reqId, publishId, response, publishStream);
 					}
 				});
 
@@ -135,7 +135,7 @@ public class SetParamsRequestProcessor extends BaseRequestProcessor {
 	 *            parameters that have been set.
 	 * @return a response
 	 */
-	private GeneratedMessage _createResultResponse(Command cmd,
+	private GeneratedMessage _createResultResponse(int reqId, Command cmd,
 			Map<String, String> params) {
 
 		Builder buildr = SuccessFail.newBuilder().setResult(Result.OK);

@@ -24,7 +24,20 @@ from net.ooici.play.instr_driver_interface_pb2 import Command, SuccessFail, OK, 
        
 class SiamInstrumentDriver(InstrumentDriver):
     """
-    @todo: under construction
+    Instrument driver interface to a SIAM enabled instrument.
+    Operations are supported by the core class SiamCiAdapterProxy.
+    
+    @todo: do translation of GPBs to the native python structures proposed by the 
+           Instrument Driver Interface page. At this point, I'm focusing my attention on
+           the core needed functionality and using the GPBs directly.
+           NOTE: The translation may probably be done only in SiamInstrumentDriverClient
+           and no necessarily in SiamInstrumentDriver. 
+    
+    @todo: NOT all operations are instrument-specific; there are some that are associated
+           with the SIAM node in general, for example, to retrieve all the instruments that
+           are deployed on that node.  The TODO is about separating this more generic 
+           functionality and use relevant ION mechanisms (eg., resource registries) for
+           those purposes.
     """
 
     def __init__(self, *args, **kwargs):
@@ -34,8 +47,10 @@ class SiamInstrumentDriver(InstrumentDriver):
         kwargs["spawnargs"]["pid"] will be used to connect to the SIAM-CI adapter service.
         
         This instance will be for a particular SIAM instrument if the 'port' parameter is given, which
-        is obtained from kwargs["spawnargs"]["port"] if defined.
+        is obtained from kwargs["spawnargs"]["port"] if defined. Otherwise, only generic
+        operations (like, list_ports) will be enabled.
         """
+        
         InstrumentDriver.__init__(self, *args, **kwargs)
         pid = None
         port = None
@@ -120,8 +135,20 @@ class SiamInstrumentDriver(InstrumentDriver):
 
 class SiamInstrumentDriverClient(InstrumentDriverClient):
     """
-    The client class for the instrument driver. This is the client that the
-    instrument agent can use for communicating with the driver.
+    Instrument driver interface to a SIAM enabled instrument.
+    Operations are supported by the core class SiamCiAdapterProxy.
+    
+    @todo: do translation of GPBs to the native python structures proposed by the 
+           Instrument Driver Interface page. At this point, I'm focusing my attention on
+           the core needed functionality and using the GPBs directly.
+           NOTE: The translation may probably be done only in SiamInstrumentDriverClient
+           and no necessarily in SiamInstrumentDriver. 
+    
+    @todo: NOT all operations are instrument-specific; there are some that are associated
+           with the SIAM node in general, for example, to retrieve all the instruments that
+           are deployed on that node.  The TODO is about separating this more generic 
+           functionality and use relevant ION mechanisms (eg., resource registries) for
+           those purposes.
     """
     
     @defer.inlineCallbacks
@@ -141,39 +168,44 @@ class SiamInstrumentDriverClient(InstrumentDriverClient):
     @defer.inlineCallbacks
     def get_last_sample(self):
         log.debug("SiamInstrumentDriverClient get_last_sample ...")
-        # 'dummy': arg required by rpc_send
+        # 'dummy': an arg required by rpc_send
         (content, headers, message) = yield self.rpc_send('get_last_sample', 'dummy')
+        
+        # @todo: conversion to python type 
+        
         defer.returnValue(content)
         
         
     @defer.inlineCallbacks
     def fetch_params(self, param_list):
         """
-        NOTE: we override the method in the superclass because tha method expects the
+        @todo: we override the method in the superclass because that method expects the
         resulting content to be a dict: assert(isinstance(content, dict))
-        In my current design, we work with the GPBs directly (with the idea that
-        any necessary conversions to more native python structures should be outside
-        of the driver). But all of this is TBD
+        In my current design, we work with the GPBs directly.
         """
                 
         log.debug("SiamInstrumentDriverClient fetch_params " +str(param_list))
         (content, headers, message) = yield self.rpc_send('fetch_params',
                                                           param_list)
+        
+        # @todo: conversion to python type 
+        
         defer.returnValue(content)
 
     @defer.inlineCallbacks
     def set_params(self, param_dict):
         """
-        NOTE: we override the method in the superclass because tha method expects the
+        @todo: we override the method in the superclass because that method expects the
         resulting content to be a dict: assert(isinstance(content, dict))
-        In my current design, we work with the GPBs directly (with the idea that
-        any necessary conversions to more native python structures should be outside
-        of the driver). But all of this is TBD
+        In my current design, we work with the GPBs directly.
         """
         
         log.debug("SiamInstrumentDriverClient set_params " +str(param_dict))
         (content, headers, message) = yield self.rpc_send('set_params',
                                                           param_dict)
+        
+        # @todo: conversion to python type 
+        
         defer.returnValue(content)
         
 

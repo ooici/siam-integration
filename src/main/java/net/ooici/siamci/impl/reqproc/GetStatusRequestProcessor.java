@@ -24,15 +24,15 @@ public class GetStatusRequestProcessor extends BaseRequestProcessor {
 	private static final Logger log = LoggerFactory
 			.getLogger(GetStatusRequestProcessor.class);
 
-	public GeneratedMessage processRequest(Command cmd) {
+	public GeneratedMessage processRequest(int reqId, Command cmd) {
 		if (cmd.getArgsCount() == 0) {
-			String msg = CMD_NAME+ ": command requires at least an argument";
+			String msg = _rid(reqId) + CMD_NAME+ ": command requires at least an argument";
 			log.warn(msg);
 			return ScUtils.createFailResponse(msg);
 		}
 		ChannelParameterPair cp = cmd.getArgs(0);
 		if (!"port".equals(cp.getChannel())) {
-			String msg = CMD_NAME+ ": command requires 'port' as first argument";
+			String msg = _rid(reqId) + CMD_NAME+ ": command requires 'port' as first argument";
 			log.warn(msg);
 			return ScUtils.createFailResponse(msg);
 		}
@@ -42,7 +42,7 @@ public class GetStatusRequestProcessor extends BaseRequestProcessor {
 		if (publishStream != null) {
 			// asynchronous handling.
 			//
-			GeneratedMessage response = _getAndPublishResult(port,
+			GeneratedMessage response = _getAndPublishResult(reqId, port,
 					publishStream);
 			return response;
 		}
@@ -54,12 +54,12 @@ public class GetStatusRequestProcessor extends BaseRequestProcessor {
 				status = siam.getPortStatus(port);
 			}
 			catch (Exception e) {
-				log.warn("getPortStatus exception", e);
+				log.warn(_rid(reqId) + "getPortStatus exception", e);
 				return ScUtils.createFailResponse(e.getClass().getName() + ": "
 						+ e.getMessage());
 			}
 
-			GeneratedMessage response = _createResultResponse(status);
+			GeneratedMessage response = _createResultResponse(reqId, status);
 			return response;
 		}
 	}
@@ -73,7 +73,7 @@ public class GetStatusRequestProcessor extends BaseRequestProcessor {
 	 *            the queue (rounting key) to publish the response.
 	 * @return The {@link SuccessFail} result of the submission of the request.
 	 */
-	private GeneratedMessage _getAndPublishResult(final String port,
+	private GeneratedMessage _getAndPublishResult(final int reqId, final String port,
 			final String publishStream) {
 		_checkAsyncSetup();
 
@@ -85,15 +85,15 @@ public class GetStatusRequestProcessor extends BaseRequestProcessor {
 		asyncSiam.getPortStatus(port, new AsyncCallback<String>() {
 
 			public void onSuccess(String result) {
-				GeneratedMessage response = _createResultResponse(result);
-				publisher.publish(publishId, response, publishStream);
+				GeneratedMessage response = _createResultResponse(reqId, result);
+				publisher.publish(reqId, publishId, response, publishStream);
 			}
 
 			public void onFailure(Throwable e) {
 				GeneratedMessage response = ScUtils.createFailResponse(e
 						.getClass().getName()
 						+ ": " + e.getMessage());
-				publisher.publish(publishId, response, publishStream);
+				publisher.publish(reqId, publishId, response, publishStream);
 			}
 		});
 
@@ -107,7 +107,7 @@ public class GetStatusRequestProcessor extends BaseRequestProcessor {
 	 * TODO currently capturing this result in a {@link SuccessFail} instance;
 	 * should probably be a more appropiate GPB.
 	 */
-	private GeneratedMessage _createResultResponse(String result) {
+	private GeneratedMessage _createResultResponse(int reqId, String result) {
 		GeneratedMessage response = ScUtils.createSuccessResponse(result);
 		return response;
 	}

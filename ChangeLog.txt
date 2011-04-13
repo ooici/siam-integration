@@ -2,12 +2,105 @@ SiamCi integration prototype
 Created 2/9/2011
 Carlos Rueda - MBARI
 
+2011-04-13
+	- updated code comments in various places to better clarify current status, in particular
+	  in the SiamInstrumentDriver class (python).
+	  
+	- SiamCiServerIonMsg: The main part of the dispatch of a request is now launched in a 
+	  different thread (using an Executors.newCachedThreadPool()).
+	- Included request ID to better identify the specific request among the various 
+	  possible concurrent log messages.
+	- The output from the adapter program looks now as follows 
+	  (with ``SIAM_CI=-  bin/trial ion/siamci/test/test_siamci_async.py'' running on the python side):
+		$ mvn exec:java -Dsiam-ci 
+		04-13-2011 16:17:08,744 [SiamCiMain        ] INFO  net.ooici.siamci.SiamCiMain - Listing instruments in the SIAM node:
+		04-13-2011 16:17:08,749 [SiamCiMain        ] WARN  siam.PortLister - UnmarshalException with device by id '1151'. Is the instrument jar in the classpath?
+		04-13-2011 16:17:08,760 [SiamCiMain        ] INFO  net.ooici.siamci.SiamCiMain -  * port='Foo' device='1151' service='Dummy'
+		04-13-2011 16:17:08,760 [SiamCiMain        ] INFO  net.ooici.siamci.SiamCiMain -  * port='testPort' device='1235' service='TEstSiamInstrument'
+		04-13-2011 16:17:08,760 [SiamCiMain        ] INFO  net.ooici.siamci.SiamCiMain - Starting SIAM-CI adapter. SIAM node host: localhost
+		04-13-2011 16:17:08,868 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Running SiamCiServerIonMsg (broker='localhost:5672', queue='SIAM-CI', exchange='magnet.topic')
+		04-13-2011 16:17:08,868 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [0] Waiting for request ...
+		04-13-2011 16:17:22,847 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [0] Request <fetch_params> received from 'carueda.shore.mbari.org.76526.1b' conv-id='#3'
+		04-13-2011 16:17:22,848 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [1] Waiting for request ...
+		04-13-2011 16:17:22,848 [pool-2-thread-1   ] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [0] Command with publish stream name: 'siamci.siamci_receiver_test_async'
+		04-13-2011 16:17:22,856 [pool-2-thread-1   ] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [0] Reply sent to 'carueda.shore.mbari.org.76526.1b' conv-id:'#3' user-id:'ANONYMOUS' expiry:0
+		
+		04-13-2011 16:17:22,858 [pool-1-thread-1   ] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [0] Publish message sent. publishId='fetch_params;port=testPort' to queue='siamci.siamci_receiver_test_async'
+		04-13-2011 16:17:23,089 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [1] Request <fetch_params> received from 'carueda.shore.mbari.org.76526.8b' conv-id='#11'
+		04-13-2011 16:17:23,090 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [2] Waiting for request ...
+		04-13-2011 16:17:23,090 [pool-2-thread-1   ] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [1] Command with publish stream name: 'siamci.siamci_receiver_test_async'
+		04-13-2011 16:17:23,091 [pool-2-thread-1   ] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [1] Reply sent to 'carueda.shore.mbari.org.76526.8b' conv-id:'#11' user-id:'ANONYMOUS' expiry:0
+		
+		04-13-2011 16:17:23,095 [pool-1-thread-1   ] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [1] Publish message sent. publishId='fetch_params;port=testPort' to queue='siamci.siamci_receiver_test_async'
+		04-13-2011 16:17:23,317 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [2] Request <fetch_params> received from 'carueda.shore.mbari.org.76526.15b' conv-id='#19'
+	    ...
+	- these adjustments were mainly made as part of the testing with the DataTurbine mechanism to
+	  get data from the instrument, see below.    
+	
+	  
+	- RbnbSinkProgram: new test program to retrieve data from a SIAM instrument enabled with the
+	  "publisherHost" property. (This property makes the SIAM publish data to the corresponding
+	  RBNB server indicated by the property, for example, "localhost:3333".)
+	  
+	  See below for how to run the program.
+	  
+	  **NOTE**  I'm noticing that the set parameters operation seems even more likely to time out 
+	  when the test instrument is enabled with the publisherHost property!  
+	  TODO: Consult the SIAM experts ;)
+	   
+	  
+	  RbnbSinkProgram can be run from maven:
+		$ mvn exec:java -Prbnb-sink -Dexec.args=--help
+		RbnbSinkProgram usage:
+		Option                                  Description                            
+		------                                  -----------                            
+		-?, --help                              print help message                     
+		--channels <channels>                   Channels separated by comma (default:  
+		                                          sequenceNumber,val)                  
+		--client <host>                         Client name (default:                  
+		                                          TEstSiamInstrument-1235)             
+		--host <host>                           RBNB server host (default: localhost)  
+		--port <port>                           RBNB server port (default: 3333)
+		
+		TestSiamInstrument1 adjusted to generate a couple of numeric channels.
+		
+		A complete test goes as follows:
+		
+		Under siam2:
+			# set the property to the instrument:
+			$ utils/setProperty localhost testPort publisherHost=localhost:3333
+			# re-start the instrument:
+			$ utils/restartPort localhost testPort
+			# that's it.
+			
+			Note: The property can be associated at the creation of the JAR as follows:
+			$ mksiamjar -classdir siam/test/devices/device1 -base classes/ \
+			            -service siam.test.devices.device1.TestSiamInstrument1 \
+			            -jar ports/TestSiamInstrument-1235.jar \
+			            -id 1235 \
+			            -mnem "TEstSiamInstrument"  \
+			            'publisherHost=localhost:3333'	
+			
+			
+		Under siamci:
+			$ mvn exec:java -Prbnb-sink    
+			04-13-2011 12:38:17,834 [main              ] INFO  test.siam.utils.RbnbSinkProgram - Connecting to localhost:3333 (clientName='TEstSiamInstrument-1235') ...
+			04-13-2011 12:38:17,938 [main              ] INFO  test.siam.utils.RbnbSinkProgram - Subscribing to channels [sequenceNumber, val]
+			04-13-2011 12:38:17,943 [RbnbSinkProgram   ] INFO  test.siam.utils.RbnbSinkProgram - Waiting for data ...
+			04-13-2011 12:38:31,335 [RbnbSinkProgram   ] INFO  test.siam.utils.RbnbSinkProgram - Fetched 2 channels
+			04-13-2011 12:38:31,335 [RbnbSinkProgram   ] INFO  test.siam.utils.RbnbSinkProgram -   'TEstSiamInstrument-1235/sequenceNumber' (type=8)  -> 32.0
+			04-13-2011 12:38:31,344 [RbnbSinkProgram   ] INFO  test.siam.utils.RbnbSinkProgram -   'TEstSiamInstrument-1235/val' (type=8)  -> 0.7439054166900111
+			04-13-2011 12:38:31,345 [RbnbSinkProgram   ] INFO  test.siam.utils.RbnbSinkProgram - Waiting for data ...
+			04-13-2011 12:38:51,329 [RbnbSinkProgram   ] INFO  test.siam.utils.RbnbSinkProgram - Fetched 2 channels
+			04-13-2011 12:38:51,329 [RbnbSinkProgram   ] INFO  test.siam.utils.RbnbSinkProgram -   'TEstSiamInstrument-1235/sequenceNumber' (type=8)  -> 33.0
+			04-13-2011 12:38:51,329 [RbnbSinkProgram   ] INFO  test.siam.utils.RbnbSinkProgram -   'TEstSiamInstrument-1235/val' (type=8)  -> 0.7614810628599319
+			04-13-2011 12:38:51,329 [RbnbSinkProgram   ] INFO  test.siam.utils.RbnbSinkProgram - Waiting for data ...
+	
+	
 2011-04-12
 	- preparing to retrieve data from the test instrument:
 		- included rbnb.jar in project (see etc/build.xml and pom.xml)
-		- preliminary quick test with a Sink client (included in TestSiamInstrument1.java)
-		  to check notification from the RBNB server.
-	  Next: enable this functionality in the adapter.
+		- preliminary quick test with a Sink client to check notification from the RBNB server.
 		
 2011-04-12
 	- ion-object-definitions: pushed addition of publish_stream field in Command.

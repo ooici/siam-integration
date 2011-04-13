@@ -2,6 +2,7 @@ package net.ooici.siamci.impl.reqproc;
 
 import net.ooici.siamci.IPublisher;
 import net.ooici.siamci.IRequestProcessor;
+import net.ooici.siamci.utils.ScUtils;
 import siam.IAsyncSiam;
 import siam.ISiam;
 
@@ -44,5 +45,13 @@ public abstract class BaseRequestProcessor implements IRequestProcessor {
 					+ " object has been associated");
 		}
 	}
-
+	
+    /**
+     * Formats a request id: helps identify the specific request among the
+     * various possible concurrent log messages.
+     */
+	protected static String _rid(int reqId) {
+        return ScUtils.formatReqId(reqId);
+    }
+	
 }

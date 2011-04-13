@@ -189,14 +189,14 @@ class RequestDispatcher implements IRequestDispatcher {
 			public void onSuccess(String result) {
 				GeneratedMessage response = ScUtils
 						.createSuccessResponse(result);
-				publisher.publish(publishId, response, publishStream);
+				publisher.publish(-1, publishId, response, publishStream);
 			}
 
 			public void onFailure(Throwable e) {
 				GeneratedMessage response = ScUtils.createFailResponse(e
 						.getClass().getName()
 						+ ": " + e.getMessage());
-				publisher.publish(publishId, response, publishStream);
+				publisher.publish(-1, publishId, response, publishStream);
 			}
 		});
 

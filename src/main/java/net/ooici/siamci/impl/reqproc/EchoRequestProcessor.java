@@ -11,7 +11,7 @@ import com.google.protobuf.GeneratedMessage;
  */
 public class EchoRequestProcessor extends BaseRequestProcessor {
 	
-	public GeneratedMessage processRequest(Command cmd) {
+	public GeneratedMessage processRequest(int reqId, Command cmd) {
 		return cmd;
 	}
 

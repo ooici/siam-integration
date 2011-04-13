@@ -9,6 +9,8 @@ import ion.core.utils.StructureManager;
 
 import java.io.PrintStream;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import net.ooici.core.container.Container;
 import net.ooici.core.container.Container.Structure;
@@ -39,395 +41,447 @@ import com.google.protobuf.Message;
  */
 class SiamCiServerIonMsg implements IPublisher, Runnable {
 
-	private static final Logger log = LoggerFactory
-			.getLogger(SiamCiServerIonMsg.class);
+    private static final Logger log = LoggerFactory
+            .getLogger(SiamCiServerIonMsg.class);
 
-	// set this to true to verify that the unpacking of the received message
-	// works ok
-	private static final boolean UNPACK = false;
+    // set this to true to verify that the unpacking of the received message
+    // works ok
+    private static final boolean UNPACK = false;
 
-	private final String brokerHost;
+    private final String brokerHost;
 
-	private final int brokerPort;
+    private final int brokerPort;
 
-	/** TODO: use some parameter -- currently hard-coded for convenience */
-	private static final String exchange = "magnet.topic";
+    /** TODO: use some parameter -- currently hard-coded for convenience */
+    private static final String exchange = "magnet.topic";
 
-	/**
-	 * Timeout for waiting for a request.
-	 */
-	private static final long TIMEOUT = 3 * 1000;
+    /**
+     * Timeout for waiting for a request.
+     */
+    private static final long TIMEOUT = 3 * 1000;
 
-	/** The queue this service is accepting requests at */
-	private final String queueName;
+    /** The queue this service is accepting requests at */
+    private final String queueName;
 
-	/** The 'from' parameter when replying to a request */
-	private final MessagingName from;
+    /** The 'from' parameter when replying to a request */
+    private final MessagingName from;
 
-	/** The processors for the requests */
-	private final IRequestProcessors requestProcessors;
+    /** The processors for the requests */
+    private final IRequestProcessors requestProcessors;
 
-	private final MsgBrokerClient ionClient;
+    private final MsgBrokerClient ionClient;
 
-	private volatile boolean keepRunning;
-	private volatile boolean isRunning;
+    private volatile boolean keepRunning;
+    private volatile boolean isRunning;
 
-	/**
-	 * Creates the Siam-Ci service.
-	 * 
-	 * @param brokerHost
-	 * @param brokerPort
-	 * @param queueName
-	 * @param requestProcessor
-	 *            To process incoming requests.
-	 * @throws Exception
-	 *             if something bad happens
-	 */
-	SiamCiServerIonMsg(String brokerHost, int brokerPort, String queueName,
-			IRequestProcessors requestProcessors) throws Exception {
+    /** For the dispatch of requests */
+    private final ExecutorService execService = Executors.newCachedThreadPool();
 
-		this.brokerHost = brokerHost;
-		this.brokerPort = brokerPort;
-		this.queueName = queueName;
-		this.from = new MessagingName(queueName);
-		this.requestProcessors = requestProcessors;
+    /**
+     * Creates the Siam-Ci service.
+     * 
+     * @param brokerHost
+     * @param brokerPort
+     * @param queueName
+     * @param requestProcessor
+     *            To process incoming requests.
+     * @throws Exception
+     *             if something bad happens
+     */
+    SiamCiServerIonMsg(String brokerHost, int brokerPort, String queueName,
+            IRequestProcessors requestProcessors) throws Exception {
 
-		this.requestProcessors.setPublisher(this);
+        this.brokerHost = brokerHost;
+        this.brokerPort = brokerPort;
+        this.queueName = queueName;
+        this.from = new MessagingName(queueName);
+        this.requestProcessors = requestProcessors;
 
-		if (log.isDebugEnabled()) {
-			log.debug("Creating SiamCiProcess");
-		}
-		ionClient = new MsgBrokerClient(this.brokerHost, this.brokerPort,
-				exchange);
-		ionClient.attach();
-		ionClient.declareQueue(queueName);
+        this.requestProcessors.setPublisher(this);
 
-		ionClient.bindQueue(queueName, new MessagingName(queueName), null);
-		ionClient.attachConsumer(queueName);
-	}
+        if (log.isDebugEnabled()) {
+            log.debug("Creating SiamCiProcess");
+        }
+        ionClient = new MsgBrokerClient(this.brokerHost, this.brokerPort,
+                exchange);
+        ionClient.attach();
+        ionClient.declareQueue(queueName);
 
-	/**
-	 * Runs this Siam-Ci service.
-	 */
-	public void run() {
-		log.info("Running " + getClass().getSimpleName() + " (" + "broker='"
-				+ brokerHost + ":" + brokerPort + "'" + ", queue='" + queueName
-				+ "'," + " exchange='" + exchange + "'" + ")");
-		keepRunning = true;
-		isRunning = true;
-		try {
-			_run();
-		}
-		catch (Throwable e) {
-			e.printStackTrace();
-		}
-		finally {
-			log.info("Ending " + getClass().getSimpleName());
-			ionClient.detach();
-			isRunning = false;
-		}
-	}
+        ionClient.bindQueue(queueName, new MessagingName(queueName), null);
+        ionClient.attachConsumer(queueName);
+    }
 
-	/**
-	 * Requests that the service stop accepting further requests.
-	 */
-	public void stop() {
-		keepRunning = false;
-	}
+    /**
+     * Runs this Siam-Ci service.
+     */
+    public void run() {
+        log.info("Running " + getClass().getSimpleName() + " (" + "broker='"
+                + brokerHost + ":" + brokerPort + "'" + ", queue='" + queueName
+                + "'," + " exchange='" + exchange + "'" + ")");
+        keepRunning = true;
+        isRunning = true;
+        try {
+            _run();
+        }
+        catch (Throwable e) {
+            e.printStackTrace();
+        }
+        finally {
+            log.info("Ending " + getClass().getSimpleName());
+            ionClient.detach();
+            isRunning = false;
+        }
+    }
 
-	boolean isRunning() {
-		return isRunning;
-	}
+    /**
+     * Requests that the service stop accepting further requests.
+     */
+    public void stop() {
+        keepRunning = false;
+    }
 
-	/**
-	 * The dispatch loop.
-	 * 
-	 * @throws InvalidProtocolBufferException
-	 */
-	private void _run() throws InvalidProtocolBufferException {
+    boolean isRunning() {
+        return isRunning;
+    }
 
-		for (int r = 0; keepRunning; r++) {
-			log.info("[" + r + "] Waiting for request ...");
+    private static String _rid(int reqId) {
+        return ScUtils.formatReqId(reqId);
+    }
 
-			IonMessage msgin = null;
-			while (keepRunning
-					&& null == (msgin = ionClient.consumeMessage(queueName,
-							TIMEOUT))) {
-				// timeout -- just try again
-				//
-				// Note: consumeMessage should throw an exception when there is
-				// a non-timeout problem with getting the message. Email sent to
-				// OOI folks
-				// about this (2011-03-22).
-			}
+    /**
+     * The dispatch loop.
+     * 
+     * @throws InvalidProtocolBufferException
+     */
+    private void _run() throws InvalidProtocolBufferException {
 
-			if (keepRunning && msgin != null) {
-				_dispatchIncomingRequest(msgin);
-			}
-		}
-	}
+        for (int reqId = 0; keepRunning; reqId++) {
+            log.info(_rid(reqId) + "Waiting for request ...");
 
-	/**
-	 * Dispatches the incoming request.
-	 */
-	private void _dispatchIncomingRequest(IonMessage msgin) {
-		try {
-			ionClient.ackMessage(msgin);
-		}
-		catch (Throwable e) {
-			Map<String, String> headers = _getIonHeaders(msgin);
-			log.warn("error while acknowledging message. headers = " + headers,
-					e);
-			return;
-		}
+            IonMessage msgin = null;
+            while (keepRunning
+                    && null == (msgin = ionClient.consumeMessage(
+                            queueName,
+                            TIMEOUT))) {
+                // timeout -- just try again
+                //
+                // Note: consumeMessage should throw an exception when there is
+                // a non-timeout problem with getting the message. Email sent to
+                // OOI folks about this (2011-03-22).
+            }
 
-		if (UNPACK) {
-			_unpack(msgin);
-		}
+            if (keepRunning && msgin != null) {
+                _dispatchIncomingRequest(reqId, msgin);
+            }
+        }
+    }
 
-		Map<String, String> receivedHeaders = _getIonHeaders(msgin);
-		if (log.isDebugEnabled()) {
-			log.debug("headers: " + receivedHeaders);
-		}
-		final String sender = receivedHeaders.get("sender");
-		log.info("Request received from '" + sender + "'");
+    /**
+     * Dispatches the incoming request.
+     * 
+     * @param reqId
+     *            An ID for the request
+     * @param msgin
+     *            the incoming message
+     */
+    private void _dispatchIncomingRequest(final int reqId,
+            final IonMessage msgin) {
 
-		//
-		// to properly respond, we need the reply-to and conv-id property
-		// values:
-		//
-		final String toName = receivedHeaders.get("reply-to");
-		final String convId = receivedHeaders.get("conv-id");
+        //
+        // Do some immediate steps in current thread, in particular
+        // to show some basic info about the incoming request.
+        //
 
-		if (toName == null) {
-			// nobody to reply to?
-			log.info("NOT REPLYING as reply-to is null");
-			return;
-		}
+        try {
+            ionClient.ackMessage(msgin);
+        }
+        catch (Throwable e) {
+            Map<String, String> headers = _getIonHeaders(msgin);
+            log.warn(
+                    _rid(reqId)
+                            + "error while acknowledging message. headers = "
+                            + headers,
+                    e);
+            return;
+        }
 
-		Command cmd = _getCommand(msgin);
+        final Map<String, String> receivedHeaders = _getIonHeaders(msgin);
+        final Command cmd = _getCommand(msgin);
 
-		final String publishStreamName = ScUtils.getPublishStreamName(cmd);
-		if (publishStreamName != null) {
-			log.info("Command with publish stream name: '" + publishStreamName
-					+ "'");
-		}
+        if (log.isDebugEnabled()) {
+            log.debug(_rid(reqId) + "headers: " + receivedHeaders);
+        }
+        String sender = receivedHeaders.get("sender");
+        String convId = receivedHeaders.get("conv-id");
 
-		if (log.isDebugEnabled()) {
-			log.debug(_showMessage(cmd, "Command received:"));
-		}
+        String cmdName = cmd.hasCommand() ? cmd.getCommand() : "?";
 
-		GeneratedMessage response = _dispatchRequest(cmd);
+        log.info(_rid(reqId) + "Request <" + cmdName + "> received from '"
+                + sender + "' conv-id="
+                + (convId != null ? "'" + convId + "'" : "(not given)"));
 
-		if (log.isDebugEnabled()) {
-			log.debug(_showMessage(response, "Response to be replied:"));
-		}
+        String toName = receivedHeaders.get("reply-to");
+        if (toName == null) {
+            // nobody to reply to?
+            log.warn(_rid(reqId) + "NOT REPLYING as reply-to is null");
+            return;
+        }
+        //
+        // Dispatch remaining, potentially long-running part in a different
+        // thread:
+        //
+        execService.submit(new Runnable() {
+            public void run() {
+                _doDispatchIncomingRequest(reqId, msgin, receivedHeaders, cmd);
+            }
+        });
+    }
 
-		if (convId == null) {
-			log.info("Will reply but with no conv-id as it was not provided");
-		}
-		else {
-			log.info("convId received: " + convId);
-		}
+    private void _doDispatchIncomingRequest(final int reqId, IonMessage msgin,
+            Map<String, String> receivedHeaders, final Command cmd) {
+        if (UNPACK) {
+            _unpack(reqId, msgin);
+        }
 
-		//
-		// 2011-03-22
-		// user-id and expiry were not needed initially, but are now required
-		// for proper handling on the python side.
-		// Use the values in the received message, if given; set some value
-		// otherwise.
-		// TODO: these props should probably be handled in a more proper way.
-		//
-		String userId = receivedHeaders.get("user-id");
-		String expiry = receivedHeaders.get("expiry");
-		if (userId == null) {
-			userId = "ANONYMOUS";
-		}
-		if (expiry == null) {
-			expiry = "0";
-		}
+        final String convId = receivedHeaders.get("conv-id");
 
-		Container.Structure.Builder structureBuilder = ProtoUtils
-				.addIonMessageContent(null, "myName", "Identity", response);
-		_sendReply(toName, convId, userId, expiry, structureBuilder.build());
-		log
-				.info("Reply sent to '" + toName + "' conv-id: '" + convId
-						+ "' user-id: '" + userId + "' expiry: '" + expiry
-						+ "'" + "\n");
-	}
+        final String publishStreamName = ScUtils.getPublishStreamName(cmd);
+        if (publishStreamName != null) {
+            log.info(_rid(reqId) + "Command with publish stream name: '"
+                    + publishStreamName + "'");
+        }
 
-	private GeneratedMessage _dispatchRequest(Command cmd) {
-		final String reqId = cmd.getCommand();
-		IRequestProcessor reqProc = requestProcessors
-				.getRequestProcessor(reqId);
-		return reqProc.processRequest(cmd);
-	}
+        if (log.isDebugEnabled()) {
+            log.debug(_showMessage(cmd, _rid(reqId) + "Command received:"));
+        }
 
-	/**
-	 * Sends the given content (structure).
-	 * 
-	 * @param toName
-	 *            where the message is going
-	 * @param convId
-	 *            value for the "conv-id" header property; if null, no such
-	 *            property is set
-	 * @param userId
-	 * @param expiry
-	 * @param structure
-	 *            See
-	 *            ProtoUtils.addIonMessageContent(Container.Structure.Builder
-	 *            structure, String name, String identity, GeneratedMessage
-	 *            content)
-	 */
-	private void _sendReply(String toName, String convId, String userId,
-			String expiry, Container.Structure structure) {
+        GeneratedMessage response = _dispatchRequest(reqId, cmd);
 
-		MessagingName to = new MessagingName(toName);
+        if (log.isDebugEnabled()) {
+            log.debug(_showMessage(response, _rid(reqId)
+                    + "Response to be replied:"));
+        }
 
-		IonMessage msg = ionClient.createMessage(from, to, "noop", structure
-				.toByteArray());
+        if (log.isDebugEnabled()) {
+            if (convId == null) {
+                log
+                        .debug(_rid(reqId)
+                                + "Will reply but with no conv-id as it was not provided");
+            }
+        }
 
-		Map<String, String> headers = _getIonHeaders(msg);
+        //
+        // 2011-03-22
+        // user-id and expiry were not needed initially, but are now required
+        // for proper handling on the python side.
+        // Use the values in the received message, if given; set some value
+        // otherwise.
+        // TODO: these props should probably be handled in a more proper way.
+        //
+        String userId = receivedHeaders.get("user-id");
+        String expiry = receivedHeaders.get("expiry");
+        if (userId == null) {
+            userId = "ANONYMOUS";
+        }
+        if (expiry == null) {
+            expiry = "0";
+        }
 
-		if (convId != null) {
-			headers.put("conv-id", convId);
-		}
-		headers.remove("accept-encoding");
-		headers.put("encoding", "ION R1 GPB");
+        final String toName = receivedHeaders.get("reply-to");
 
-		headers.put("user-id", userId);
-		headers.put("expiry", expiry);
+        // TODO what name and identity?
+        Container.Structure.Builder structureBuilder = ProtoUtils
+                .addIonMessageContent(null, "myName", "Identity", response);
+        _sendReply(reqId, toName, convId, userId, expiry, structureBuilder
+                .build());
+        log
+                .info(_rid(reqId) + "Reply sent to '" + toName + "' conv-id:'"
+                        + convId + "' user-id:'" + userId + "' expiry:"
+                        + expiry + "\n");
+    }
 
-		// set 'status' -- note that the following error message is printed on
-		// the python side if this property is not set:
-		// ERROR:RPC reply is not well formed. Header "status" must be set!
-		//
-		headers.put("status", "OK");
+    private GeneratedMessage _dispatchRequest(int reqId, Command cmd) {
+        final String cmdName = cmd.getCommand();
+        IRequestProcessor reqProc = requestProcessors
+                .getRequestProcessor(cmdName);
+        return reqProc.processRequest(reqId, cmd);
+    }
 
-		ionClient.sendMessage(msg);
-		
-		if ( log.isDebugEnabled() ) {
-			log.debug("headers of message sent: " +headers);
-		}
-	}
+    /**
+     * Sends the given content (structure).
+     * 
+     * @param reqId
+     * @param toName
+     *            where the message is going
+     * @param convId
+     *            value for the "conv-id" header property; if null, no such
+     *            property is set
+     * @param userId
+     * @param expiry
+     * @param structure
+     *            See
+     *            ProtoUtils.addIonMessageContent(Container.Structure.Builder
+     *            structure, String name, String identity, GeneratedMessage
+     *            content)
+     */
+    private void _sendReply(int reqId, String toName, String convId,
+            String userId, String expiry, Container.Structure structure) {
 
-	/**
-	 * {@link IPublisher} operation.
-	 */
-	public void publish(String publishId, GeneratedMessage response,
-			String streamName) {
-		if (log.isDebugEnabled()) {
-			log.debug("Publishing with publishId='" + publishId
-					+ "' to queue='" + streamName + "'" + " reponse='"
-					+ response + "'");
-		}
+        MessagingName to = new MessagingName(toName);
 
-		// TODO: "SomeName", "Identity": determine appropriate values.
-		Structure structure = ProtoUtils.addIonMessageContent(null, "SomeName",
-				"Identity", response).build();
+        IonMessage msg = ionClient.createMessage(from, to, "noop", structure
+                .toByteArray());
 
-		String toName = streamName;
-		MessagingName to = new MessagingName(toName);
+        Map<String, String> headers = _getIonHeaders(msg);
 
-		IonMessage msg = ionClient.createMessage(from, to, "acceptResponse",
-				structure.toByteArray());
+        if (convId != null) {
+            headers.put("conv-id", convId);
+        }
+        headers.remove("accept-encoding");
+        headers.put("encoding", "ION R1 GPB");
 
-		Map<String, String> headers = _getIonHeaders(msg);
-		headers.remove("accept-encoding");
-		headers.put("encoding", "ION R1 GPB");
+        headers.put("user-id", userId);
+        headers.put("expiry", expiry);
 
-		headers.put("user-id", "ANONYMOUS");
-		headers.put("expiry", "0");
+        // set 'status' -- note that the following error message is printed on
+        // the python side if this property is not set:
+        // ERROR:RPC reply is not well formed. Header "status" must be set!
+        //
+        headers.put("status", "OK");
 
-		headers.put("status", "OK");
+        ionClient.sendMessage(msg);
 
-		headers.put("publish_id", publishId);
+        if (log.isDebugEnabled()) {
+            log.debug(_rid(reqId) + "headers of message sent: " + headers);
+        }
+    }
 
-		ionClient.sendMessage(msg);
-		if (log.isDebugEnabled()) {
-			log.debug("Publish message sent.");
-		}
-	}
+    /**
+     * {@link IPublisher} operation.
+     */
+    public void publish(int reqId, String publishId, GeneratedMessage response,
+            String streamName) {
+        if (log.isDebugEnabled()) {
+            log.debug(_rid(reqId) + "Publishing with publishId='" + publishId
+                    + "' to queue='" + streamName + "'" + " reponse='"
+                    + response + "'");
+        }
 
-	/**
-	 * Returns a string with contents of the given message using a prefix for
-	 * each line, like so:
-	 * 
-	 * <pre>
-	 * --title goes here--
-	 * 		    class net.ooici.play.InstrDriverInterface$Command
-	 * 		    | command: "echo"
-	 * 		    | args {
-	 * 		    |   channel: "myCh1"
-	 * 		    |   parameter: "myParam1"
-	 * 		    | }
-	 * </pre>
-	 * 
-	 * @param msg
-	 * @param title
-	 * @return
-	 */
-	private String _showMessage(Message msg, String title) {
-		final String prefix = "    | ";
-		return " [x] " + title + "\n    " + msg.getClass() + "\n" + prefix
-				+ msg.toString().trim().replaceAll("\n", "\n" + prefix);
-	}
+        // TODO: "SomeName", "Identity": determine appropriate values.
+        Structure structure = ProtoUtils.addIonMessageContent(
+                null,
+                "SomeName",
+                "Identity",
+                response).build();
 
-	/** Utility to narrow the supress warning item */
-	@SuppressWarnings("unchecked")
-	private Map<String, String> _getIonHeaders(IonMessage msg) {
-		Map<String, String> headers = msg.getIonHeaders();
-		return headers;
-	}
+        String toName = streamName;
+        MessagingName to = new MessagingName(toName);
 
-	/**
-	 * Extracts the Command from the message.
-	 */
-	@SuppressWarnings("unchecked")
-	private Command _getCommand(IonMessage reply) {
-		StructureManager sm = StructureManager.Factory(reply);
-		for (String key : sm.getItemIds()) {
-			GPBWrapper<Command> demWrap = sm.getObjectWrapper(key);
-			Command cmd = demWrap.getObjectValue();
-			return cmd;
-		}
-		return null;
-	}
+        IonMessage msg = ionClient.createMessage(
+                from,
+                to,
+                "acceptResponse",
+                structure.toByteArray());
 
-	// from ProtoUtils.testSendReceive()
-	@SuppressWarnings("unchecked")
-	private void _unpack(IonMessage reply) {
-		log.debug("\n------------------<_unpack>");
-		log.debug(" reply.getContent class = " + reply.getContent().getClass());
-		StructureManager sm = StructureManager.Factory(reply);
-		log.debug(">>>> Heads:");
-		for (String key : sm.getHeadIds()) {
-			log.debug("  headId = " + key);
-			GPBWrapper<IonMsg> msgWrap = sm.getObjectWrapper(key);
-			log.debug("  object wrapper = " + msgWrap);
-			// IonMsg msg = msgWrap.getObjectValue();
-		}
-		log.debug("\n>>>> Items:");
-		for (String key : sm.getItemIds()) {
-			log.debug("  itemId = " + key);
-			GPBWrapper<Command> demWrap = sm.getObjectWrapper(key);
-			log.debug("  object wrapper = " + demWrap);
-			// Command dem = demWrap.getObjectValue();
-		}
-		log.debug("------------------</_unpack>\n");
-	}
+        Map<String, String> headers = _getIonHeaders(msg);
+        headers.remove("accept-encoding");
+        headers.put("encoding", "ION R1 GPB");
 
-	static {
-		//
-		// TODO, once ioncore-java starts using standard logging, eliminate the
-		// following, which simply "redirects" System.out messages to a file.
-		//
-		final String outputFile = "stdout.txt";
-		try {
-			System.setOut(new PrintStream(outputFile));
-		}
-		catch (Throwable ex) {
-			log.warn("Could not set system out to file " + outputFile, ex);
-		}
-	}
+        // TODO proper values for user-id, expiry
+        headers.put("user-id", "ANONYMOUS");
+        headers.put("expiry", "0");
+
+        headers.put("status", "OK");
+
+        // include the publish_id as a header:
+        headers.put("publish_id", publishId);
+
+        ionClient.sendMessage(msg);
+
+        log.info(_rid(reqId) + "Publish message sent. publishId='" + publishId
+                + "' to queue='" + streamName + "'");
+    }
+
+    /**
+     * Returns a string with contents of the given message using a prefix for
+     * each line, like so:
+     * 
+     * <pre>
+     * --title goes here--
+     * 		    class net.ooici.play.InstrDriverInterface$Command
+     * 		    | command: "echo"
+     * 		    | args {
+     * 		    |   channel: "myCh1"
+     * 		    |   parameter: "myParam1"
+     * 		    | }
+     * </pre>
+     * 
+     * @param msg
+     * @param title
+     * @return
+     */
+    private static String _showMessage(Message msg, String title) {
+        final String prefix = "    | ";
+        return " [x] " + title + "\n    " + msg.getClass() + "\n" + prefix
+                + msg.toString().trim().replaceAll("\n", "\n" + prefix);
+    }
+
+    /** Utility to narrow the supress warning item */
+    @SuppressWarnings("unchecked")
+    private Map<String, String> _getIonHeaders(IonMessage msg) {
+        Map<String, String> headers = msg.getIonHeaders();
+        return headers;
+    }
+
+    /**
+     * Extracts the Command from the message.
+     */
+    @SuppressWarnings("unchecked")
+    private Command _getCommand(IonMessage reply) {
+        StructureManager sm = StructureManager.Factory(reply);
+        for (String key : sm.getItemIds()) {
+            GPBWrapper<Command> demWrap = sm.getObjectWrapper(key);
+            Command cmd = demWrap.getObjectValue();
+            return cmd;
+        }
+        return null;
+    }
+
+    // from ProtoUtils.testSendReceive()
+    @SuppressWarnings("unchecked")
+    private void _unpack(int reqId, IonMessage reply) {
+        log.debug("\n" + _rid(reqId) + "------------------<_unpack>");
+        log.debug(_rid(reqId) + " reply.getContent class = "
+                + reply.getContent().getClass());
+        StructureManager sm = StructureManager.Factory(reply);
+        log.debug(">>>> Heads:");
+        for (String key : sm.getHeadIds()) {
+            log.debug(_rid(reqId) + "  headId = " + key);
+            GPBWrapper<IonMsg> msgWrap = sm.getObjectWrapper(key);
+            log.debug(_rid(reqId) + "  object wrapper = " + msgWrap);
+            // IonMsg msg = msgWrap.getObjectValue();
+        }
+        log.debug("\n" + _rid(reqId) + ">>>> Items:");
+        for (String key : sm.getItemIds()) {
+            log.debug(_rid(reqId) + "  itemId = " + key);
+            GPBWrapper<Command> demWrap = sm.getObjectWrapper(key);
+            log.debug(_rid(reqId) + "  object wrapper = " + demWrap);
+            // Command dem = demWrap.getObjectValue();
+        }
+        log.debug(_rid(reqId) + "------------------</_unpack>\n");
+    }
+
+    static {
+        //
+        // TODO, once ioncore-java starts using standard logging, eliminate the
+        // following, which simply "redirects" System.out messages to a file.
+        //
+        final String outputFile = "stdout.txt";
+        try {
+            System.setOut(new PrintStream(outputFile));
+        }
+        catch (Throwable ex) {
+            log.warn("Could not set system out to file " + outputFile, ex);
+        }
+    }
 }

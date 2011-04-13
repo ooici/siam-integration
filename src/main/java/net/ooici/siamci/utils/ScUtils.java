@@ -15,6 +15,15 @@ import com.google.protobuf.GeneratedMessage;
  */
 public class ScUtils {
 
+    /**
+     * Formats a request id: helps identify the specific request among the
+     * various possible concurrent log messages.
+     */
+    public static String formatReqId(int reqId) {
+        return "[" + reqId + "] ";
+    }
+
+    
 	/**
 	 * Gets the value of the "publish_stream" field, if any.
 	 * 

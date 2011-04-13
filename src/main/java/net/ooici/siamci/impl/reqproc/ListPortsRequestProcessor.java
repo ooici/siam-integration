@@ -30,13 +30,13 @@ public class ListPortsRequestProcessor extends BaseRequestProcessor {
 	private static final Logger log = LoggerFactory
 			.getLogger(ListPortsRequestProcessor.class);
 
-	public GeneratedMessage processRequest(Command cmd) {
+	public GeneratedMessage processRequest(int reqId, Command cmd) {
 
 		final String publishStream = ScUtils.getPublishStreamName(cmd);
 		if (publishStream != null) {
 			// asynchronous handling.
 			//
-			GeneratedMessage response = _getAndPublishResult(publishStream);
+			GeneratedMessage response = _getAndPublishResult(reqId, publishStream);
 			return response;
 		}
 		else {
@@ -47,12 +47,12 @@ public class ListPortsRequestProcessor extends BaseRequestProcessor {
 				ports = siam.listPorts();
 			}
 			catch (Exception e) {
-				log.warn("getPortStatus exception", e);
+				log.warn(_rid(reqId) + "getPortStatus exception", e);
 				return ScUtils.createFailResponse(e.getClass().getName() + ": "
 						+ e.getMessage());
 			}
 
-			GeneratedMessage response = _createResultResponse(ports);
+			GeneratedMessage response = _createResultResponse(reqId, ports);
 			return response;
 		}
 	}
@@ -66,7 +66,7 @@ public class ListPortsRequestProcessor extends BaseRequestProcessor {
 	 *            the queue (rounting key) to publish the response.
 	 * @return The {@link SuccessFail} result of the submission of the request.
 	 */
-	private GeneratedMessage _getAndPublishResult(final String publishStream) {
+	private GeneratedMessage _getAndPublishResult(final int reqId, final String publishStream) {
 		_checkAsyncSetup();
 
 		//
@@ -77,15 +77,15 @@ public class ListPortsRequestProcessor extends BaseRequestProcessor {
 		asyncSiam.listPorts(new AsyncCallback<List<PortItem>>() {
 
 			public void onSuccess(List<PortItem> result) {
-				GeneratedMessage response = _createResultResponse(result);
-				publisher.publish(publishId, response, publishStream);
+				GeneratedMessage response = _createResultResponse(reqId, result);
+				publisher.publish(reqId, publishId, response, publishStream);
 			}
 
 			public void onFailure(Throwable e) {
 				GeneratedMessage response = ScUtils.createFailResponse(e
 						.getClass().getName()
 						+ ": " + e.getMessage());
-				publisher.publish(publishId, response, publishStream);
+				publisher.publish(reqId, publishId, response, publishStream);
 			}
 		});
 
@@ -99,7 +99,7 @@ public class ListPortsRequestProcessor extends BaseRequestProcessor {
 	 * TODO currently capturing this result in a {@link SuccessFail} instance;
 	 * should probably be a more appropiate GPB.
 	 */
-	private GeneratedMessage _createResultResponse(List<PortItem> result) {
+	private GeneratedMessage _createResultResponse(int reqId, List<PortItem> result) {
 		Builder buildr = SuccessFail.newBuilder().setResult(Result.OK);
 		for (PortItem pi : result) {
 

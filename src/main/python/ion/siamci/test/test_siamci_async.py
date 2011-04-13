@@ -23,8 +23,8 @@ from ion.core import ioninit
 # Static definition of message queues
 #ion_messaging = ioninit.get_config('messaging_cfg', CONF) #-
 
-# Note the ``'spawnargs':{ 'servicename':receiver_service_name }'' below to properly name
-# the service; otherwise the default name in SiamCiReceiverService.declare would be used.
+# Note the ``'spawnargs':{ 'servicename':receiver_service_name }'' included below to properly name
+# the service; if not included, the default name in SiamCiReceiverService.declare would be used.
 receiver_service_name = 'siamci_receiver_test_async'
 
 class TestSiamCiAdapterProxyAsync(SiamCiTestCase):

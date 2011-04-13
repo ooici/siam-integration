@@ -35,6 +35,8 @@ class SiamCiAdapterProxy():
     indicating whether the command has been or has not been successfully submitted.
     If the 'publish_stream' is None (the default), then no such asynchronous behavior is enabled,
     with the command result being returned by the method itself.
+    
+    @note: All operations here work at the level of GPBs.
     """
 
     def __init__(self, queue, port=None):
@@ -73,8 +75,20 @@ class SiamCiAdapterProxy():
         
     @defer.inlineCallbacks
     def _make_command(self, cmd_name, args=None, publish_stream=None):
+        """
+        Creates a command message.
+        
+        @param cmd_name: name of the command
+        @param args: list of tuples
+        @param publish_stream: Name of queue for asynchronous notification of result
+        """
+        
         if args is None: args = [] 
+        
+        # @todo: for the moment, make sure the proxy is started (later on, we can delegate this
+        # responsability to client code)
         yield self.start()
+        
         cmd = yield self.mc.create_instance(Command_type, MessageName='command sent message')
         cmd.command = cmd_name
         for (c,p) in args:
@@ -100,6 +114,7 @@ class SiamCiAdapterProxy():
         (response, headers, msg) = yield self.proc.rpc_send(recv=self.queue, operation='command', content=message)
         
         defer.returnValue(response)
+        
     
     @defer.inlineCallbacks
     def ping(self):
@@ -149,29 +164,19 @@ class SiamCiAdapterProxy():
     @defer.inlineCallbacks
     def get_last_sample(self, publish_stream=None):
         """
-        Gets the last sample from the instrument on the given "port"
+        Gets the last sample from the instrument identified by the given "port"
         """
         assert self.port, "No port provided"
         cmd = yield self._make_command("get_last_sample", [("port", self.port)], publish_stream)
         response = yield self._rpc(cmd)
         log.debug(show_message(response, "get_last_sample response:"))
         
-        result = response
-        
-        # TODO remove this conversion to python type. If such kind of conversions are needed,
-        # provide that functionality in some helper class.
-#        result = "ERROR"
-#        if response.result == OK:
-#            result = {}
-#            for it in response.item:
-#                result[it.pair.first] = it.pair.second
-            
-        defer.returnValue(result)
+        defer.returnValue(response)
         
     @defer.inlineCallbacks
     def fetch_params(self, param_list=None, publish_stream=None):
         """
-        Gets parameters associated with the instrument on the given "port"
+        Gets parameters associated with the instrument identified by the given "port"
         
         @param param_list: the list of desired parameters. If None (which is the default), 
               all parameters are requested.
@@ -194,15 +199,7 @@ class SiamCiAdapterProxy():
         response = yield self._rpc(cmd)
         log.debug(show_message(response, "fetch_params response:"))
         
-        result = response
-        
-#        result = "ERROR"
-#        if response.result == OK:
-#            result = {}
-#            for it in response.item:
-#                result[it.pair.first] = it.pair.second
-                
-        defer.returnValue(result)
+        defer.returnValue(response)
         
         
     @defer.inlineCallbacks
@@ -218,15 +215,7 @@ class SiamCiAdapterProxy():
         response = yield self._rpc(cmd)
         log.debug(show_message(response, "fetch_params response:"))
         
-        result = response
-        
-#        result = "ERROR"
-#        if response.result == OK:
-#            result = {}
-#            for it in response.item:
-#                result[it.pair.first] = it.pair.second
-                
-        defer.returnValue(result)
+        defer.returnValue(response)
         
         
 
