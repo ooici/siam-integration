@@ -19,8 +19,7 @@ import siam.PortItem;
 
 /**
  * Main SiamCi program.
- * 
- * NOTE: preliminary implementation
+ * For usage, {@link #main(String[])}.
  * 
  * @author carueda
  */
@@ -77,6 +76,7 @@ public class SiamCiMain {
 		static Params getParams(String[] args) {
 			OptionSet options = parser.parse(args);
 			if ( options.has(helpOpt) ) {
+			    System.out.println("SIAM-CI Adapter Service options:");
 				try {
 					parser.printHelpOn(System.out);
 				} 
@@ -108,6 +108,7 @@ public class SiamCiMain {
 	 * @param args
 	 * 		Here is the usage message: (mvn exec:java -Dsiam-ci -Dexec.args=--help)
 	 * <pre>
+        SIAM-CI Adapter Service options:
 		Option                                  Description                            
 		------                                  -----------                            
 		-?, --help                              print help message                     

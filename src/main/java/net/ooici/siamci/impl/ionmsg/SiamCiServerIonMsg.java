@@ -32,9 +32,9 @@ import com.google.protobuf.Message;
 /**
  * The actual SIAM-CI service.
  * 
- * It accepts RPC requests on the queue
- * {@link SiamCiConstants#DEFAULT_QUEUE_NAME}, uses the ICommandProcessor object
- * to process the incoming command, and replies the resulting response to the
+ * In a nutshell, it accepts RPC requests on the queue
+ * {@link SiamCiConstants#DEFAULT_QUEUE_NAME}, uses a {@link IRequestProcessors} object
+ * to process the incoming requests, and replies the resulting response to the
  * routingKey indicated in the "reply-to" property of the request.
  * 
  * @author carueda
@@ -44,9 +44,6 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
     private static final Logger log = LoggerFactory
             .getLogger(SiamCiServerIonMsg.class);
 
-    // set this to true to verify that the unpacking of the received message
-    // works ok
-    private static final boolean UNPACK = false;
 
     private final String brokerHost;
 
@@ -239,7 +236,7 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
 
     private void _doDispatchIncomingRequest(final int reqId, IonMessage msgin,
             Map<String, String> receivedHeaders, final Command cmd) {
-        if (UNPACK) {
+        if (log.isTraceEnabled()) {
             _unpack(reqId, msgin);
         }
 
@@ -450,25 +447,25 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
     // from ProtoUtils.testSendReceive()
     @SuppressWarnings("unchecked")
     private void _unpack(int reqId, IonMessage reply) {
-        log.debug("\n" + _rid(reqId) + "------------------<_unpack>");
-        log.debug(_rid(reqId) + " reply.getContent class = "
+        log.trace("\n" + _rid(reqId) + "------------------<_unpack>");
+        log.trace(_rid(reqId) + " reply.getContent class = "
                 + reply.getContent().getClass());
         StructureManager sm = StructureManager.Factory(reply);
-        log.debug(">>>> Heads:");
+        log.trace(">>>> Heads:");
         for (String key : sm.getHeadIds()) {
-            log.debug(_rid(reqId) + "  headId = " + key);
+            log.trace(_rid(reqId) + "  headId = " + key);
             GPBWrapper<IonMsg> msgWrap = sm.getObjectWrapper(key);
-            log.debug(_rid(reqId) + "  object wrapper = " + msgWrap);
+            log.trace(_rid(reqId) + "  object wrapper = " + msgWrap);
             // IonMsg msg = msgWrap.getObjectValue();
         }
-        log.debug("\n" + _rid(reqId) + ">>>> Items:");
+        log.trace("\n" + _rid(reqId) + ">>>> Items:");
         for (String key : sm.getItemIds()) {
-            log.debug(_rid(reqId) + "  itemId = " + key);
+            log.trace(_rid(reqId) + "  itemId = " + key);
             GPBWrapper<Command> demWrap = sm.getObjectWrapper(key);
-            log.debug(_rid(reqId) + "  object wrapper = " + demWrap);
+            log.trace(_rid(reqId) + "  object wrapper = " + demWrap);
             // Command dem = demWrap.getObjectValue();
         }
-        log.debug(_rid(reqId) + "------------------</_unpack>\n");
+        log.trace(_rid(reqId) + "------------------</_unpack>\n");
     }
 
     static {
