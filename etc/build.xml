@@ -21,6 +21,10 @@
 	<property name="siam_version" value="0.9" />
 	<property name="siam_jar" value="${siam}/jars/siam.jar" />
 	
+	<!-- RBNB library version and library -->
+	<property name="rbnb_version" value="0.1.adhoc" />
+	<property name="rbnb_jar" value="${siam}/jars/rbnb.jar" />
+	
 	<!-- SIAM test instrument library version and library  -->
 	<property name="siam_instr_version" value="0.0.1" />
 	<property name="siam_instr_jar" value="${siam}/ports/TestSiamInstrument-1235.jar" />
@@ -83,6 +87,7 @@
 		
 	<target name="install-siam" description="installs SIAM dependencies">
 		<install jar="${siam_jar}" groupId="org.mbari" artifactId="siam" version="${siam_version}" /> 
+		<install jar="${rbnb_jar}" groupId="adhoc.rbnb" artifactId="rbnb" version="${rbnb_version}" /> 
 		<install jar="${siam_instr_jar}" groupId="siam_test_devices" artifactId="TestSiamInstrument1" version="${siam_instr_version}" /> 
 	</target>
 		

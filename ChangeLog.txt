@@ -3,6 +3,13 @@ Created 2/9/2011
 Carlos Rueda - MBARI
 
 2011-04-12
+	- preparing to retrieve data from the test instrument:
+		- included rbnb.jar in project (see etc/build.xml and pom.xml)
+		- preliminary quick test with a Sink client (included in TestSiamInstrument1.java)
+		  to check notification from the RBNB server.
+	  Next: enable this functionality in the adapter.
+		
+2011-04-12
 	- ion-object-definitions: pushed addition of publish_stream field in Command.
 	- ioncore-java: pushed dependency on ionproto version 0.3.16-pl5 and rebuilt ioncore-java
 	- siamci: etc/buid.xml and pom.xml updated with the new ionproto version

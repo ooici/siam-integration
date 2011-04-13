@@ -13,6 +13,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
 		<siam_version>0.9</siam_version>
+		<rbnb_version>0.1.adhoc</rbnb_version>
 		<siam_instr_version>0.0.1</siam_instr_version>
 		<ionproto_version>0.3.16</ionproto_version>
 		<ioncore_version>0.2.4</ioncore_version>
@@ -154,6 +155,11 @@
 			<groupId>org.mbari</groupId>
 			<artifactId>siam</artifactId>
 			<version>${siam_version}</version>
+		</dependency>
+		<dependency>
+			<groupId>adhoc.rbnb</groupId>
+			<artifactId>rbnb</artifactId>
+			<version>${rbnb_version}</version>
 		</dependency>
 		<dependency>
 			<groupId>siam_test_devices</groupId>

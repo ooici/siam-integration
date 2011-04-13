@@ -17,8 +17,13 @@ import org.mbari.siam.distributed.ScheduleSpecifier;
 import org.mbari.siam.distributed.SensorDataPacket;
 import org.mbari.siam.distributed.TimeoutException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.apache.log4j.Logger;
+
+import com.rbnb.sapi.ChannelMap;
+import com.rbnb.sapi.SAPIException;
+import com.rbnb.sapi.Sink;
+//import org.slf4j.Logger;
+//import org.slf4j.LoggerFactory;
 
 /**
  * A simple SIAM instrument for basic tests.
@@ -29,7 +34,8 @@ public class TestSiamInstrument1 extends PolledInstrumentService implements Inst
 	
 	private static int _sequenceNumber = 0;
 	
-	protected static Logger _log4j = LoggerFactory.getLogger(TestSiamInstrument1.class);
+	protected static Logger _log4j = Logger.getLogger(TestSiamInstrument1.class);
+//	protected static Logger _log4j = LoggerFactory.getLogger(TestSiamInstrument1.class);
     
     
 	public TestSiamInstrument1() throws RemoteException {
@@ -40,12 +46,16 @@ public class TestSiamInstrument1 extends PolledInstrumentService implements Inst
 		return new ScheduleSpecifier(10*1000);
 	}
 	
-	// puts in the buffer something like:  "nn: Hello SIAM(nn)", where nn is a sequence number
+	// puts in the buffer something like:  "nn:mm", where nn is a sequence number and mm
+	// is a random double number
 	protected int readSample(byte[] sample) throws TimeoutException, IOException, Exception {
-		byte[] bytes = (_sequenceNumber + ": Hello SIAM(" + _sequenceNumber + ")").getBytes();
+		
+		byte[] bytes = (_sequenceNumber + ":" +Math.random()).getBytes();
 		_sequenceNumber++;
 		int numBytes = Math.min(sample.length, bytes.length);
 		System.arraycopy(bytes, 0, sample, 0, numBytes);
+		
+		_launchPrepareDataTurbineSinkIfNeeded();
 
 		return numBytes;
 	}
@@ -86,24 +96,125 @@ public class TestSiamInstrument1 extends PolledInstrumentService implements Inst
 			}
 
 			SensorDataPacket sensorDataPacket = (SensorDataPacket )packet;
-			String foo = new String(sensorDataPacket.dataBuffer());
+			String buffer = new String(sensorDataPacket.dataBuffer());
 			
-			String[] toks = foo.split(":"); 
-			if ( toks.length != 2 ) {
-				throw new ParseException("Expecting 2 tokens separated by `:'", 0);
+			Integer sequenceNumber = new Integer(-1);
+			Double val = new Double(0);
+			
+			if ( buffer.trim().length() > 0 ) {
+				String[] toks = buffer.split(":"); 
+				if ( toks.length != 2 ) {
+					throw new ParseException("Expecting 2 tokens separated by `:'. String received = '" +buffer+ "'", 0);
+				}
+				sequenceNumber = new Integer(toks[0]);
+				val = new Double(toks[1]);
 			}
-			PacketParser.Field[] fields = new PacketParser.Field[toks.length];
-			fields[0] = new Field("sequenceNumber", toks[0], "count");
-			fields[1] = new Field("foo", toks[1], "string");
+			PacketParser.Field[] fields = new PacketParser.Field[2];
+			fields[0] = new Field("sequenceNumber", sequenceNumber, "count");
+			fields[1] = new Field("val", val, "double");
 			return fields;
 		}		
 	}
 	public PacketParser getParser() throws NotSupportedException {
 		return new MyPacketParser();
 	}
+	
+	//////////////////////////////////////////////////////////////
+	// <DataTurbine stuff> 
+	private static final String rbnbHost = "192.168.1.64:3333";
+	private static volatile Sink rbnbSink = null;
+	
+	private static void _launchPrepareDataTurbineSinkIfNeeded() {
+		new Thread(new Runnable() {
+			public void run() {
+				try {
+					Thread.sleep(4*1000);
+					_prepareDataTurbineSinkIfNeeded();
+				}
+				catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}).start();
+	}
+	
+	private static void _prepareDataTurbineSinkIfNeeded() {
+		if ( rbnbSink != null ) {
+			return;
+		}
+		System.out.println("_prepareDataTurbineSinkIfNeeded: " + "preparing ...");
+			
+		rbnbSink = new Sink();
+		try {
+			System.out.println("OpenRBNBConnection rbnbHost = " + rbnbHost);
+			rbnbSink.OpenRBNBConnection(rbnbHost, "TEstSiamInstrument-1235");
+
+			final ChannelMap channelMap = new ChannelMap(); 
+			channelMap.Clear();
+//			channelMap.Add("metadata");
+			channelMap.Add("TEstSiamInstrument-1235/sequenceNumber");
+			channelMap.Add("TEstSiamInstrument-1235/val");
+			System.err.println("Subscribing ....");            
+			double durationSecs = 10;
+			rbnbSink.Subscribe(channelMap, 0, durationSecs, "newest");
+
+			// now, go into loop to fetch data
+			new Thread(new Runnable() {
+
+				public void run() {
+
+					while ( rbnbSink != null ) {
+						try {
+							System.out.println("Fetching DATA .......");
+							ChannelMap getmap = rbnbSink.Fetch(-1, channelMap);
+							if ( getmap == null || getmap.NumberOfChannels() == 0 ) {
+								System.err.println("No data fetched");
+								continue;                    
+							}
+
+							int noChannels = getmap.NumberOfChannels();
+
+							System.out.println("getmap.NumberOfChannels() = " +noChannels);
+							for (int ch = 0; ch < noChannels; ch++) {
+
+								String chName = getmap.GetName(ch);
+								double[] times = getmap.GetTimes(ch);
+								int type = getmap.GetType(ch);
+
+								double[] value = getmap.GetDataAsFloat64(ch);
+								
+								System.out.println("Fetched: chName=" +chName+ " times=" +times+ " type=" +type
+										+ "VALUE=(len=" +value.length+ ") -> " +value[0]
+								);
+							}								
+						}
+						catch (SAPIException e) {
+							System.err.println("Error fetching data: " +e.getMessage());
+							e.printStackTrace();
+							if ( rbnbSink != null ) {
+								rbnbSink.CloseRBNBConnection();
+							}
+							rbnbSink = null;
+							return;
+						}
+					}
+				}
+			}).start();
+
+		}
+		catch (SAPIException e) {
+			rbnbSink = null;
+			System.err.println("Exception in OpenRBNBConnection: " +e.getMessage());
+			e.printStackTrace();
+			return;
+		}
+	}
+	// </DataTurbine stuff> 
+	//////////////////////////////////////////////////////////////
+	
 
 	protected void requestSample() throws TimeoutException, Exception {
-		System.err.println(getClass().getSimpleName()+ ": requestSample() called!");
+		System.err.println(getClass().getSimpleName()+ ": requestSample() called, _sequenceNumber = " +_sequenceNumber);
 		if ( _sequenceNumber == 0 ) {
 			return;  // no snooze for very first sample
 		}
