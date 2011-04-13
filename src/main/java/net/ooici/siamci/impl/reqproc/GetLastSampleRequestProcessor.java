@@ -20,7 +20,7 @@ import siam.AsyncCallback;
 import com.google.protobuf.GeneratedMessage;
 
 /**
- * get_status processor.
+ * get_last_sample processor.
  * 
  * @author carueda
  */

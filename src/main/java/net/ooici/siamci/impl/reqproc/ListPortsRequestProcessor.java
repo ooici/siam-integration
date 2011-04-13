@@ -19,7 +19,7 @@ import siam.PortItem;
 import com.google.protobuf.GeneratedMessage;
 
 /**
- * get_status processor.
+ * list_ports processor.
  * 
  * @author carueda
  */
