@@ -1,8 +1,10 @@
 package net.ooici.siamci.impl;
 
+import net.ooici.siamci.IDataManagers;
 import net.ooici.siamci.IRequestProcessors;
 import net.ooici.siamci.ISiamCiAdapter;
 import net.ooici.siamci.ISiamCiFactory;
+import net.ooici.siamci.impl.data.DataManagers;
 import net.ooici.siamci.impl.ionmsg.SiamCiAdapterIonMsg;
 import siam.AsyncSiam;
 import siam.IAsyncSiam;
@@ -17,6 +19,8 @@ import siam.Siam;
  */
 public class SiamCiFactoryImpl implements ISiamCiFactory {
 
+    private final IDataManagers dataManagers = new DataManagers();
+
     public ISiam createSiam(String host) throws Exception {
         return new Siam(host);
     }
@@ -29,12 +33,16 @@ public class SiamCiFactoryImpl implements ISiamCiFactory {
         return new RequestProcessors(siam);
     }
 
+    public IDataManagers getDataManagers() {
+        return dataManagers;
+    }
+
     public ISiamCiAdapter createSiamCiAdapter(String brokerHost,
             int brokerPort, String queueName, String exchangeName,
             IRequestProcessors requestProcessors) {
 
         return new SiamCiAdapterIonMsg(brokerHost, brokerPort, queueName,
-                exchangeName, requestProcessors );
+                exchangeName, requestProcessors);
     }
 
 }

@@ -24,11 +24,22 @@ public class SiamCiAdapterIonMsg implements ISiamCiAdapter {
     private SiamCiServerIonMsg siamCiProcess;
     private Thread thread;
 
-    private IRequestProcessors requestProcessors;
+    private final IRequestProcessors requestProcessors;
 
+    /**
+     * Creates the adapter.
+     * 
+     * @param brokerHost
+     * @param brokerPort
+     * @param queueName
+     * @param ionExchange
+     * @param requestProcessors
+     * @param dataManagers
+     */
     public SiamCiAdapterIonMsg(String brokerHost, int brokerPort,
             String queueName, String ionExchange,
             IRequestProcessors requestProcessors) {
+
         this.brokerHost = brokerHost;
         this.brokerPort = brokerPort;
         this.queueName = queueName;

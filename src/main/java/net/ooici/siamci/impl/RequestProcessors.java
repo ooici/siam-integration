@@ -1,6 +1,8 @@
 package net.ooici.siamci.impl;
 
 import net.ooici.play.InstrDriverInterface.Command;
+import net.ooici.siamci.IDataManagers;
+import net.ooici.siamci.IDataRequestProcessor;
 import net.ooici.siamci.IPublisher;
 import net.ooici.siamci.IRequestProcessor;
 import net.ooici.siamci.IRequestProcessors;
@@ -29,79 +31,90 @@ import com.google.protobuf.GeneratedMessage;
  */
 class RequestProcessors implements IRequestProcessors {
 
-	private static final Logger log = LoggerFactory
-			.getLogger(RequestProcessors.class);
+    private static final Logger log = LoggerFactory
+            .getLogger(RequestProcessors.class);
 
-	/**
-	 * The request processors are gathered in this enumeration.
-	 */
-	private enum RP {
+    /**
+     * The request processors are gathered in this enumeration.
+     */
+    private enum RP {
 
-		echo(new EchoRequestProcessor()),
+        echo(new EchoRequestProcessor()),
 
-		list_ports(new ListPortsRequestProcessor()),
+        list_ports(new ListPortsRequestProcessor()),
 
-		get_status(new GetStatusRequestProcessor()),
+        get_status(new GetStatusRequestProcessor()),
 
-		get_last_sample(new GetLastSampleRequestProcessor()),
+        get_last_sample(new GetLastSampleRequestProcessor()),
 
-		fetch_params(new FetchParamsRequestProcessor()),
+        fetch_params(new FetchParamsRequestProcessor()),
 
-		set_params(new SetParamsRequestProcessor()),
+        set_params(new SetParamsRequestProcessor()),
 
-		;
+        ;
 
-		private BaseRequestProcessor reqProc;
+        private BaseRequestProcessor reqProc;
 
-		RP(BaseRequestProcessor reqProc) {
-			this.reqProc = reqProc;
-		}
+        RP(BaseRequestProcessor reqProc) {
+            this.reqProc = reqProc;
+        }
 
-	}
+    }
 
-	RequestProcessors(ISiam siam) {
-		for (RP rp : RP.values()) {
-			rp.reqProc.setSiam(siam);
-		}
-		log.debug("instance created.");
-	}
+    RequestProcessors(ISiam siam) {
+        for (RP rp : RP.values()) {
+            rp.reqProc.setSiam(siam);
+        }
+        log.debug("instance created.");
+    }
 
-	public void setAsyncSiam(IAsyncSiam asyncSiam) {
-		for (RP rp : RP.values()) {
-			rp.reqProc.setAsyncSiam(asyncSiam);
-		}
-	}
+    public void setAsyncSiam(IAsyncSiam asyncSiam) {
+        for (RP rp : RP.values()) {
+            rp.reqProc.setAsyncSiam(asyncSiam);
+        }
+    }
 
-	public void setPublisher(IPublisher publisher) {
-		for (RP rp : RP.values()) {
-			rp.reqProc.setPublisher(publisher);
-		}
-	}
+    public void setPublisher(IPublisher publisher) {
+        for (RP rp : RP.values()) {
+            rp.reqProc.setPublisher(publisher);
+        }
+    }
 
-	/**
-	 * Returns the request processor for the given request ID
-	 * 
-	 * @param id
-	 *            ID of the desired processor
-	 * @return the desired processor, or a special processor if the ID is not
-	 *         recognized
-	 */
-	public IRequestProcessor getRequestProcessor(String id) {
-		try {
-			RP rp = RP.valueOf(id);
-			return rp.reqProc;
-		}
-		catch (IllegalArgumentException e) {
-			return _unrecognizedRequestProcessor;
-		}
-	}
+    public void setDataManagers(IDataManagers dataManagers) {
+        for (RP rp : RP.values()) {
+            if (rp.reqProc instanceof IDataRequestProcessor) {
+                ((IDataRequestProcessor) rp.reqProc)
+                        .setDataManagers(dataManagers);
+            }
+        }
+    }
 
-	private static BaseRequestProcessor _unrecognizedRequestProcessor = new BaseRequestProcessor() {
-		public GeneratedMessage processRequest(int reqId, Command cmd) {
-			String cmdName = cmd.getCommand();
-			String description = _rid(reqId) + "Command '" + cmdName + "' not recognized";
-			log.debug(description);
-			return ScUtils.createFailResponse(description);
-		}
-	};
+    /**
+     * Returns the request processor for the given request ID
+     * 
+     * @param id
+     *            ID of the desired processor
+     * @return the desired processor, or a special processor if the ID is not
+     *         recognized
+     */
+    public IRequestProcessor getRequestProcessor(String id) {
+        try {
+            RP rp = RP.valueOf(id);
+            return rp.reqProc;
+        }
+        catch (IllegalArgumentException e) {
+            return _unrecognizedRequestProcessor;
+        }
+    }
+
+    private static BaseRequestProcessor _unrecognizedRequestProcessor = new BaseRequestProcessor() {
+        public GeneratedMessage processRequest(int reqId, Command cmd) {
+            String cmdName = cmd.getCommand();
+            String description = _rid(reqId) + "Command '" + cmdName
+                    + "' not recognized";
+            log.debug(description);
+            return ScUtils.createFailResponse(description);
+        }
+    };
+
 }

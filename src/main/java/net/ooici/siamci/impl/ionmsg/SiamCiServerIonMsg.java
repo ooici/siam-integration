@@ -96,8 +96,9 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
      * @param brokerPort
      * @param queueName
      * @param ionExchange
-     * @param requestProcessor
+     * @param requestProcessors
      *            To process incoming requests.
+     * @param dataManagers
      * @throws Exception
      *             if something bad happens
      */

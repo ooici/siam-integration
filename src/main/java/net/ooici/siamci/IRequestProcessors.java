@@ -30,6 +30,13 @@ public interface IRequestProcessors {
 	public void setPublisher(IPublisher publisher);
 	
 	/**
+	 * Sets the given data managers object to thos processors that may use it.
+	 * 
+	 * @param dataManagers
+	 */
+	public void setDataManagers(IDataManagers dataManagers);
+	
+	/**
 	 * Returns the request processor for the given request ID
 	 * 
 	 * @param id
