@@ -29,19 +29,19 @@ public interface ISiamCiFactory {
 	 */
 	public IRequestProcessors createRequestProcessors(ISiam siam);
 
-	
-	/**
-	 * Gets the SIAM-CI adapter implementation.
-	 * 
-	 * @param siam
-	 *            interface to SIAM library
-	 * @param brokerHost
-	 * @param brokerPort
-	 * @param queueName
-	 * @param requestDispatcher
-	 * @return adapter
-	 */
+    /**
+     * Gets the SIAM-CI adapter implementation.
+     * 
+     * @param siam
+     *            interface to SIAM library
+     * @param brokerHost
+     * @param brokerPort
+     * @param queueName
+     * @param exchangeName
+     * @param requestDispatcher
+     * @return adapter
+     */
 	public ISiamCiAdapter createSiamCiAdapter(String brokerHost,
-			int brokerPort, String queueName,
+			int brokerPort, String queueName, String exchangeName,
 			IRequestProcessors requestProcessors);
 }

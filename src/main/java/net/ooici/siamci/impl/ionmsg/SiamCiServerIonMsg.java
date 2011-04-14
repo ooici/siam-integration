@@ -19,7 +19,6 @@ import net.ooici.play.InstrDriverInterface.Command;
 import net.ooici.siamci.IPublisher;
 import net.ooici.siamci.IRequestProcessor;
 import net.ooici.siamci.IRequestProcessors;
-import net.ooici.siamci.SiamCiConstants;
 import net.ooici.siamci.utils.ScUtils;
 
 import org.slf4j.Logger;
@@ -32,10 +31,10 @@ import com.google.protobuf.Message;
 /**
  * The actual SIAM-CI service.
  * 
- * In a nutshell, it accepts RPC requests on the queue
- * {@link SiamCiConstants#DEFAULT_QUEUE_NAME}, uses a {@link IRequestProcessors} object
- * to process the incoming requests, and replies the resulting response to the
- * routingKey indicated in the "reply-to" property of the request.
+ * In a nutshell, it accepts RPC requests on a given broker queue, uses a
+ * {@link IRequestProcessors} object to process the incoming requests, and
+ * replies the resulting response to the routingKey indicated in the "reply-to"
+ * property of the request.
  * 
  * @author carueda
  */
@@ -44,24 +43,40 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
     private static final Logger log = LoggerFactory
             .getLogger(SiamCiServerIonMsg.class);
 
+    static {
+        //
+        // TODO, once ioncore-java starts using standard logging, eliminate the
+        // following, which simply "redirects" System.out messages to a file so
+        // the general INFO logging shows up more cleanly
+        //
+        final String outputFile = "stdout.txt";
+        try {
+            System.setOut(new PrintStream(outputFile));
+        }
+        catch (Throwable ex) {
+            log.warn("Could not set system out to file " + outputFile, ex);
+        }
+    }
+
+    /**
+     * Timeout while waiting for a request. The timeout allows to periodically
+     * check whether the main loop should finish (because of a call to
+     * {@link #stop()})
+     */
+    private static final long TIMEOUT = 3 * 1000;
 
     private final String brokerHost;
 
     private final int brokerPort;
-
-    /** TODO: use some parameter -- currently hard-coded for convenience */
-    private static final String exchange = "magnet.topic";
-
-    /**
-     * Timeout for waiting for a request.
-     */
-    private static final long TIMEOUT = 3 * 1000;
 
     /** The queue this service is accepting requests at */
     private final String queueName;
 
     /** The 'from' parameter when replying to a request */
     private final MessagingName from;
+
+    /** The ION exchange */
+    private final String ionExchange;
 
     /** The processors for the requests */
     private final IRequestProcessors requestProcessors;
@@ -80,18 +95,21 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
      * @param brokerHost
      * @param brokerPort
      * @param queueName
+     * @param ionExchange
      * @param requestProcessor
      *            To process incoming requests.
      * @throws Exception
      *             if something bad happens
      */
     SiamCiServerIonMsg(String brokerHost, int brokerPort, String queueName,
-            IRequestProcessors requestProcessors) throws Exception {
+            String ionExchange, IRequestProcessors requestProcessors)
+            throws Exception {
 
         this.brokerHost = brokerHost;
         this.brokerPort = brokerPort;
         this.queueName = queueName;
         this.from = new MessagingName(queueName);
+        this.ionExchange = ionExchange;
         this.requestProcessors = requestProcessors;
 
         this.requestProcessors.setPublisher(this);
@@ -100,7 +118,7 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
             log.debug("Creating SiamCiProcess");
         }
         ionClient = new MsgBrokerClient(this.brokerHost, this.brokerPort,
-                exchange);
+                this.ionExchange);
         ionClient.attach();
         ionClient.declareQueue(queueName);
 
@@ -114,7 +132,7 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
     public void run() {
         log.info("Running " + getClass().getSimpleName() + " (" + "broker='"
                 + brokerHost + ":" + brokerPort + "'" + ", queue='" + queueName
-                + "'," + " exchange='" + exchange + "'" + ")");
+                + "'," + " exchange='" + ionExchange + "'" + ")");
         keepRunning = true;
         isRunning = true;
         try {
@@ -141,6 +159,10 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
         return isRunning;
     }
 
+    /**
+     * Formats a request id: helps identify the specific request among the
+     * various possible concurrent log messages.
+     */
     private static String _rid(int reqId) {
         return ScUtils.formatReqId(reqId);
     }
@@ -160,6 +182,7 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
                     && null == (msgin = ionClient.consumeMessage(
                             queueName,
                             TIMEOUT))) {
+                //
                 // timeout -- just try again
                 //
                 // Note: consumeMessage should throw an exception when there is
@@ -174,7 +197,8 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
     }
 
     /**
-     * Dispatches the incoming request.
+     * Dispatches the incoming request. Basic steps are performed in the current
+     * thread, while the main processing is started in a different thread.
      * 
      * @param reqId
      *            An ID for the request
@@ -186,7 +210,8 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
 
         //
         // Do some immediate steps in current thread, in particular
-        // to show some basic info about the incoming request.
+        // to show some basic info about the incoming request, but
+        // launch a different thread from the pool for the main processing.
         //
 
         try {
@@ -225,7 +250,7 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
         }
         //
         // Dispatch remaining, potentially long-running part in a different
-        // thread:
+        // thread from the pool:
         //
         execService.submit(new Runnable() {
             public void run() {
@@ -297,6 +322,14 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
                         + expiry + "\n");
     }
 
+    /**
+     * Dispatches the given command by delegating to the corresponding processor
+     * as given by {@link IRequestProcessors}.
+     * 
+     * @param reqId
+     * @param cmd
+     * @return
+     */
     private GeneratedMessage _dispatchRequest(int reqId, Command cmd) {
         final String cmdName = cmd.getCommand();
         IRequestProcessor reqProc = requestProcessors
@@ -468,17 +501,4 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
         log.trace(_rid(reqId) + "------------------</_unpack>\n");
     }
 
-    static {
-        //
-        // TODO, once ioncore-java starts using standard logging, eliminate the
-        // following, which simply "redirects" System.out messages to a file.
-        //
-        final String outputFile = "stdout.txt";
-        try {
-            System.setOut(new PrintStream(outputFile));
-        }
-        catch (Throwable ex) {
-            log.warn("Could not set system out to file " + outputFile, ex);
-        }
-    }
 }

@@ -13,79 +13,82 @@ import org.slf4j.LoggerFactory;
  */
 public class SiamCiAdapterIonMsg implements ISiamCiAdapter {
 
-	private static final Logger log = LoggerFactory
-			.getLogger(SiamCiAdapterIonMsg.class);
+    private static final Logger log = LoggerFactory
+            .getLogger(SiamCiAdapterIonMsg.class);
 
-	private final String brokerHost;
-	private final int brokerPort;
-	private final String queueName;
+    private final String brokerHost;
+    private final int brokerPort;
+    private final String queueName;
+    private final String ionExchange;
 
-	private SiamCiServerIonMsg siamCiProcess;
-	private Thread thread;
+    private SiamCiServerIonMsg siamCiProcess;
+    private Thread thread;
 
-	private IRequestProcessors requestProcessors;
+    private IRequestProcessors requestProcessors;
 
-	public SiamCiAdapterIonMsg(String brokerHost, int brokerPort,
-			String queueName, IRequestProcessors requestProcessors) {
-		this.brokerHost = brokerHost;
-		this.brokerPort = brokerPort;
-		this.queueName = queueName;
-		this.requestProcessors = requestProcessors;
-	}
+    public SiamCiAdapterIonMsg(String brokerHost, int brokerPort,
+            String queueName, String ionExchange,
+            IRequestProcessors requestProcessors) {
+        this.brokerHost = brokerHost;
+        this.brokerPort = brokerPort;
+        this.queueName = queueName;
+        this.ionExchange = ionExchange;
+        this.requestProcessors = requestProcessors;
+    }
 
-	public void start() throws Exception {
-		siamCiProcess = new SiamCiServerIonMsg(brokerHost, brokerPort,
-				queueName, requestProcessors);
+    public void start() throws Exception {
+        siamCiProcess = new SiamCiServerIonMsg(brokerHost, brokerPort,
+                queueName, ionExchange, requestProcessors);
 
-		thread = new Thread(siamCiProcess, siamCiProcess.getClass()
-				.getSimpleName());
-		if (log.isDebugEnabled()) {
-			log.debug("Starting process thread");
-		}
-		thread.start();
-	}
+        thread = new Thread(siamCiProcess, siamCiProcess.getClass()
+                .getSimpleName());
+        if (log.isDebugEnabled()) {
+            log.debug("Starting process thread");
+        }
+        thread.start();
+    }
 
-	/**
-	 * It requests that the process complete, and makes the current thread wait
-	 * until that process completes, but only up to a maximum of a few seconds.
-	 * If after this wait the process seems to be still running, then {@code
-	 * interrupt()} is called on the associated process' thread.
-	 */
-	public void stop() {
-		if (siamCiProcess != null) {
-			siamCiProcess.stop();
-			_waitAndInterruptIfNecessary();
-			siamCiProcess = null;
-		}
-	}
+    /**
+     * It requests that the process complete, and makes the current thread wait
+     * until that process completes, but only up to a maximum of a few seconds.
+     * If after this wait the process seems to be still running, then {@code
+     * interrupt()} is called on the associated process' thread.
+     */
+    public void stop() {
+        if (siamCiProcess != null) {
+            siamCiProcess.stop();
+            _waitAndInterruptIfNecessary();
+            siamCiProcess = null;
+        }
+    }
 
-	/**
-	 * Allows some time for the process to terminate by itself before
-	 * interrupting the thread.
-	 */
-	private void _waitAndInterruptIfNecessary() {
-		try {
-			if (log.isDebugEnabled()) {
-				log.debug("Waiting for process to complete by itself...");
-			}
-			// wait a maximum of ~8 seconds
-			for (int remaining = 8 * 1000; remaining > 0
-					&& siamCiProcess.isRunning(); remaining -= 200) {
-				Thread.sleep(200);
-			}
-		}
-		catch (InterruptedException ignore) {
-			if (log.isDebugEnabled()) {
-				log.debug("Interrupted while waiting for process to complete");
-			}
-		}
+    /**
+     * Allows some time for the process to terminate by itself before
+     * interrupting the thread.
+     */
+    private void _waitAndInterruptIfNecessary() {
+        try {
+            if (log.isDebugEnabled()) {
+                log.debug("Waiting for process to complete by itself...");
+            }
+            // wait a maximum of ~8 seconds
+            for (int remaining = 8 * 1000; remaining > 0
+                    && siamCiProcess.isRunning(); remaining -= 200) {
+                Thread.sleep(200);
+            }
+        }
+        catch (InterruptedException ignore) {
+            if (log.isDebugEnabled()) {
+                log.debug("Interrupted while waiting for process to complete");
+            }
+        }
 
-		if (siamCiProcess.isRunning()) {
-			if (log.isDebugEnabled()) {
-				log.debug("Process still running. Interrupting thread...");
-			}
-			thread.interrupt();
-		}
-	}
+        if (siamCiProcess.isRunning()) {
+            if (log.isDebugEnabled()) {
+                log.debug("Process still running. Interrupting thread...");
+            }
+            thread.interrupt();
+        }
+    }
 
 }

@@ -17,37 +17,24 @@ import siam.Siam;
  */
 public class SiamCiFactoryImpl implements ISiamCiFactory {
 
-	/**
-	 * true: to use implementation based on ION messaging APIs. false: to use
-	 * alternative implementation that manipulates the GPB messages directly.
-	 * 
-	 * As of 3/7/11 set to true.
-	 */
-	private static final boolean USE_ION_MESSAGING = true;
+    public ISiam createSiam(String host) throws Exception {
+        return new Siam(host);
+    }
 
-	public ISiam createSiam(String host) throws Exception {
-		return new Siam(host);
-	}
+    public IAsyncSiam createAsyncSiam(ISiam siam) throws Exception {
+        return new AsyncSiam(siam);
+    }
 
-	public IAsyncSiam createAsyncSiam(ISiam siam) throws Exception {
-		return new AsyncSiam(siam);
-	}
+    public IRequestProcessors createRequestProcessors(ISiam siam) {
+        return new RequestProcessors(siam);
+    }
 
-	public IRequestProcessors createRequestProcessors(ISiam siam) {
-		return new RequestProcessors(siam);
-	}
+    public ISiamCiAdapter createSiamCiAdapter(String brokerHost,
+            int brokerPort, String queueName, String exchangeName,
+            IRequestProcessors requestProcessors) {
 
-	public ISiamCiAdapter createSiamCiAdapter(String brokerHost,
-			int brokerPort, String queueName,
-			IRequestProcessors requestProcessors) {
-		if (USE_ION_MESSAGING) {
-			return new SiamCiAdapterIonMsg(brokerHost, brokerPort, queueName,
-					requestProcessors);
-		}
-		else {
-			// Old code, not maintained
-			return null;
-		}
-	}
+        return new SiamCiAdapterIonMsg(brokerHost, brokerPort, queueName,
+                exchangeName, requestProcessors );
+    }
 
 }
