@@ -99,7 +99,7 @@ public class TestSiamInstrument1 extends PolledInstrumentService implements
         }
         log.debug("requestSample() - snooze()");
         try {
-            snooze(20);
+            snooze(7);
             log.debug("requestSample() - done with snooze()");
         }
         catch (Throwable e) {

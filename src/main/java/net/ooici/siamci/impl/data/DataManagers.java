@@ -6,6 +6,9 @@ import java.util.Map;
 import net.ooici.siamci.IDataManager;
 import net.ooici.siamci.IDataManagers;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Provides data manager instances.
  * 
@@ -13,11 +16,16 @@ import net.ooici.siamci.IDataManagers;
  */
 public class DataManagers implements IDataManagers {
 
+    private static final Logger log = LoggerFactory
+            .getLogger(DataManagers.class);
+
     private Map<String, IDataManager> dataManagers = new HashMap<String, IDataManager>();
 
     public IDataManager getDataManager(String rbnbHost, String baseClientName) {
-        // this key is internal, any combination will do.
-        String key = rbnbHost + "$$" + baseClientName;
+        //
+        // this key is internal; any combination will do.
+        final String key = rbnbHost + "$$" + baseClientName;
+        
         IDataManager dataManager = dataManagers.get(key);
         if (dataManager == null) {
             synchronized (dataManagers) {
@@ -28,6 +36,7 @@ public class DataManagers implements IDataManagers {
                 }
             }
         }
+        log.info("Returning dataManager (" +dataManager.getClass().getName()+ ")");
         return dataManager;
     }
 }

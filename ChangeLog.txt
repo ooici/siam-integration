@@ -2,6 +2,14 @@ SiamCi integration prototype
 Created 2/9/2011
 Carlos Rueda - MBARI
 
+2011-04-18
+	- Some more preparation for data reception and notification to ION, with preliminary
+	  test_siamci_data_async.py completing ok.
+	- I reduced the snooze in the test instrument from 20 to 7 seconds to faciliate testing
+	  (less likehood of timeout).
+	  
+	    
+	
 2011-04-13b
 	- some preparations for data management, ie., for dispatching the reception of
 	  data from the RBNB channels associated with SIAM instruments to the ION.

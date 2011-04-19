@@ -26,12 +26,13 @@ class DataNotifier implements Runnable {
 
     private final String rbnbHost;
     private final String clientName;
-    private final String channelName;
-    private final String fullChannelName;
+    private final String turbineName;
     private final String prefix;
 
     private final Set<IDataListener> listeners = new LinkedHashSet<IDataListener>();
 
+    private volatile boolean active = false;
+    private volatile boolean isRunning = false;
     private volatile Sink rbnbSink = null;
     private final ChannelMap channelMap = new ChannelMap();
 
@@ -40,17 +41,18 @@ class DataNotifier implements Runnable {
      * 
      * @param rbnbHost
      * @param clientName
-     * @param channelName
+     * @param turbineName
      * @throws Exception
      */
-    DataNotifier(String rbnbHost, String clientName, String channelName)
+    DataNotifier(String rbnbHost, String clientName, String turbineName)
             throws Exception {
         super();
         this.rbnbHost = rbnbHost;
         this.clientName = clientName;
-        this.channelName = channelName;
-        this.fullChannelName = this.clientName + "/" + this.channelName;
-        this.prefix = String.format("[%s] ", this.fullChannelName);
+        this.turbineName = turbineName;
+        this.prefix = String.format("[%s] ", this.turbineName);
+        
+        log.info(prefix + "instance created.");
 
         _prepare();
     }
@@ -61,31 +63,41 @@ class DataNotifier implements Runnable {
         rbnbSink.OpenRBNBConnection(rbnbHost, clientName);
 
         channelMap.Clear();
-        channelMap.Add(fullChannelName);
+        channelMap.Add(turbineName);
         log.info(prefix + "Subscribing to channel ...");
         rbnbSink.Subscribe(channelMap); // , 0, 10, "newest");
+        
+        active = true;
     }
 
     public boolean addDataListener(IDataListener listener) {
-        if (rbnbSink == null) {
+        log.info("Adding listener: " +listener);
+        if (!active) {
             return false;
         }
-
-        synchronized (listeners) {
-            listeners.add(listener);
-            return true;
-        }
+        listeners.add(listener);
+        return true;
     }
 
     private void _notifyListeners(double value) {
-        synchronized (listeners) {
-            for (IDataListener listener : listeners) {
-                listener.dataReceived(fullChannelName, value);
-            }
+        log.info("Notifying " +listeners.size()+ " listeners");
+        for (IDataListener listener : listeners) {
+            listener.dataReceived(turbineName, value);
+        }
+    }
+    
+    public void run() {
+        isRunning = true;
+        try {
+            _run();
+        }
+        finally {
+            active = false;
+            isRunning = false;
         }
     }
 
-    public void run() {
+    private void _run() {
         while (rbnbSink != null) {
             try {
                 log.info(prefix + "Waiting for data ...");
@@ -126,7 +138,7 @@ class DataNotifier implements Runnable {
     }
 
     public boolean isRunning() {
-        return rbnbSink != null;
+        return isRunning;
     }
 
 }

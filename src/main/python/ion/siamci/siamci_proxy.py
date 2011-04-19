@@ -218,6 +218,26 @@ class SiamCiAdapterProxy():
         defer.returnValue(response)
         
         
+    @defer.inlineCallbacks
+    def execute_StartAcquisition(self, channel, publish_stream):
+        """
+        @todo: VERY PRELIMINARY, incomplete!
+        """
+
+        assert(channel is not None)
+        assert(publish_stream is not None)
+        
+        log.debug("execute_StartAcquisition: channel='%s' publish_stream='%s'" % (str(channel), str(publish_stream)))
+        
+        args = [("port", self.port), ("channel", channel)]
+             
+        cmd = yield self._make_command("execute_StartAcquisition", args, publish_stream)
+        response = yield self._rpc(cmd)
+        log.debug(show_message(response, "execute_StartAcquisition response:"))
+        
+        defer.returnValue(response)
+        
+        
 
 
   

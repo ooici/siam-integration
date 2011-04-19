@@ -13,6 +13,7 @@ import net.ooici.siamci.impl.reqproc.GetLastSampleRequestProcessor;
 import net.ooici.siamci.impl.reqproc.GetStatusRequestProcessor;
 import net.ooici.siamci.impl.reqproc.ListPortsRequestProcessor;
 import net.ooici.siamci.impl.reqproc.SetParamsRequestProcessor;
+import net.ooici.siamci.impl.reqproc.StartAcquisitionRequestProcessor;
 import net.ooici.siamci.utils.ScUtils;
 
 import org.slf4j.Logger;
@@ -50,6 +51,8 @@ class RequestProcessors implements IRequestProcessors {
         fetch_params(new FetchParamsRequestProcessor()),
 
         set_params(new SetParamsRequestProcessor()),
+
+        execute_StartAcquisition(new StartAcquisitionRequestProcessor()),
 
         ;
 

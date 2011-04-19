@@ -8,34 +8,36 @@ import java.util.concurrent.Future;
  * @author carueda
  */
 public interface IDataManager {
+    
+    
+    public boolean isDataNotifierCreated(String turbineName);
 
     /**
-     * Is the notifier for the given channel already running?
+     * Creates a data notifiers.
      * 
-     * @param channelName
-     * @return
+     * @param turbineName
      * @throws Exception
      */
-    public boolean isNotifierRunning(String channelName) throws Exception;
+    public void createDataNotifier(String turbineName) throws Exception;
 
     /**
      * Starts the notifier for the given channel
      * 
-     * @param channelName
+     * @param turbineName
      * @return A future for the just submitted task; null if the notifier is
      *         already running
      * @throws Exception
      */
-    public Future<?> startDataNotifier(String channelName) throws Exception;
+    public Future<?> startDataNotifier(String turbineName) throws Exception;
 
     /**
      * Adds a listener to the notifier running for the given channel.
      * 
-     * @param channelName
+     * @param turbineName
      * @param listener
-     * @return true is the listener was added; false if there is no notifier
-     *         running
+     * @return true if the listener was added; false if there is no notifier for
+     *         this manager of if this notifier is no active.
      */
-    public boolean addDataListener(String channelName, IDataListener listener);
+    public boolean addDataListener(String turbineName, IDataListener listener);
 
 }
