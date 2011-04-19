@@ -5,7 +5,6 @@ import java.util.Map;
 import net.ooici.play.InstrDriverInterface.ChannelParameterPair;
 import net.ooici.play.InstrDriverInterface.Command;
 import net.ooici.play.InstrDriverInterface.SuccessFail;
-import net.ooici.siamci.IDataListener;
 import net.ooici.siamci.IDataManager;
 import net.ooici.siamci.utils.ScUtils;
 
@@ -18,15 +17,13 @@ import com.google.protobuf.GeneratedMessage;
 /**
  * StartAcquisition command processor.
  * 
- * TODO NOT IMPLEMENTED YET ! (still preparing supporting stuff, eg, data
- * management)
+ * TODO complete implementation (still preliminary)
  * 
  * @author carueda
  */
 public class StartAcquisitionRequestProcessor extends BaseDataRequestProcessor {
 
-    private static final Logger log = LoggerFactory
-            .getLogger(StartAcquisitionRequestProcessor.class);
+    private static final Logger log = LoggerFactory.getLogger(StartAcquisitionRequestProcessor.class);
 
     //
     // TODO Command naming is rather ad hoc at the moment
@@ -105,8 +102,7 @@ public class StartAcquisitionRequestProcessor extends BaseDataRequestProcessor {
         log.info(_rid(reqId) + "rbnbHost='" + rbnbHost + "' fullChannelName='"
                 + turbineName + "'");
 
-        GeneratedMessage response = _getAndPublishResult(
-                reqId,
+        GeneratedMessage response = _getAndPublishResult(reqId,
                 rbnbHost,
                 turbineName,
                 port,
@@ -128,10 +124,7 @@ public class StartAcquisitionRequestProcessor extends BaseDataRequestProcessor {
     /**
      * Gets the value of the "publisherHost" property.
      * 
-     * @param port
-     *            port identifying the instrument
-     * @return the value, or null if it is not associated or cannot be retrieved
-     *         due to some error.
+     * @return the value, or null if it is not associated
      */
     private String _getRbnbHost(Map<String, String> props) {
         String rbnbHost = props.get("publisherHost");
@@ -163,12 +156,10 @@ public class StartAcquisitionRequestProcessor extends BaseDataRequestProcessor {
         String isiID = props.get("isiID");
 
         if (serviceName == null || serviceName.trim().length() == 0) {
-            throw new Exception(
-                    "'serviceName' property no associated with instrument");
+            throw new Exception("'serviceName' property no associated with instrument");
         }
         if (isiID == null || isiID.trim().length() == 0) {
-            throw new Exception(
-                    "'isiID' property no associated with instrument");
+            throw new Exception("'isiID' property no associated with instrument");
         }
         serviceName = serviceName.trim();
         isiID = isiID.trim();
@@ -192,7 +183,7 @@ public class StartAcquisitionRequestProcessor extends BaseDataRequestProcessor {
      * @param channel
      *            channel name
      * @param publishStream
-     *            the queue (rounting key) to publish the response.
+     *            the queue (rounting key) to publish the data.
      * @return The {@link SuccessFail} result of the submission of the request.
      */
     private GeneratedMessage _getAndPublishResult(final int reqId,
@@ -207,43 +198,21 @@ public class StartAcquisitionRequestProcessor extends BaseDataRequestProcessor {
                 + channel;
 
         // get the data manager for the given rbnbHost and instrument port
-        IDataManager dataManager = dataManagers.getDataManager(rbnbHost, port);
+        IDataManager dataManager = dataManagers.getDataManager(rbnbHost,
+                port,
+                publisher);
 
         assert dataManager != null;
 
-        if (!dataManager.isDataNotifierCreated(turbineName)) {
-            try {
-                dataManager.createDataNotifier(turbineName);
-            }
-            catch (Exception e) {
-                String description = _rid(reqId) + "Error while  data notifier";
-                log.warn(description, e);
-                GeneratedMessage response = ScUtils
-                        .createFailResponse(description);
-                return response;
-            }
-        }
-
-        // add data listener
-        IDataListener dataListener = new DataListener(reqId, publishId,
-                publishStream);
-        boolean added = dataManager.addDataListener(turbineName, dataListener);
-        log.info(_rid(reqId) + "Listener added: " + added);
-
-        // start data notifier for the channel
         try {
-            log.info(_rid(reqId) + "starting data notifier");
-            Object res = dataManager.startDataNotifier(turbineName);
-            if (res != null) {
-                log.info(_rid(reqId) + "Data notifier started");
-            }
-            else {
-                log.info(_rid(reqId) + "Data notifier already running");
-            }
+            dataManager.startDataNotifier(turbineName,
+                    reqId,
+                    publishId,
+                    publishStream);
         }
         catch (Exception e) {
             String description = _rid(reqId)
-                    + "Error while starting data notifier";
+                    + "Error while creating data notifier";
             log.warn(description, e);
             GeneratedMessage response = ScUtils.createFailResponse(description);
             return response;
@@ -252,38 +221,5 @@ public class StartAcquisitionRequestProcessor extends BaseDataRequestProcessor {
         // respond with OK, ie., sucessfully submitted request:
         GeneratedMessage response = ScUtils.createSuccessResponse(null);
         return response;
-    }
-
-    class DataListener implements IDataListener {
-
-        final int reqId;
-        final String publishId;
-        final String publishStream;
-
-        /*
-         * TODO do actual publish of data to ION. For now, we just send a single
-         * publish so the basic test on the python side can complete, during
-         * this preliminary set-up. Overall control TBD.
-         */
-        boolean publishDone = false;
-
-        DataListener(int reqId, String publishId, String publishStream) {
-            this.reqId = reqId;
-            this.publishId = publishId;
-            this.publishStream = publishStream;
-        }
-
-        public void dataReceived(String fullChannelName, double value) {
-            log.info(_rid(reqId) + "dataReceived: '" + fullChannelName + "' = "
-                    + value);
-
-            if (!publishDone) {
-                publishDone = true;
-                GeneratedMessage response = ScUtils
-                        .createSuccessResponse("dataReceived = " + value);
-                publisher.publish(reqId, publishId, response, publishStream);
-            }
-        }
-
     }
 }

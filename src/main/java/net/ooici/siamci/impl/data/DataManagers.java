@@ -5,6 +5,7 @@ import java.util.Map;
 
 import net.ooici.siamci.IDataManager;
 import net.ooici.siamci.IDataManagers;
+import net.ooici.siamci.IPublisher;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +22,7 @@ public class DataManagers implements IDataManagers {
 
     private Map<String, IDataManager> dataManagers = new HashMap<String, IDataManager>();
 
-    public IDataManager getDataManager(String rbnbHost, String baseClientName) {
+    public IDataManager getDataManager(String rbnbHost, String baseClientName, IPublisher publisher) {
         //
         // this key is internal; any combination will do.
         final String key = rbnbHost + "$$" + baseClientName;
@@ -31,7 +32,7 @@ public class DataManagers implements IDataManagers {
             synchronized (dataManagers) {
                 dataManager = dataManagers.get(key);
                 if (dataManager == null) {
-                    dataManager = new DataManager(rbnbHost, baseClientName);
+                    dataManager = new DataManager(rbnbHost, baseClientName, publisher);
                     dataManagers.put(key, dataManager);
                 }
             }

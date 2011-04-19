@@ -8,6 +8,13 @@ Carlos Rueda - MBARI
 	- I reduced the snooze in the test instrument from 20 to 7 seconds to faciliate testing
 	  (less likehood of timeout).
 	  
+	- TODO re. data notification: at the moment DataNotifier sends ONLY one notification and
+	  terminates (this is mainly to let the test_siamci_data_async.py complete). In general
+	  of course the notification should continue until indicated otherwise (or because
+	  of some error, etc.).  In this general case, it would be convenient to detect 
+	  the situation where there is no receptor for such data notifications so the notifier
+	  can decide to stop running.
+	  
 	    
 	
 2011-04-13b
