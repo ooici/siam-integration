@@ -36,7 +36,7 @@
 <!--<property name="ionproto_jar" value="${ion-object-definitions}/dist/lib/ionproto-${ionproto_version}.jar" />-->
 	
 	<!-- ioncore-java's library version and library -->
-	<property name="ioncore_version" value="0.2.4" />
+	<property name="ioncore_version" value="0.2.5-dev" />
 	<property name="ioncore_jar" value="${ioncore-java}/dist/lib/ioncore-java-${ioncore_version}.jar" />
 	
 	<!-- msgpack library version and library -->

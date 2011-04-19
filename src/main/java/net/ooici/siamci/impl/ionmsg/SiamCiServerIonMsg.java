@@ -7,7 +7,9 @@ import ion.core.utils.GPBWrapper;
 import ion.core.utils.ProtoUtils;
 import ion.core.utils.StructureManager;
 
+import java.io.IOException;
 import java.io.PrintStream;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -27,6 +29,8 @@ import org.slf4j.LoggerFactory;
 import com.google.protobuf.GeneratedMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
+import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.ReturnListener;
 
 /**
  * The actual SIAM-CI service.
@@ -40,8 +44,7 @@ import com.google.protobuf.Message;
  */
 class SiamCiServerIonMsg implements IPublisher, Runnable {
 
-    private static final Logger log = LoggerFactory
-            .getLogger(SiamCiServerIonMsg.class);
+    private static final Logger log = LoggerFactory.getLogger(SiamCiServerIonMsg.class);
 
     static {
         //
@@ -89,6 +92,30 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
     /** For the dispatch of requests */
     private final ExecutorService execService = Executors.newCachedThreadPool();
 
+    private final ReturnListener returnListener = new ReturnListener() {
+
+        /**
+         * calls {@link SiamCiServerIonMsg#_notifyReturn(String)} with the
+         * rountingKey.
+         */
+        public void handleBasicReturn(int replyCode, String replyText,
+                String exchange, String routingKey,
+                AMQP.BasicProperties properties, byte[] body)
+                throws IOException {
+
+            if (log.isDebugEnabled()) {
+                log.debug("handleBasicReturn: "
+                        + Arrays.asList(replyCode,
+                                replyText,
+                                exchange,
+                                routingKey,
+                                properties));
+            }
+
+            _notifyReturn(routingKey);
+        }
+    };
+
     /**
      * Creates the Siam-Ci service.
      * 
@@ -115,16 +142,54 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
 
         this.requestProcessors.setPublisher(this);
 
-        if (log.isDebugEnabled()) {
-            log.debug("Creating SiamCiProcess");
-        }
-        ionClient = new MsgBrokerClient(this.brokerHost, this.brokerPort,
-                this.ionExchange);
-        ionClient.attach();
+        this.ionClient = _createMsgBrokerClient();
+
         ionClient.declareQueue(queueName);
 
         ionClient.bindQueue(queueName, new MessagingName(queueName), null);
         ionClient.attachConsumer(queueName);
+    }
+
+    /**
+     * This creates an instance of (an anonymous subclass of)
+     * {@link MsgBrokerClient} where the {@link MsgBrokerClient#attach()} method
+     * is overriden to set a {@link ReturnListener} to the mDefaultChannel.
+     */
+    private MsgBrokerClient _createMsgBrokerClient() {
+
+        MsgBrokerClient ionClient = new MsgBrokerClient(brokerHost,
+                brokerPort,
+                ionExchange) {
+
+            @Override
+            public void attach() {
+                // do the regular attach:
+                super.attach();
+
+                // and set our return listener:
+                mDefaultChannel.setReturnListener(returnListener);
+                if (log.isDebugEnabled()) {
+                    log.debug("Return listener has been set to the channel");
+                }
+            }
+
+        };
+
+        ionClient.attach();
+
+        return ionClient;
+    }
+
+    /**
+     * Notifies a return to interested objects.
+     * TODO implement
+     * 
+     * @param routingKey
+     */
+    private void _notifyReturn(String routingKey) {
+        // TODO Auto-generated method stub
+
+        log.info("_notifyReturn: routingKey='" + routingKey + "'");
     }
 
     /**
@@ -180,8 +245,7 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
 
             IonMessage msgin = null;
             while (keepRunning
-                    && null == (msgin = ionClient.consumeMessage(
-                            queueName,
+                    && null == (msgin = ionClient.consumeMessage(queueName,
                             TIMEOUT))) {
                 //
                 // timeout -- just try again
@@ -220,10 +284,8 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
         }
         catch (Throwable e) {
             Map<String, String> headers = _getIonHeaders(msgin);
-            log.warn(
-                    _rid(reqId)
-                            + "error while acknowledging message. headers = "
-                            + headers,
+            log.warn(_rid(reqId)
+                    + "error while acknowledging message. headers = " + headers,
                     e);
             return;
         }
@@ -287,9 +349,8 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
 
         if (log.isDebugEnabled()) {
             if (convId == null) {
-                log
-                        .debug(_rid(reqId)
-                                + "Will reply but with no conv-id as it was not provided");
+                log.debug(_rid(reqId)
+                        + "Will reply but with no conv-id as it was not provided");
             }
         }
 
@@ -313,14 +374,18 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
         final String toName = receivedHeaders.get("reply-to");
 
         // TODO what name and identity?
-        Container.Structure.Builder structureBuilder = ProtoUtils
-                .addIonMessageContent(null, "myName", "Identity", response);
-        _sendReply(reqId, toName, convId, userId, expiry, structureBuilder
-                .build());
-        log
-                .info(_rid(reqId) + "Reply sent to '" + toName + "' conv-id:'"
-                        + convId + "' user-id:'" + userId + "' expiry:"
-                        + expiry + "\n");
+        Container.Structure.Builder structureBuilder = ProtoUtils.addIonMessageContent(null,
+                "myName",
+                "Identity",
+                response);
+        _sendReply(reqId,
+                toName,
+                convId,
+                userId,
+                expiry,
+                structureBuilder.build());
+        log.info(_rid(reqId) + "Reply sent to '" + toName + "' conv-id:'"
+                + convId + "' user-id:'" + userId + "' expiry:" + expiry + "\n");
     }
 
     /**
@@ -333,8 +398,7 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
      */
     private GeneratedMessage _dispatchRequest(int reqId, Command cmd) {
         final String cmdName = cmd.getCommand();
-        IRequestProcessor reqProc = requestProcessors
-                .getRequestProcessor(cmdName);
+        IRequestProcessor reqProc = requestProcessors.getRequestProcessor(cmdName);
         return reqProc.processRequest(reqId, cmd);
     }
 
@@ -360,8 +424,10 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
 
         MessagingName to = new MessagingName(toName);
 
-        IonMessage msg = ionClient.createMessage(from, to, "noop", structure
-                .toByteArray());
+        IonMessage msg = ionClient.createMessage(from,
+                to,
+                "noop",
+                structure.toByteArray());
 
         Map<String, String> headers = _getIonHeaders(msg);
 
@@ -399,8 +465,7 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
         }
 
         // TODO: "SomeName", "Identity": determine appropriate values.
-        Structure structure = ProtoUtils.addIonMessageContent(
-                null,
+        Structure structure = ProtoUtils.addIonMessageContent(null,
                 "SomeName",
                 "Identity",
                 response).build();
@@ -408,8 +473,7 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
         String toName = streamName;
         MessagingName to = new MessagingName(toName);
 
-        IonMessage msg = ionClient.createMessage(
-                from,
+        IonMessage msg = ionClient.createMessage(from,
                 to,
                 "acceptResponse",
                 structure.toByteArray());
@@ -427,10 +491,24 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
         // include the publish_id as a header:
         headers.put("publish_id", publishId);
 
-        ionClient.sendMessage(msg);
+        try {
+            // use my new method in MsgBrokerClient:
+            // TODO: I'm setting both flags (mandatory and immediate) as true;
+            // probably
+            // not both are necessary.
+            // See various relevant items in the
+            // http://www.rabbitmq.com/faq.html,
+            // for example
+            // http://www.rabbitmq.com/faq.html#immediate-flat-routing
+            ionClient.sendMessage(msg, true, true);
+            log.info(_rid(reqId) + "Publish message sent. publishId='"
+                    + publishId + "' to queue='" + streamName + "'");
+        }
+        catch (IOException e) {
+            log.warn(_rid(reqId) + "Cannot send publish message. publishId='"
+                    + publishId + "' to queue='" + streamName + "'", e);
+        }
 
-        log.info(_rid(reqId) + "Publish message sent. publishId='" + publishId
-                + "' to queue='" + streamName + "'");
     }
 
     /**

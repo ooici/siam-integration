@@ -16,7 +16,7 @@
 		<rbnb_version>0.1.adhoc</rbnb_version>
 		<siam_instr_version>0.0.1</siam_instr_version>
 		<ionproto_version>0.3.16</ionproto_version>
-		<ioncore_version>0.2.4</ioncore_version>
+		<ioncore_version>0.2.5-dev</ioncore_version>
 		<msgpack_version>0.3</msgpack_version>
 	</properties>
 

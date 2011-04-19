@@ -2,6 +2,17 @@ SiamCi integration prototype
 Created 2/9/2011
 Carlos Rueda - MBARI
 
+2011-04-19
+	- In ioncore-java, pushed new method: 
+		sendMessage(IonMessage msg, boolean mandatory, boolean immediate) throws IOException
+	  to MsgBrokerClient:
+	  	https://github.com/ooici/ioncore-java/commit/0ce5ecea433c32a0aa266b04ed4043401e9bf523
+	  The new method is used in SiamCiServerIonMsg.publish:
+	  NOTE: I'm setting both flags (mandatory and immediate) as true, but probably not both are 
+	  necessary. See various relevant items in the http://www.rabbitmq.com/faq.html,
+	  for example http://www.rabbitmq.com/faq.html#immediate-flat-routing
+	  
+	  
 2011-04-18
 	- Some more preparation for data reception and notification to ION, with preliminary
 	  test_siamci_data_async.py completing ok.
@@ -14,6 +25,18 @@ Carlos Rueda - MBARI
 	  of some error, etc.).  In this general case, it would be convenient to detect 
 	  the situation where there is no receptor for such data notifications so the notifier
 	  can decide to stop running.
+	  
+	  
+	- In ioncore-java, I just pushed the following change: in MsgBrokerClient, make
+	  mDefaultChannel protected to facilitate some added functionality, for example, detection of 
+	  undelivered/unroutable messages:
+	    https://github.com/ooici/ioncore-java/commit/262ae24ffed5d61c32f78af09e78a03fe4b88737
+	    
+	  While I update the dependency to the new release of ioncore-java including this change, 
+	  I made a quick test of registering a ReturnListener to the channel using a copy of the 
+	  whole MsgBrokerClient class and also indicating the immediate and mandatory flags in 
+	  the sendMessage method (at least one of these flags must be true for the return notification
+	  to work).
 	  
 	    
 	

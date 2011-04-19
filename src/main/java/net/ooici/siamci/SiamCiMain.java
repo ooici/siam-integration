@@ -38,35 +38,42 @@ public class SiamCiMain {
         private static final OptionParser parser = new OptionParser();
 
         // siam
-        private static final OptionSpec<String> siamHostOpt = parser.accepts(
-                "siam",
-                "SIAM node host").withRequiredArg().describedAs("host")
+        private static final OptionSpec<String> siamHostOpt = parser.accepts("siam",
+                "SIAM node host")
+                .withRequiredArg()
+                .describedAs("host")
                 .defaultsTo(DEFAULT_SIAM_NODE_HOST);
 
         // broker
-        private static final OptionSpec<String> brokerHostOpt = parser.accepts(
-                "brokerHost",
-                "Broker host").withRequiredArg().describedAs("host")
+        private static final OptionSpec<String> brokerHostOpt = parser.accepts("brokerHost",
+                "Broker host")
+                .withRequiredArg()
+                .describedAs("host")
                 .defaultsTo(DEFAULT_BROKER_HOST);
-        private static final OptionSpec<String> brokerPortOpt = parser.accepts(
-                "brokerPort",
-                "Broker port").withRequiredArg().describedAs("port")
+        private static final OptionSpec<String> brokerPortOpt = parser.accepts("brokerPort",
+                "Broker port")
+                .withRequiredArg()
+                .describedAs("port")
                 .defaultsTo(String.valueOf(DEFAULT_BROKER_PORT));
 
         // queue
-        private static final OptionSpec<String> queueNameOpt = parser.accepts(
-                "queue",
-                "Queue name").withRequiredArg().describedAs("name").defaultsTo(
-                DEFAULT_QUEUE_NAME);
+        private static final OptionSpec<String> queueNameOpt = parser.accepts("queue",
+                "Queue name")
+                .withRequiredArg()
+                .describedAs("name")
+                .defaultsTo(DEFAULT_QUEUE_NAME);
 
         // ION exchange
-        private static final OptionSpec<String> exchangeNameOpt = parser
-                .accepts("exchange", "ION exchange name").withRequiredArg()
-                .describedAs("name").defaultsTo(DEFAULT_ION_EXCHANGE);
+        private static final OptionSpec<String> exchangeNameOpt = parser.accepts("exchange",
+                "ION exchange name")
+                .withRequiredArg()
+                .describedAs("name")
+                .defaultsTo(DEFAULT_ION_EXCHANGE);
 
-        private static final OptionSpec<String> helpOpt = parser.acceptsAll(
-                Arrays.asList("help", "?"),
-                "print help message").withOptionalArg();
+        private static final OptionSpec<String> helpOpt = parser.acceptsAll(Arrays.asList("help",
+                "?"),
+                "print help message")
+                .withOptionalArg();
 
         /**
          * Gets the parameters for the program by parsing the given arguments
@@ -106,14 +113,12 @@ public class SiamCiMain {
         }
 
         public String toString() {
-            return String
-                    .format(
-                            "siamHost='%s', broker='%s:%s', queueName='%s', exchangeName='%s'",
-                            siamHost,
-                            brokerHost,
-                            brokerPort,
-                            queueName,
-                            exchangeName);
+            return String.format("siamHost='%s', broker='%s:%s', queueName='%s', exchangeName='%s'",
+                    siamHost,
+                    brokerHost,
+                    brokerPort,
+                    queueName,
+                    exchangeName);
         }
     }
 
@@ -183,8 +188,7 @@ public class SiamCiMain {
     }
 
     private ISiamCiAdapter _createSiamCiAdapter() {
-        return siamCiFactory.createSiamCiAdapter(
-                params.brokerHost,
+        return siamCiFactory.createSiamCiAdapter(params.brokerHost,
                 params.brokerPort,
                 params.queueName,
                 params.exchangeName,
@@ -224,9 +228,7 @@ public class SiamCiMain {
     }
 
     private void _startAdapter() throws Exception {
-        log
-                .info("Starting SIAM-CI adapter. SIAM node host: "
-                        + params.siamHost);
+        log.info("Starting SIAM-CI adapter. SIAM node host: " + params.siamHost);
         siamCiAdapter.start();
     }
 

@@ -165,14 +165,14 @@ class DataNotifier implements Runnable {
                          * notifications.
                          */
 
-                        /*
-                         * For now, we 'break' here, that is, just send a single
-                         * publish so the basic test on the python side can
-                         * complete.
-                         */
-                        log.info(prefix
-                                + "NOTE: ONLY one publish done at the moment, so completing loop.");
-                        break;
+//                        /*
+//                         * For now, we 'break' here, that is, just send a single
+//                         * publish so the basic test on the python side can
+//                         * complete.
+//                         */
+//                        log.info(prefix
+//                                + "NOTE: ONLY one publish done at the moment, so completing loop.");
+//                        break;
                     }
                 }
             }
