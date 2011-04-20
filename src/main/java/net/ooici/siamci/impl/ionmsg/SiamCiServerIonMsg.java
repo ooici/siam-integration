@@ -8,7 +8,6 @@ import ion.core.utils.ProtoUtils;
 import ion.core.utils.StructureManager;
 
 import java.io.IOException;
-import java.io.PrintStream;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -47,21 +46,6 @@ import com.rabbitmq.client.ReturnListener;
 class SiamCiServerIonMsg implements IPublisher, Runnable {
 
     private static final Logger log = LoggerFactory.getLogger(SiamCiServerIonMsg.class);
-
-    static {
-        //
-        // TODO, once ioncore-java starts using standard logging, eliminate the
-        // following, which simply "redirects" System.out messages to a file so
-        // the general INFO logging shows up more cleanly
-        //
-        final String outputFile = "stdout.txt";
-        try {
-            System.setOut(new PrintStream(outputFile));
-        }
-        catch (Throwable ex) {
-            log.warn("Could not set system out to file " + outputFile, ex);
-        }
-    }
 
     /**
      * Timeout while waiting for a request. The timeout allows to periodically

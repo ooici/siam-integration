@@ -2,6 +2,13 @@ SIAM_CI Integration Prototype change log
 Carlos Rueda - MBARI
 
 2011-04-20
+
+	- pushed change to MsgBrokerClient (and a couple of other ioncore-java sources) to replace 
+	  system.out.println to log.debug and e.printstacktrace to log.error as agreed with Chris Mueller.
+	     https://github.com/ooici/ioncore-java/commit/15cb59369319f9586eea493112682b8f098aaa02
+	- updated my local ioncore-java library and corresp. dependency in this project
+	- with this update, removed redirection of stdout in SiamCiServerIonMsg
+	
 	- some javadoc about event management (net.ooici.siamci.event.EventMan)
 	- added reason for stopping a data notifier. With the test_siamci_data_async.py test, the siam-ci output 
 	  looks like the following (note the reason message at the end):

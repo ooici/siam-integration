@@ -15,7 +15,7 @@ import com.rbnb.sapi.Sink;
  * Notifies data from a RBNB channel to a publish_stream using a given
  * publisher.
  * 
- * Very preliminary implementation, thread-safety is not guaranteed
+ * Preliminary implementation, thread-safety is not guaranteed
  * 
  * @author carueda
  */
@@ -25,8 +25,8 @@ class DataNotifier implements Runnable {
 
     /**
      * Timeout while fetching for data. The timeout allows to periodically check
-     * whether the main loop should finish (because of a call to {@link #stop()}
-     * )
+     * whether the main loop should finish (because of a call to
+     * {@link #stop(String)}.
      */
     private static final long FETCH_TIMEOUT = 2 * 1000;
 
@@ -80,11 +80,9 @@ class DataNotifier implements Runnable {
         this.prefix = ScUtils.formatReqId(reqId)
                 + String.format("{%s} ", this.turbineName);
 
-        // //////////
         this.publishId = publishId;
         this.publishStream = publishStream;
         this.publisher = publisher;
-        // //////////
 
         _prepare();
     }
@@ -130,7 +128,7 @@ class DataNotifier implements Runnable {
      * immediately.
      * 
      * @param reason
-     *            This string will be passed to {@link #_completed()}
+     *            This string will be passed to {@link #_completed(String)}.
      */
     public void stop(String reason) {
         keepRunning = false;
