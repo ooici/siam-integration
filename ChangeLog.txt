@@ -13,6 +13,51 @@ Carlos Rueda - MBARI
 	  for example http://www.rabbitmq.com/faq.html#immediate-flat-routing
 	  
 	  
+	- I googled for some good in-jvm event bus library but it was not quickly clear what solution
+	  to use (EventBus.org seems to Swing oriented and the confluence pages were down; 
+	  SimpleEventBus looked dated). But then I found mycila-event which turns out very interesting:
+	        http://code.google.com/p/mycila/wiki/MycilaEvent 
+	  (I found it by reading a blog by TestNG's creator: http://java.dzone.com/articles/local-message-bus).
+	  
+	- New event package and initial support using mycila-event, see EventMan and EventTest.
+	
+	- With these new elements the program is now able to stop the DataNotifier's associated with
+	  the routingKey that is reported by RabittMQ via the ReturnListener associated with the
+	  channel in MsgBrokerClient.  Tests are successful.
+	  	
+	  	$ mvn exec:java -Psiam-ci
+	  	
+	    $ SIAM_CI=- bin/trial ion/siamci/test/test_siamci_data_async.py
+	    
+	    The siam-ci output looks:
+		04-19-2011 16:56:51,440 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [0] Request <execute_StartAcquisition> received from 'carueda.shore.mbari.org.4749.1b' conv-id='#3'
+		04-19-2011 16:56:51,441 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [1] Waiting for request ...
+		04-19-2011 16:56:51,441 [pool-2-thread-1   ] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [0] Command with publish stream name: 'siamci.siamci_receiver_test_async'
+		04-19-2011 16:56:51,448 [pool-2-thread-1   ] INFO  net.ooici.siamci.impl.reqproc.StartAcquisitionRequestProcessor - [0] rbnbHost='localhost:3333' fullChannelName='TEstSiamInstrument-1235/val'
+		04-19-2011 16:56:51,466 [pool-2-thread-1   ] INFO  net.ooici.siamci.impl.data.DataManager - instance created: localhost:3333|testPort
+		04-19-2011 16:56:51,466 [pool-2-thread-1   ] INFO  net.ooici.siamci.impl.data.DataManagers - Returning dataManager (net.ooici.siamci.impl.data.DataManager)
+		04-19-2011 16:56:51,584 [pool-2-thread-1   ] INFO  net.ooici.siamci.impl.data.DataManager - DataNotifier created: key='0|TEstSiamInstrument-1235/val|execute_StartAcquisition;port=testPort;channel=val|siamci.siamci_receiver_test_async'
+		04-19-2011 16:56:51,585 [pool-2-thread-1   ] INFO  net.ooici.siamci.impl.data.DataManager - DataNotifier started: key='0|TEstSiamInstrument-1235/val|execute_StartAcquisition;port=testPort;channel=val|siamci.siamci_receiver_test_async'
+		04-19-2011 16:56:51,586 [pool-3-thread-1   ] INFO  net.ooici.siamci.impl.data.DataNotifier - [0] {TEstSiamInstrument-1235/val} Waiting for data ...
+		04-19-2011 16:56:51,595 [pool-2-thread-1   ] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [0] Reply sent to 'carueda.shore.mbari.org.4749.1b' conv-id:'#3' user-id:'ANONYMOUS' expiry:0
+		
+		04-19-2011 16:56:53,741 [pool-3-thread-1   ] INFO  net.ooici.siamci.impl.data.DataNotifier - [0] {TEstSiamInstrument-1235/val} _publishData: 'TEstSiamInstrument-1235/val' = 0.71238620459177
+		04-19-2011 16:56:53,742 [pool-3-thread-1   ] DEBUG ion.core.messaging.MsgBrokerClient - Sent message to exchange magnet.topic with routing key siamci.siamci_receiver_test_async, msglen 446, mandatory=true immediate=true
+		04-19-2011 16:56:53,742 [pool-3-thread-1   ] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [0] Publish message sent. publishId='execute_StartAcquisition;port=testPort;channel=val' to queue='siamci.siamci_receiver_test_async'
+		04-19-2011 16:56:53,743 [pool-3-thread-1   ] INFO  net.ooici.siamci.impl.data.DataNotifier - [0] {TEstSiamInstrument-1235/val} Waiting for data ...
+		
+		
+		04-19-2011 16:57:03,731 [pool-3-thread-1   ] INFO  net.ooici.siamci.impl.data.DataNotifier - [0] {TEstSiamInstrument-1235/val} _publishData: 'TEstSiamInstrument-1235/val' = 0.1520382002169598
+		04-19-2011 16:57:03,732 [pool-3-thread-1   ] DEBUG ion.core.messaging.MsgBrokerClient - Sent message to exchange magnet.topic with routing key siamci.siamci_receiver_test_async, msglen 448, mandatory=true immediate=true
+		04-19-2011 16:57:03,732 [pool-3-thread-1   ] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [0] Publish message sent. publishId='execute_StartAcquisition;port=testPort;channel=val' to queue='siamci.siamci_receiver_test_async'
+		04-19-2011 16:57:03,732 [pool-3-thread-1   ] INFO  net.ooici.siamci.impl.data.DataNotifier - [0] {TEstSiamInstrument-1235/val} Waiting for data ...
+		04-19-2011 16:57:03,744 [AMQP Connection localhost:5672] INFO  net.ooici.siamci.impl.data.DataManager - Got ReturnEvent: routingKey='siamci.siamci_receiver_test_async'
+		04-19-2011 16:57:03,744 [AMQP Connection localhost:5672] INFO  net.ooici.siamci.impl.data.DataManager - XXX stopping notifier key='0|TEstSiamInstrument-1235/val|execute_StartAcquisition;port=testPort;channel=val|siamci.siamci_receiver_test_async'
+		
+		04-19-2011 16:57:05,733 [pool-3-thread-1   ] INFO  net.ooici.siamci.impl.data.DataManager - Notifier completed. Removing key='0|TEstSiamInstrument-1235/val|execute_StartAcquisition;port=testPort;channel=val|siamci.siamci_receiver_test_async'
+	    
+	    
+	  
 2011-04-18
 	- Some more preparation for data reception and notification to ION, with preliminary
 	  test_siamci_data_async.py completing ok.

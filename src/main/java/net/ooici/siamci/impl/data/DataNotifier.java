@@ -23,18 +23,27 @@ class DataNotifier implements Runnable {
 
     private static final Logger log = LoggerFactory.getLogger(DataNotifier.class);
 
+    /**
+     * Timeout while fetching for data. The timeout allows to periodically check
+     * whether the main loop should finish (because of a call to {@link #stop()}
+     * )
+     */
+    private static final long FETCH_TIMEOUT = 2 * 1000;
+
     private final String rbnbHost;
     private final String clientName;
     private final String turbineName;
     private final String prefix;
 
-    final int reqId;
-    final String publishId;
-    final String publishStream;
+    private final int reqId;
+    private final String publishId;
+    private final String publishStream;
 
     private final IPublisher publisher;
 
+    private volatile boolean keepRunning;
     private volatile boolean isRunning = false;
+
     private volatile Sink rbnbSink = null;
     private final ChannelMap channelMap = new ChannelMap();
 
@@ -79,6 +88,10 @@ class DataNotifier implements Runnable {
         _prepare();
     }
 
+    String getPublishStream() {
+        return publishStream;
+    }
+
     private void _prepare() throws Exception {
         if (log.isDebugEnabled()) {
             log.debug(prefix + "Connecting to " + rbnbHost + " ...");
@@ -106,9 +119,18 @@ class DataNotifier implements Runnable {
     }
 
     /**
+     * Requests that this process stop accepting further requests. It returns
+     * immediately.
+     */
+    public void stop() {
+        keepRunning = false;
+    }
+
+    /**
      * Start the loop of fetching data from RBNB and publishing the values
      */
     public void run() {
+        keepRunning = true;
         isRunning = true;
         try {
             _run();
@@ -125,61 +147,52 @@ class DataNotifier implements Runnable {
 
     private void _run() {
 
-        while (isRunning) {
+        while (keepRunning) {
             try {
                 log.info(prefix + "Waiting for data ...");
-                //
-                // TODO the following blocks until data is fetched or error;
-                // change
-                // to include a timeout so it is easier to gracefully stop the
-                // loop.
-                //
-                ChannelMap getmap = rbnbSink.Fetch(-1, channelMap);
-                if (getmap == null || getmap.NumberOfChannels() == 0) {
-                    log.warn(prefix + "No data fetched");
-                    continue;
+
+                ChannelMap getmap = null;
+
+                while (keepRunning) {
+                    getmap = rbnbSink.Fetch(FETCH_TIMEOUT, channelMap);
+                    if (getmap != null && getmap.NumberOfChannels() > 0) {
+                        break; // we have data.
+                    }
+                    else {
+                        // surely a timeout -- just try again.
+                        // log.info("XXXXXXXXXXXXXXXXXX timeout");
+                    }
                 }
 
-                // should be 1 because we are subscribing to one channel
-                int noChannels = getmap.NumberOfChannels();
-
-                if (noChannels > 0) {
-                    final int ch = 0;
-
-                    // double[] times = getmap.GetTimes(ch);
-                    // int type = getmap.GetType(ch);
-
-                    // value.length should be 1
-                    double[] values = getmap.GetDataAsFloat64(ch);
-                    if (values.length > 0) {
-                        double value = values[0];
-                        if (log.isDebugEnabled()) {
-                            log.debug(prefix + " -> " + value);
-                        }
-
-                        _publishData(turbineName, value);
-
-                        /*
-                         * TODO overall control for publishing data including
-                         * termination if there is nobody receiving the
-                         * notifications.
-                         */
-
-//                        /*
-//                         * For now, we 'break' here, that is, just send a single
-//                         * publish so the basic test on the python side can
-//                         * complete.
-//                         */
-//                        log.info(prefix
-//                                + "NOTE: ONLY one publish done at the moment, so completing loop.");
-//                        break;
-                    }
+                if (keepRunning) {
+                    _dispatchGotData(getmap);
                 }
             }
             catch (SAPIException e) {
-                isRunning = false;
+                keepRunning = isRunning = false;
                 log.warn(prefix + "Error fetching data: " + e.getMessage(), e);
             }
+        }
+    }
+
+    private void _dispatchGotData(ChannelMap getmap) {
+        int noChannels = getmap.NumberOfChannels();
+        assert noChannels == 1; // should be 1 because we are subscribing to one channel
+
+        final int ch = 0;
+
+        // double[] times = getmap.GetTimes(ch);
+        // int type = getmap.GetType(ch);
+
+        // value.length should be 1
+        double[] values = getmap.GetDataAsFloat64(ch);
+        if (values.length > 0) {
+            double value = values[0];
+            if (log.isDebugEnabled()) {
+                log.debug(prefix + " -> " + value);
+            }
+
+            _publishData(turbineName, value);
         }
     }
 

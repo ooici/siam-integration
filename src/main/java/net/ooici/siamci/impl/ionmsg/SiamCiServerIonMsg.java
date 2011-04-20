@@ -21,6 +21,8 @@ import net.ooici.play.InstrDriverInterface.Command;
 import net.ooici.siamci.IPublisher;
 import net.ooici.siamci.IRequestProcessor;
 import net.ooici.siamci.IRequestProcessors;
+import net.ooici.siamci.event.EventMan;
+import net.ooici.siamci.event.ReturnEvent;
 import net.ooici.siamci.utils.ScUtils;
 
 import org.slf4j.Logger;
@@ -181,15 +183,17 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
     }
 
     /**
-     * Notifies a return to interested objects.
-     * TODO implement
+     * Fires a {@link ReturnEvent} with the given routingKey.
      * 
      * @param routingKey
      */
     private void _notifyReturn(String routingKey) {
-        // TODO Auto-generated method stub
 
-        log.info("_notifyReturn: routingKey='" + routingKey + "'");
+        if (log.isDebugEnabled()) {
+            log.debug("_notifyReturn: routingKey='" + routingKey + "'");
+        }
+
+        EventMan.fireEvent(new ReturnEvent(routingKey));
     }
 
     /**

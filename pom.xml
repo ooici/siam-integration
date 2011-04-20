@@ -264,5 +264,12 @@
 			<type>jar</type>
 			<scope>test</scope>
 		</dependency>
+
+		<dependency>
+			<groupId>com.mycila</groupId>
+			<artifactId>mycila-event</artifactId>
+			<version>4.2.ga</version>
+			<type>jar</type>
+		</dependency>
 	</dependencies>
 </project>

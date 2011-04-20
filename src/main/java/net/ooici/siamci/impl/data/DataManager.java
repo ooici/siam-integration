@@ -2,14 +2,20 @@ package net.ooici.siamci.impl.data;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import net.ooici.siamci.IDataManager;
 import net.ooici.siamci.IPublisher;
+import net.ooici.siamci.event.EventMan;
+import net.ooici.siamci.event.ReturnEvent;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.mycila.event.Event;
+import com.mycila.event.Subscriber;
 
 /**
  * Mechanism to dispatch the notification of new data from RBNB channels to
@@ -19,7 +25,7 @@ import org.slf4j.LoggerFactory;
  * 
  * @author carueda
  */
-public class DataManager implements IDataManager {
+public class DataManager implements IDataManager, Subscriber<ReturnEvent> {
 
     private static final Logger log = LoggerFactory.getLogger(DataManager.class);
 
@@ -53,7 +59,44 @@ public class DataManager implements IDataManager {
         this.rbnbHost = rbnbHost;
         this.baseClientName = baseClientName;
         this.publisher = publisher;
+
+        EventMan.subscribe(ReturnEvent.class, this);
+
         log.info("instance created: " + this);
+    }
+
+    /**
+     * {@link Subscriber} operation implementation.
+     */
+    public void onEvent(Event<ReturnEvent> event) throws Exception {
+        ReturnEvent returnEvent = event.getSource();
+        String routingKey = returnEvent.getRountingKey();
+
+        if (log.isDebugEnabled()) {
+            log.debug("Got ReturnEvent: routingKey='" + routingKey + "'");
+        }
+
+        _stopNotifiers(routingKey);
+    }
+
+    /**
+     * Stops the notifiers associated with the given routingKey (ie.,
+     * publish_stream).
+     * 
+     * @param routingKey
+     */
+    private void _stopNotifiers(String routingKey) {
+        synchronized (dataNotifiers) {
+            for (Entry<String, DataNotifier> e : dataNotifiers.entrySet()) {
+                DataNotifier dn = e.getValue();
+                if (routingKey.equals(dn.getPublishStream())) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Stopping notifier key='" + e.getKey() + "'");
+                    }
+                    dn.stop();
+                }
+            }
+        }
     }
 
     public void startDataNotifier(String turbineName, int reqId,
@@ -68,13 +111,17 @@ public class DataManager implements IDataManager {
             DataNotifier dataNotifier = dataNotifiers.get(key);
             if (dataNotifier != null) {
                 if (dataNotifier.isRunning()) {
-                    log.info("data notifier already created and running. key='"
-                            + key + "'");
+                    if (log.isDebugEnabled()) {
+                        log.debug("data notifier already created and running. key='"
+                                + key + "'");
+                    }
                     return;
                 }
                 else {
-                    log.info("re-running data notifier already created. key='"
-                            + key + "'");
+                    if (log.isDebugEnabled()) {
+                        log.debug("re-running data notifier already created. key='"
+                                + key + "'");
+                    }
                 }
             }
             else {
@@ -87,16 +134,17 @@ public class DataManager implements IDataManager {
                         publisher) {
                     @Override
                     protected void _completed() {
-                        log.info("Notifier completed. Removing key = " + key);
+                        log.info("Notifier completed. Removing key='" + key
+                                + "'");
                         _removeNotifier(key);
                     }
                 };
 
                 dataNotifiers.put(key, dataNotifier);
-                log.info("DataNotifier created: " + key);
+                log.info("DataNotifier created: key='" + key + "'");
             }
             execService.submit(dataNotifier);
-            log.info("DataNotifier started: " + key);
+            log.info("DataNotifier started: key='" + key + "'");
         }
 
     }
@@ -105,7 +153,6 @@ public class DataManager implements IDataManager {
         synchronized (dataNotifiers) {
             dataNotifiers.remove(key);
         }
-
     }
 
     private String _getNotifierKey(String turbineName, int reqId,
