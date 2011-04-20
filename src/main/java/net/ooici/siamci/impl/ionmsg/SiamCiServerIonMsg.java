@@ -209,7 +209,7 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
             _run();
         }
         catch (Throwable e) {
-            e.printStackTrace();
+            log.warn("Exception caught while running", e);
         }
         finally {
             log.info("Ending " + getClass().getSimpleName());
