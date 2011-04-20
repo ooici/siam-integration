@@ -40,7 +40,7 @@ import com.rabbitmq.client.ReturnListener;
  * In a nutshell, it accepts RPC requests on a given broker queue, uses a
  * {@link IRequestProcessors} object to process the incoming requests, and
  * replies the resulting response to the routingKey indicated in the "reply-to"
- * property of the request.
+ * property of the request. Also handles the asynchronous publish of messages
  * 
  * @author carueda
  */
@@ -382,12 +382,14 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
                 "myName",
                 "Identity",
                 response);
+
         _sendReply(reqId,
                 toName,
                 convId,
                 userId,
                 expiry,
                 structureBuilder.build());
+
         log.info(_rid(reqId) + "Reply sent to '" + toName + "' conv-id:'"
                 + convId + "' user-id:'" + userId + "' expiry:" + expiry + "\n");
     }
@@ -496,15 +498,16 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
         headers.put("publish_id", publishId);
 
         try {
-            // use my new method in MsgBrokerClient:
-            // TODO: I'm setting both flags (mandatory and immediate) as true;
-            // probably
-            // not both are necessary.
-            // See various relevant items in the
-            // http://www.rabbitmq.com/faq.html,
-            // for example
-            // http://www.rabbitmq.com/faq.html#immediate-flat-routing
+            /*
+             * use my new method in MsgBrokerClient: TODO: I'm setting both
+             * flags (mandatory and immediate) as true; probably not both are
+             * necessary. See various relevant items in the
+             * http://www.rabbitmq.com/faq.html, for example
+             * http://www.rabbitmq.com/faq.html#immediate-flat-routing
+             */
             ionClient.sendMessage(msg, true, true);
+
+            // this could be a log.debug instead of log.info
             log.info(_rid(reqId) + "Publish message sent. publishId='"
                     + publishId + "' to queue='" + streamName + "'");
         }

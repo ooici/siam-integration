@@ -60,13 +60,17 @@ public class DataManager implements IDataManager, Subscriber<ReturnEvent> {
         this.baseClientName = baseClientName;
         this.publisher = publisher;
 
+        // subscribe to return event to stop corresponding data notifiers
         EventMan.subscribe(ReturnEvent.class, this);
 
-        log.info("instance created: " + this);
+        if (log.isDebugEnabled()) {
+            log.debug("instance created: " + this);
+        }
     }
 
     /**
-     * {@link Subscriber} operation implementation.
+     * {@link Subscriber} operation implementation. Used to stop the notifiers
+     * assocaited with the event.
      */
     public void onEvent(Event<ReturnEvent> event) throws Exception {
         ReturnEvent returnEvent = event.getSource();
@@ -93,7 +97,8 @@ public class DataManager implements IDataManager, Subscriber<ReturnEvent> {
                     if (log.isDebugEnabled()) {
                         log.debug("Stopping notifier key='" + e.getKey() + "'");
                     }
-                    dn.stop();
+                    dn.stop("No delivery possible to rountingKey='"
+                            + routingKey + "'");
                 }
             }
         }
@@ -132,19 +137,33 @@ public class DataManager implements IDataManager, Subscriber<ReturnEvent> {
                         publishId,
                         publishStream,
                         publisher) {
+
                     @Override
-                    protected void _completed() {
-                        log.info("Notifier completed. Removing key='" + key
-                                + "'");
+                    protected void _completed(String reason) {
                         _removeNotifier(key);
+
+                        String str = "DataNotifier completed. key='" + key
+                                + "'";
+                        if (reason != null) {
+                            str += " Reason: " + reason;
+                        }
+                        /*
+                         * TODO could be a log.debug but log.info seems
+                         * convenient for the moment
+                         */
+                        log.info(str);
                     }
                 };
 
                 dataNotifiers.put(key, dataNotifier);
-                log.info("DataNotifier created: key='" + key + "'");
+                if (log.isDebugEnabled()) {
+                    log.debug("DataNotifier created: key='" + key + "'");
+                }
             }
             execService.submit(dataNotifier);
-            log.info("DataNotifier started: key='" + key + "'");
+            if (log.isDebugEnabled()) {
+                log.debug("DataNotifier started: key='" + key + "'");
+            }
         }
 
     }

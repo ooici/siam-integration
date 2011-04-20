@@ -1,7 +1,31 @@
-SiamCi integration prototype
-Created 2/9/2011
+SIAM_CI Integration Prototype change log
 Carlos Rueda - MBARI
 
+2011-04-20
+	- some javadoc about event management (net.ooici.siamci.event.EventMan)
+	- added reason for stopping a data notifier. With the test_siamci_data_async.py test, the siam-ci output 
+	  looks like the following (note the reason message at the end):
+		04-20-2011 11:10:35,370 [SiamCiMain        ] INFO  net.ooici.siamci.SiamCiMain - Parameters: siamHost='localhost', broker='localhost:5672', queueName='SIAM-CI', exchangeName='magnet.topic'
+		04-20-2011 11:10:35,372 [SiamCiMain        ] INFO  net.ooici.siamci.SiamCiMain - Listing instruments in the SIAM node:
+		04-20-2011 11:10:35,378 [SiamCiMain        ] WARN  siam.PortLister - UnmarshalException with device by id '1151'. Is the instrument jar in the classpath?
+		04-20-2011 11:10:35,390 [SiamCiMain        ] INFO  net.ooici.siamci.SiamCiMain -  * port='Foo' device='1151' service='Dummy'
+		04-20-2011 11:10:35,390 [SiamCiMain        ] INFO  net.ooici.siamci.SiamCiMain -  * port='testPort' device='1235' service='TEstSiamInstrument'
+		04-20-2011 11:10:35,390 [SiamCiMain        ] INFO  net.ooici.siamci.SiamCiMain - Starting SIAM-CI adapter. SIAM node host: localhost
+		04-20-2011 11:10:35,533 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - Running SiamCiServerIonMsg (broker='localhost:5672', queue='SIAM-CI', exchange='magnet.topic')
+		04-20-2011 11:10:35,535 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [0] Waiting for request ...
+		04-20-2011 11:11:00,250 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [0] Request <execute_StartAcquisition> received from 'carueda.shore.mbari.org.6323.1b' conv-id='#3'
+		04-20-2011 11:11:00,251 [SiamCiServerIonMsg] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [1] Waiting for request ...
+		04-20-2011 11:11:00,251 [pool-2-thread-1   ] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [0] Command with publish stream name: 'siamci.siamci_receiver_test_async'
+		04-20-2011 11:11:00,257 [pool-2-thread-1   ] INFO  net.ooici.siamci.impl.reqproc.StartAcquisitionRequestProcessor - [0] rbnbHost='localhost:3333' fullChannelName='TEstSiamInstrument-1235/val'
+		04-20-2011 11:11:00,273 [pool-2-thread-1   ] INFO  net.ooici.siamci.impl.data.DataManagers - Returning dataManager (net.ooici.siamci.impl.data.DataManager)
+		04-20-2011 11:11:00,394 [pool-2-thread-1   ] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [0] Reply sent to 'carueda.shore.mbari.org.6323.1b' conv-id:'#3' user-id:'ANONYMOUS' expiry:0
+		
+		04-20-2011 11:11:04,179 [pool-3-thread-1   ] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [0] Publish message sent. publishId='execute_StartAcquisition;port=testPort;channel=val' to queue='siamci.siamci_receiver_test_async'
+		04-20-2011 11:11:14,162 [pool-3-thread-1   ] INFO  net.ooici.siamci.impl.ionmsg.SiamCiServerIonMsg - [0] Publish message sent. publishId='execute_StartAcquisition;port=testPort;channel=val' to queue='siamci.siamci_receiver_test_async'
+		04-20-2011 11:11:16,163 [pool-3-thread-1   ] INFO  net.ooici.siamci.impl.data.DataManager - DataNotifier completed. key='0|TEstSiamInstrument-1235/val|execute_StartAcquisition;port=testPort;channel=val|siamci.siamci_receiver_test_async' 
+		                       Reason: No delivery possible to rountingKey='siamci.siamci_receiver_test_async'
+	
+	
 2011-04-19
 	- In ioncore-java, pushed new method: 
 		sendMessage(IonMessage msg, boolean mandatory, boolean immediate) throws IOException

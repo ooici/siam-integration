@@ -42,6 +42,7 @@ class DataNotifier implements Runnable {
     private final IPublisher publisher;
 
     private volatile boolean keepRunning;
+    private volatile String stopReason;
     private volatile boolean isRunning = false;
 
     private volatile Sink rbnbSink = null;
@@ -112,24 +113,35 @@ class DataNotifier implements Runnable {
     }
 
     /**
-     * Called when the execution has completed.
+     * Called when the execution has completed. This method does nothing in this
+     * class.
+     * 
+     * @param reason
+     *            null unless there has been a call to {@link #stop(String)}
+     *            prior to the completion of the execution, in which case the
+     *            string given to {@link #stop(String)} will be passed here.
      */
-    protected void _completed() {
+    protected void _completed(String reason) {
         // nothing here
     }
 
     /**
      * Requests that this process stop accepting further requests. It returns
      * immediately.
+     * 
+     * @param reason
+     *            This string will be passed to {@link #_completed()}
      */
-    public void stop() {
+    public void stop(String reason) {
         keepRunning = false;
+        stopReason = reason;
     }
 
     /**
      * Start the loop of fetching data from RBNB and publishing the values
      */
     public void run() {
+        stopReason = null;
         keepRunning = true;
         isRunning = true;
         try {
@@ -137,7 +149,8 @@ class DataNotifier implements Runnable {
         }
         finally {
             isRunning = false;
-            _completed();
+            // let subclass know execution completed:
+            _completed(stopReason);
             if (rbnbSink != null) {
                 rbnbSink.CloseRBNBConnection();
             }
@@ -149,7 +162,9 @@ class DataNotifier implements Runnable {
 
         while (keepRunning) {
             try {
-                log.info(prefix + "Waiting for data ...");
+                if (log.isDebugEnabled()) {
+                    log.debug(prefix + "Waiting for data ...");
+                }
 
                 ChannelMap getmap = null;
 
@@ -160,7 +175,9 @@ class DataNotifier implements Runnable {
                     }
                     else {
                         // surely a timeout -- just try again.
-                        // log.info("XXXXXXXXXXXXXXXXXX timeout");
+                        // if (log.isDebugEnabled()) {
+                        // log.debug("XXXX timeout while fetching data");
+                        // }
                     }
                 }
 
@@ -177,7 +194,8 @@ class DataNotifier implements Runnable {
 
     private void _dispatchGotData(ChannelMap getmap) {
         int noChannels = getmap.NumberOfChannels();
-        assert noChannels == 1; // should be 1 because we are subscribing to one channel
+        assert noChannels == 1; // should be 1 because we are subscribing to one
+        // channel
 
         final int ch = 0;
 
@@ -196,8 +214,10 @@ class DataNotifier implements Runnable {
         }
     }
 
-    private void _publishData(String fullChannelName, double value) {
-        log.info(prefix + "_publishData: '" + fullChannelName + "' = " + value);
+    private void _publishData(String turbineName, double value) {
+        if (log.isDebugEnabled()) {
+            log.debug(prefix + "_publishData: '" + turbineName + "' = " + value);
+        }
 
         GeneratedMessage response = ScUtils.createSuccessResponse("dataReceived = "
                 + value);
