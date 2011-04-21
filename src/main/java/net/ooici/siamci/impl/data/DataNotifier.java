@@ -1,6 +1,6 @@
 package net.ooici.siamci.impl.data;
 
-import net.ooici.siamci.IPublisher;
+import net.ooici.siamci.SiamCi;
 import net.ooici.siamci.utils.ScUtils;
 
 import org.slf4j.Logger;
@@ -39,8 +39,6 @@ class DataNotifier implements Runnable {
     private final String publishId;
     private final String publishStream;
 
-    private final IPublisher publisher;
-
     private volatile boolean keepRunning;
     private volatile String stopReason;
     private volatile boolean isRunning = false;
@@ -70,8 +68,7 @@ class DataNotifier implements Runnable {
      *             calls.
      */
     DataNotifier(String rbnbHost, String clientName, String turbineName,
-            int reqId, String publishId, String publishStream,
-            IPublisher publisher) throws Exception {
+            int reqId, String publishId, String publishStream) throws Exception {
         super();
         this.rbnbHost = rbnbHost;
         this.clientName = clientName;
@@ -82,7 +79,6 @@ class DataNotifier implements Runnable {
 
         this.publishId = publishId;
         this.publishStream = publishStream;
-        this.publisher = publisher;
 
         _prepare();
     }
@@ -219,6 +215,9 @@ class DataNotifier implements Runnable {
 
         GeneratedMessage response = ScUtils.createSuccessResponse("dataReceived = "
                 + value);
-        publisher.publish(reqId, publishId, response, publishStream);
+        SiamCi.instance().getPublisher().publish(reqId,
+                publishId,
+                response,
+                publishStream);
     }
 }

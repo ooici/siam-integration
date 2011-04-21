@@ -8,27 +8,38 @@ import net.ooici.play.InstrDriverInterface.SuccessFail;
 import net.ooici.siamci.IDataManager;
 import net.ooici.siamci.utils.ScUtils;
 
-import org.mbari.siam.core.BaseInstrumentService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.protobuf.GeneratedMessage;
 
 /**
- * StartAcquisition command processor.
+ * Request processor for start and stop data acquisition.
  * 
  * TODO complete implementation (still preliminary)
  * 
  * @author carueda
  */
-public class StartAcquisitionRequestProcessor extends BaseDataRequestProcessor {
+public class StartOrStopAcquisitionRequestProcessor extends
+        BaseDataRequestProcessor {
 
-    private static final Logger log = LoggerFactory.getLogger(StartAcquisitionRequestProcessor.class);
+    private static final Logger log = LoggerFactory.getLogger(StartOrStopAcquisitionRequestProcessor.class);
+    
+    private static final String CMD_NAME = "data_acquisition";
 
-    //
-    // TODO Command naming is rather ad hoc at the moment
-    //
-    private static final String CMD_NAME = "execute_StartAcquisition";
+    private final boolean start;
+
+    /**
+     * Creates an instance for the specific behavior: start or stop data
+     * acquisition
+     * 
+     * @param start
+     *            true to start, false to stop acquisition
+     */
+    public StartOrStopAcquisitionRequestProcessor(boolean start) {
+        super();
+        this.start = start;
+    }
 
     public GeneratedMessage processRequest(int reqId, Command cmd) {
         if (cmd.getArgsCount() == 0) {
@@ -81,7 +92,9 @@ public class StartAcquisitionRequestProcessor extends BaseDataRequestProcessor {
         if (rbnbHost == null) {
             String msg = _rid(reqId)
                     + CMD_NAME
-                    + ": no RBNB server associated with the instrument; cannot publish data";
+                    + ": no RBNB server associated with the instrument"
+                    + (start ? "; cannot publish data"
+                            : "; data is not being published");
             log.warn(msg);
             return ScUtils.createFailResponse(msg);
         }
@@ -92,14 +105,14 @@ public class StartAcquisitionRequestProcessor extends BaseDataRequestProcessor {
         }
         catch (Exception e) {
             String msg = _rid(reqId) + CMD_NAME
-                    + ": error composing full channel name: " + e.getMessage();
+                    + ": error composing turbineName: " + e.getMessage();
             log.warn(msg);
             return ScUtils.createFailResponse(msg);
         }
 
         // TODO some of these log.info call to become log.debug
 
-        log.info(_rid(reqId) + "rbnbHost='" + rbnbHost + "' fullChannelName='"
+        log.info(_rid(reqId) + "rbnbHost='" + rbnbHost + "' turbineName='"
                 + turbineName + "'");
 
         GeneratedMessage response = _getAndPublishResult(reqId,
@@ -109,65 +122,6 @@ public class StartAcquisitionRequestProcessor extends BaseDataRequestProcessor {
                 channel,
                 publishStream);
         return response;
-    }
-
-    private Map<String, String> _getPortProperties(String port) {
-        try {
-            Map<String, String> props = siam.getPortProperties(port);
-            return props;
-        }
-        catch (Exception e) {
-            return null;
-        }
-    }
-
-    /**
-     * Gets the value of the "publisherHost" property.
-     * 
-     * @return the value, or null if it is not associated
-     */
-    private String _getRbnbHost(Map<String, String> props) {
-        String rbnbHost = props.get("publisherHost");
-        if (rbnbHost != null && rbnbHost.trim().length() > 0) {
-            return rbnbHost.trim();
-        }
-        else {
-            return null;
-        }
-    }
-
-    /**
-     * Gets the full name for the requested channel in a form compliant with the
-     * "turbineName" used by SIAM. See {@link BaseInstrumentService#run()}. This
-     * name is composed as follows: <br/> {@code serviceName.replace(' ', '_') + "-"
-     * + isiID} <br/>
-     * where serviceName and isiID are the value of the corresponding properties
-     * 'serviceName' and 'isiID'.
-     * 
-     * @param props
-     *            the properties obtained from the intrument.
-     * @return the "dataTurbine" name
-     * @throws Exception
-     *             if any of the required properties is missing.
-     */
-    private String _getTurbineName(Map<String, String> props, String channelName)
-            throws Exception {
-        String serviceName = props.get("serviceName");
-        String isiID = props.get("isiID");
-
-        if (serviceName == null || serviceName.trim().length() == 0) {
-            throw new Exception("'serviceName' property no associated with instrument");
-        }
-        if (isiID == null || isiID.trim().length() == 0) {
-            throw new Exception("'isiID' property no associated with instrument");
-        }
-        serviceName = serviceName.trim();
-        isiID = isiID.trim();
-
-        String turbineName = serviceName.replace(' ', '_') + "-" + isiID + "/"
-                + channelName;
-        return turbineName;
-
     }
 
     /**
@@ -189,6 +143,7 @@ public class StartAcquisitionRequestProcessor extends BaseDataRequestProcessor {
     private GeneratedMessage _getAndPublishResult(final int reqId,
             String rbnbHost, String turbineName, final String port,
             final String channel, final String publishStream) {
+
         _checkAsyncSetup();
 
         //
@@ -197,25 +152,64 @@ public class StartAcquisitionRequestProcessor extends BaseDataRequestProcessor {
         final String publishId = CMD_NAME + ";port=" + port + ";channel="
                 + channel;
 
-        // get the data manager for the given rbnbHost and instrument port
-        IDataManager dataManager = dataManagers.getDataManager(rbnbHost,
-                port,
-                publisher);
+        IDataManager dataManager;
 
-        assert dataManager != null;
+        if (start) {
+            /*
+             * create (f necessary) the data manager for the given rbnbHost and
+             * instrument port
+             */
+            dataManager = dataManagers.createDataManagerIfAbsent(rbnbHost, port);
 
-        try {
-            dataManager.startDataNotifier(turbineName,
-                    reqId,
-                    publishId,
-                    publishStream);
+            if (dataManager == null) {
+                String description = _rid(reqId) + "Cannot create data manager";
+                log.warn(description);
+                GeneratedMessage response = ScUtils.createFailResponse(description);
+                return response;
+            }
+
+            try {
+                dataManager.startDataNotifier(turbineName,
+                        reqId,
+                        publishId,
+                        publishStream);
+            }
+            catch (Exception e) {
+                String description = _rid(reqId)
+                        + "Error while starting data notifier";
+                log.warn(description, e);
+                GeneratedMessage response = ScUtils.createFailResponse(description);
+                return response;
+            }
+
         }
-        catch (Exception e) {
-            String description = _rid(reqId)
-                    + "Error while creating data notifier";
-            log.warn(description, e);
-            GeneratedMessage response = ScUtils.createFailResponse(description);
-            return response;
+        else {
+            /*
+             * get the data manager for the given rbnbHost and instrument port
+             */
+            dataManager = dataManagers.getDataManager(rbnbHost, port);
+            if (dataManager == null) {
+                String description = _rid(reqId)
+                        + "Data acquisition not in progress";
+                log.warn(description);
+                GeneratedMessage response = ScUtils.createFailResponse(description);
+                return response;
+            }
+
+            try {
+                dataManager.stopDataNotifier(turbineName,
+                        reqId,
+                        publishId,
+                        publishStream);
+            }
+            catch (Exception e) {
+                String description = _rid(reqId)
+                        + "Error while trying to stop data acquisition";
+                log.warn(description, e);
+                GeneratedMessage response = ScUtils.createFailResponse(description);
+                return response;
+            }
+
         }
 
         // respond with OK, ie., sucessfully submitted request:

@@ -126,8 +126,6 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
         this.ionExchange = ionExchange;
         this.requestProcessors = requestProcessors;
 
-        this.requestProcessors.setPublisher(this);
-
         this.ionClient = _createMsgBrokerClient();
 
         ionClient.declareQueue(queueName);

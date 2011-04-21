@@ -3,7 +3,6 @@ package net.ooici.siamci.impl;
 import net.ooici.play.InstrDriverInterface.Command;
 import net.ooici.siamci.IDataManagers;
 import net.ooici.siamci.IDataRequestProcessor;
-import net.ooici.siamci.IPublisher;
 import net.ooici.siamci.IRequestProcessor;
 import net.ooici.siamci.IRequestProcessors;
 import net.ooici.siamci.impl.reqproc.BaseRequestProcessor;
@@ -13,7 +12,7 @@ import net.ooici.siamci.impl.reqproc.GetLastSampleRequestProcessor;
 import net.ooici.siamci.impl.reqproc.GetStatusRequestProcessor;
 import net.ooici.siamci.impl.reqproc.ListPortsRequestProcessor;
 import net.ooici.siamci.impl.reqproc.SetParamsRequestProcessor;
-import net.ooici.siamci.impl.reqproc.StartAcquisitionRequestProcessor;
+import net.ooici.siamci.impl.reqproc.StartOrStopAcquisitionRequestProcessor;
 import net.ooici.siamci.utils.ScUtils;
 
 import org.slf4j.Logger;
@@ -32,8 +31,7 @@ import com.google.protobuf.GeneratedMessage;
  */
 class RequestProcessors implements IRequestProcessors {
 
-    private static final Logger log = LoggerFactory
-            .getLogger(RequestProcessors.class);
+    private static final Logger log = LoggerFactory.getLogger(RequestProcessors.class);
 
     /**
      * The request processors are gathered in this enumeration.
@@ -52,7 +50,11 @@ class RequestProcessors implements IRequestProcessors {
 
         set_params(new SetParamsRequestProcessor()),
 
-        execute_StartAcquisition(new StartAcquisitionRequestProcessor()),
+        execute_StartAcquisition(
+                new StartOrStopAcquisitionRequestProcessor(true)),
+
+        execute_StopAcquisition(
+                new StartOrStopAcquisitionRequestProcessor(false)),
 
         ;
 
@@ -77,17 +79,10 @@ class RequestProcessors implements IRequestProcessors {
         }
     }
 
-    public void setPublisher(IPublisher publisher) {
-        for (RP rp : RP.values()) {
-            rp.reqProc.setPublisher(publisher);
-        }
-    }
-
     public void setDataManagers(IDataManagers dataManagers) {
         for (RP rp : RP.values()) {
             if (rp.reqProc instanceof IDataRequestProcessor) {
-                ((IDataRequestProcessor) rp.reqProc)
-                        .setDataManagers(dataManagers);
+                ((IDataRequestProcessor) rp.reqProc).setDataManagers(dataManagers);
             }
         }
     }

@@ -7,7 +7,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import net.ooici.siamci.IDataManager;
-import net.ooici.siamci.IPublisher;
 import net.ooici.siamci.event.EventMan;
 import net.ooici.siamci.event.ReturnEvent;
 
@@ -40,25 +39,20 @@ public class DataManager implements IDataManager, Subscriber<ReturnEvent> {
     private final Map<String, DataNotifier> dataNotifiers = new HashMap<String, DataNotifier>();
 
     private final String rbnbHost;
-    private final String baseClientName;
-
-    private final IPublisher publisher;
+    private final String clientName;
 
     /**
      * Creates a data notifier manager.
      * 
      * @param rbnbHost
      *            RBNB server host (and port)
-     * @param baseClientName
-     *            Base name for the RBNB client names (one client per channel in
-     *            this first implementation)
-     * @param publisher
+     * @param clientName
+     *            RBNB client name
      */
-    DataManager(String rbnbHost, String baseClientName, IPublisher publisher) {
+    DataManager(String rbnbHost, String clientName) {
         super();
         this.rbnbHost = rbnbHost;
-        this.baseClientName = baseClientName;
-        this.publisher = publisher;
+        this.clientName = clientName;
 
         // subscribe to return event to stop corresponding data notifiers
         EventMan.subscribe(ReturnEvent.class, this);
@@ -131,12 +125,11 @@ public class DataManager implements IDataManager, Subscriber<ReturnEvent> {
             }
             else {
                 dataNotifier = new DataNotifier(rbnbHost,
-                        baseClientName,
+                        clientName,
                         turbineName,
                         reqId,
                         publishId,
-                        publishStream,
-                        publisher) {
+                        publishStream) {
 
                     @Override
                     protected void _completed(String reason) {
@@ -168,6 +161,32 @@ public class DataManager implements IDataManager, Subscriber<ReturnEvent> {
 
     }
 
+    public void stopDataNotifier(String turbineName, int reqId,
+            String publishId, String publishStream) throws Exception {
+
+        final String key = _getNotifierKey(turbineName,
+                reqId,
+                publishId,
+                publishStream);
+
+        synchronized (dataNotifiers) {
+            DataNotifier dataNotifier = dataNotifiers.get(key);
+            if (dataNotifier != null) {
+                if (dataNotifier.isRunning()) {
+                    dataNotifier.stop("stop requested");
+                }
+                else if (log.isDebugEnabled()) {
+                    log.debug("Data notifier is not running. key='" + key + "'");
+                }
+                dataNotifiers.remove(key);
+            }
+            else if (log.isDebugEnabled()) {
+                log.debug("Data notifier not registered. key='" + key + "'");
+            }
+        }
+
+    }
+
     private void _removeNotifier(String key) {
         synchronized (dataNotifiers) {
             dataNotifiers.remove(key);
@@ -183,7 +202,7 @@ public class DataManager implements IDataManager, Subscriber<ReturnEvent> {
     }
 
     public String toString() {
-        return rbnbHost + "|" + baseClientName;
+        return rbnbHost + "|" + clientName;
     }
 
 }

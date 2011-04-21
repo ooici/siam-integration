@@ -7,17 +7,15 @@ import java.util.List;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
-import net.ooici.siamci.impl.SiamCiFactoryImpl;
+import net.ooici.siamci.SiamCi.SiamCiParameters;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import siam.IAsyncSiam;
-import siam.ISiam;
 import siam.PortItem;
 
 /**
- * Main SiamCi program. For usage, {@link #main(String[])}.
+ * Main SiamCi program. For usage, see {@link #main(String[])}.
  * 
  * @author carueda
  */
@@ -98,27 +96,14 @@ public class SiamCiMain {
             return new Params(options);
         }
 
-        String siamHost;
-        String brokerHost;
-        int brokerPort;
-        String queueName;
-        String exchangeName;
+        SiamCiParameters siamCiParams;
 
         private Params(OptionSet options) {
-            siamHost = options.valueOf(siamHostOpt);
-            brokerHost = options.valueOf(brokerHostOpt);
-            brokerPort = Integer.parseInt(options.valueOf(brokerPortOpt));
-            queueName = options.valueOf(queueNameOpt);
-            exchangeName = options.valueOf(exchangeNameOpt);
-        }
-
-        public String toString() {
-            return String.format("siamHost='%s', broker='%s:%s', queueName='%s', exchangeName='%s'",
-                    siamHost,
-                    brokerHost,
-                    brokerPort,
-                    queueName,
-                    exchangeName);
+            siamCiParams = new SiamCiParameters(options.valueOf(siamHostOpt),
+                    options.valueOf(brokerHostOpt),
+                    Integer.parseInt(options.valueOf(brokerPortOpt)),
+                    options.valueOf(queueNameOpt),
+                    options.valueOf(exchangeNameOpt));
         }
     }
 
@@ -149,7 +134,7 @@ public class SiamCiMain {
 
         Params params = Params.getParams(args);
         if (params != null) {
-            new SiamCiMain(params)._start();
+            new SiamCiMain(params.siamCiParams)._start();
         }
     }
 
@@ -157,42 +142,18 @@ public class SiamCiMain {
     // instance.
     // /////////////////////////////////////////////////////////
 
-    private Params params;
-    private final ISiamCiFactory siamCiFactory;
-
-    private final ISiam siam;
-    private final IAsyncSiam asyncSiam;
-    private final IRequestProcessors requestProcessors;
-    private final ISiamCiAdapter siamCiAdapter;
+    private SiamCiParameters siamCiParams;
 
     /**
      * Creates the main object of the SIAM-CI adapter.
      * 
-     * @param params
-     *            program parameters
+     * @param siamCiParams
+     *            the application parameters
      * @throws Exception
      */
-    private SiamCiMain(Params params) throws Exception {
-        this.params = params;
-        siamCiFactory = new SiamCiFactoryImpl();
-        siam = siamCiFactory.createSiam(params.siamHost);
-        asyncSiam = siamCiFactory.createAsyncSiam(siam);
-
-        requestProcessors = siamCiFactory.createRequestProcessors(siam);
-        requestProcessors.setAsyncSiam(asyncSiam);
-
-        IDataManagers dataManagers = siamCiFactory.getDataManagers();
-        requestProcessors.setDataManagers(dataManagers);
-
-        siamCiAdapter = _createSiamCiAdapter();
-    }
-
-    private ISiamCiAdapter _createSiamCiAdapter() {
-        return siamCiFactory.createSiamCiAdapter(params.brokerHost,
-                params.brokerPort,
-                params.queueName,
-                params.exchangeName,
-                requestProcessors);
+    private SiamCiMain(SiamCiParameters siamCiParams) throws Exception {
+        this.siamCiParams = siamCiParams;
+        SiamCi.createInstance(siamCiParams);
     }
 
     /**
@@ -206,7 +167,7 @@ public class SiamCiMain {
     }
 
     private void _showServiceInfo() {
-        log.info("Parameters: " + params);
+        log.info("Parameters: " + siamCiParams);
 
     }
 
@@ -214,7 +175,7 @@ public class SiamCiMain {
         log.info("Listing instruments in the SIAM node:");
         List<PortItem> ports;
         try {
-            ports = siam.listPorts();
+            ports = SiamCi.instance().getSiam().listPorts();
         }
         catch (Exception e) {
             log.warn("Error retrieving list of ports", e);
@@ -228,8 +189,9 @@ public class SiamCiMain {
     }
 
     private void _startAdapter() throws Exception {
-        log.info("Starting SIAM-CI adapter. SIAM node host: " + params.siamHost);
-        siamCiAdapter.start();
+        log.info("Starting SIAM-CI adapter. SIAM node host: "
+                + siamCiParams.siamHost);
+        SiamCi.instance().getSiamCiAdapter().start();
     }
 
     /**
@@ -239,6 +201,9 @@ public class SiamCiMain {
         Runtime.getRuntime().addShutdownHook(new Thread("shutdown") {
             public void run() {
                 log.info("Stopping program ...");
+                ISiamCiAdapter siamCiAdapter = SiamCi.instance()
+                        .getSiamCiAdapter();
+
                 if (siamCiAdapter != null) {
                     try {
                         siamCiAdapter.stop();

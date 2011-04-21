@@ -8,18 +8,25 @@ package net.ooici.siamci;
 public interface IDataManagers {
 
     /**
-     * Gets the data manager for the given rbrnHost and baseClientName
-     * parameters. Note, the publisher is not used to differentiate the data
-     * manager.
+     * Creates the data manager for the given rbrnHost and clientName
+     * parameters. If that object already exists, it is returned.
      * 
      * @param rbnbHost
      *            RBNB server host (and port)
-     * @param baseClientName
-     *            Base name for the RBNB client names (one client per channel in
-     *            this first implementation)
-     * @param publisher
+     * @param clientName
+     *            Name for the RBNB client
      */
-    public IDataManager getDataManager(String rbnbHost, String baseClientName,
-            IPublisher publisher);
+    public IDataManager createDataManagerIfAbsent(String rbnbHost,
+            String clientName);
+
+    /**
+     * Gets the data manager for the given rbrnHost and clientName parameters.
+     * 
+     * @param rbnbHost
+     *            RBNB server host (and port)
+     * @param clientName
+     *            Name of the RBNB client
+     */
+    public IDataManager getDataManager(String rbnbHost, String clientName);
 
 }

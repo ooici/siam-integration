@@ -76,7 +76,37 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
         # @todo: more robust assignment of publish IDs
         # In this case should include the particular channel, not indicated yet either!
         #
-        publish_id = "execute_StartAcquisition;port=" + SiamCiTestCase.port + ";channel=" +channel
+        publish_id = "data_acquisition;port=" + SiamCiTestCase.port + ";channel=" +channel
+        
+        # prepare to receive result:
+        yield self.client.expect(publish_id);
+        
+        ret = yield self.siamci.execute_StartAcquisition(channel=channel,
+                                                         publish_stream="siamci." + receiver_service_name)
+        self.assertIsSuccessFail(ret)
+        self.assertEquals(ret.result, OK)
+        
+        # check that all expected were received
+        expected = yield self.client.getExpected(timeout=30)
+        self.assertEquals(len(expected), 0)
+        
+        # actual response should indicate OK: 
+        response = yield self.client.getAccepted(publish_id)
+        self.assertIsSuccessFail(response)
+        self.assertEquals(response.result, OK)
+
+    @defer.inlineCallbacks
+    def test_execute_StartAndStopAcquisition_async(self):
+        raise unittest.SkipTest('Not implemented yet')
+
+        # @todo: capture channel from some parameter?
+        channel = "val"
+        
+        #
+        # @todo: more robust assignment of publish IDs
+        # In this case should include the particular channel, not indicated yet either!
+        #
+        publish_id = "data_acquisition;port=" + SiamCiTestCase.port + ";channel=" +channel
         
         # prepare to receive result:
         yield self.client.expect(publish_id);

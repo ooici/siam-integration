@@ -1,5 +1,6 @@
 package net.ooici.siamci.impl.ionmsg;
 
+import net.ooici.siamci.IPublisher;
 import net.ooici.siamci.IRequestProcessors;
 import net.ooici.siamci.ISiamCiAdapter;
 
@@ -47,6 +48,7 @@ public class SiamCiAdapterIonMsg implements ISiamCiAdapter {
         this.requestProcessors = requestProcessors;
     }
 
+    
     public void start() throws Exception {
         siamCiProcess = new SiamCiServerIonMsg(brokerHost, brokerPort,
                 queueName, ionExchange, requestProcessors);
@@ -57,6 +59,10 @@ public class SiamCiAdapterIonMsg implements ISiamCiAdapter {
             log.debug("Starting process thread");
         }
         thread.start();
+    }
+
+    public IPublisher getPublisher() {
+        return siamCiProcess;
     }
 
     /**

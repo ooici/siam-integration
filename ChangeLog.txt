@@ -33,6 +33,16 @@ Carlos Rueda - MBARI
 		                       Reason: No delivery possible to rountingKey='siamci.siamci_receiver_test_async'
 	
 	
+	- Refactoring to simplify access to common elements via a singleton SiamCi class, in particular
+	  there is a unique IPublisher per adapter service (and well, there is only one such service at
+	  the moment).
+	  
+	- StartAcquisitionRequestProcessor renamed to StartOrStopAcquisitionRequestProcessor because of
+	  the common logic. 
+	  "stop acquisition" implemented but not tested yet.
+	  
+	  
+	
 2011-04-19
 	- In ioncore-java, pushed new method: 
 		sendMessage(IonMessage msg, boolean mandatory, boolean immediate) throws IOException

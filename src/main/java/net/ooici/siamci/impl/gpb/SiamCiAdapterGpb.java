@@ -1,5 +1,6 @@
 package net.ooici.siamci.impl.gpb;
 
+import net.ooici.siamci.IPublisher;
 import net.ooici.siamci.IRequestDispatcher;
 import net.ooici.siamci.ISiamCiAdapter;
 
@@ -32,4 +33,10 @@ public class SiamCiAdapterGpb implements ISiamCiAdapter {
 	public void stop() {
 		siamCiProcess.stop();
 	}
+
+
+    public IPublisher getPublisher() {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }

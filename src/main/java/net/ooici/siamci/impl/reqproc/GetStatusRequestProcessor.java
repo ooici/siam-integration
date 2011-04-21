@@ -86,14 +86,14 @@ public class GetStatusRequestProcessor extends BaseRequestProcessor {
 
 			public void onSuccess(String result) {
 				GeneratedMessage response = _createResultResponse(reqId, result);
-				publisher.publish(reqId, publishId, response, publishStream);
+				_getPublisher().publish(reqId, publishId, response, publishStream);
 			}
 
 			public void onFailure(Throwable e) {
 				GeneratedMessage response = ScUtils.createFailResponse(e
 						.getClass().getName()
 						+ ": " + e.getMessage());
-				publisher.publish(reqId, publishId, response, publishStream);
+				_getPublisher().publish(reqId, publishId, response, publishStream);
 			}
 		});
 

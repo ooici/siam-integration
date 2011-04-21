@@ -108,7 +108,8 @@ public class FetchParamsRequestProcessor extends BaseRequestProcessor {
                                 reqId,
                                 cmd,
                                 result);
-                        publisher.publish(
+                        
+                        _getPublisher().publish(
                                 reqId,
                                 publishId,
                                 response,
@@ -119,7 +120,8 @@ public class FetchParamsRequestProcessor extends BaseRequestProcessor {
                         GeneratedMessage response = ScUtils
                                 .createFailResponse(e.getClass().getName()
                                         + ": " + e.getMessage());
-                        publisher.publish(
+                        
+                        _getPublisher().publish(
                                 reqId,
                                 publishId,
                                 response,
