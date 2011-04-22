@@ -434,6 +434,13 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
         //
         headers.put("status", "OK");
 
+        /*
+         * Upon changes on ioncore-python (some time after 2011-03-21), this is
+         * now required, otherwise ioncopre-python would complain with
+         * "unexpected message".
+         */
+        headers.put("performative", "inform_result");
+
         ionClient.sendMessage(msg);
 
         if (log.isDebugEnabled()) {

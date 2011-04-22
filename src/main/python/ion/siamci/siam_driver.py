@@ -208,6 +208,22 @@ class SiamInstrumentDriverClient(InstrumentDriverClient):
         
         defer.returnValue(content)
         
+    @defer.inlineCallbacks
+    def get_status(self, param_dict):
+        """
+        @todo: we override the method in the superclass because that method expects
+        to work with python types (list, tuple)
+        In my current design, we work with the GPBs directly.
+        """
+        
+        log.debug("SiamInstrumentDriverClient get_status " +str(param_dict))
+        (content, headers, message) = yield self.rpc_send('get_status',
+                                                          param_dict)
+        
+        # @todo: conversion to python type 
+        
+        defer.returnValue(content)
+        
 
 # Spawn of the process using the module name
 factory = ProcessFactory(SiamInstrumentDriver)

@@ -1,6 +1,26 @@
 SIAM_CI Integration Prototype change log
 Carlos Rueda - MBARI
 
+2011-04-22
+	- Java-python communication fixed with latest ioncore-python (as of today ~9am)!
+	  All tests (including async ones) PASSING.
+	  Solution: include header "performative" with value "inform_result" in 
+	  SiamCiServerIonMsg._sendReply (thanks Chris M. for the hint), instead of
+	  using the default "request" value given by IonSendMessage.
+	  
+	  NOTE about SiamCiServerIonMsg.publish: at the moment the sendMessage here should NOT 
+	  indicate "inform_result" because in my current implementation the "listener" of such 
+	  mensaje is SiamCiReceiverService, that is, a ServiceProcess, so the message is actually
+	  a "request" (and this is already the default value for "performative" in IonSendMessage).
+	  A TODO is that SiamCiReceiverService should probably be a Receiver.
+	  
+	  
+	- siam_driver.py: added explicit get_status to the client to override the method in the 
+	  superclass because that method expects to work with python types (list, tuple).
+      In the current SIAM-CI, we work with the GPBs directly.
+	
+	  
+	
 2011-04-20
 
 	- pushed change to MsgBrokerClient (and a couple of other ioncore-java sources) to replace 
