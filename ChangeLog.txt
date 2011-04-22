@@ -18,6 +18,9 @@ Carlos Rueda - MBARI
 	- siam_driver.py: added explicit get_status to the client to override the method in the 
 	  superclass because that method expects to work with python types (list, tuple).
       In the current SIAM-CI, we work with the GPBs directly.
+      
+      
+    - resource_registry_beta is now resource_registry (according to David's email today). 
 	
 	  
 	
