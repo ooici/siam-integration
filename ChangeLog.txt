@@ -4,6 +4,36 @@ Carlos Rueda - MBARI
 2011-04-23
 	- removed src/main/gpb/net/ooici/play/instr_driver_interface.proto: already at ion-object-definitions: 
 	  https://github.com/ooici/ion-object-definitions/blob/develop/net/ooici/play/instr_driver_interface.proto
+	  
+	- New subdirectory 'python' under this project's root directory to maintain the buildout-based
+	  structure for the SIAM-CI python code.
+	  
+	  NOTE: until now I was maintaining this code under src/main/python/ just to follow
+	  some conventional maven practice but actually no maven mechanisms are enabled for it at all.
+	  It makes more sense to have the python side in a separate location (under this project anyway).
+	  
+	  Now, the buildout scheme is fully in place. (No more symlink in ioncore-python for this.) 
+	  
+	  Somewhat following the ion-integration project, the new python/ has:
+	  	README.txt
+	  	LICENSE.txt
+	  	bootstrap.py
+	  	buildout.cfg
+	  	setup.py
+	  	MANIFEST.in
+	  	res/...
+	  	src/...
+	  	
+	  Note about src/: 
+		I decided to move the base package "ion.siamci" to simply "siamci" because "ion.siamci"
+		would not be found by any of the generated buildout scripts, the reason being (apparently) that
+		the "ion" package in ioncore-python would take precedence thus hidding "ion.siamci" here.
+	  
+	  Note about res/:
+	  	This basically contains a copy of corresponding apps/, logging/, and config/ from ioncore-python.
+	  	TODO: How are the res/... resources supposed to be handled in general in ioncore-python-dependent
+	  	      applications?  The copied stuff isworking fine now, but this need to be revisited!
+	  	
 		  
 		 
 
