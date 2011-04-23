@@ -16,6 +16,6 @@ This is the python part.
 4- Run the SIAM-CI integration tests:
    a- Make sure the SIAM-CI adapter service is running
    b- Run the python tests:
-	$ SIAM_CI=- bin/trial src/ion/siamci/test
+	$ SIAM_CI=- bin/trial siamci
 
 

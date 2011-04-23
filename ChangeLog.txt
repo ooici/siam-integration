@@ -35,6 +35,7 @@ Carlos Rueda - MBARI
 	  	      applications?  The copied stuff isworking fine now, but this need to be revisited!
 	  	
 		  
+	  TODO:  remove src/main/python/
 		 
 
 2011-04-22
