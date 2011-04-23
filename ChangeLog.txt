@@ -1,6 +1,12 @@
 SIAM_CI Integration Prototype change log
 Carlos Rueda - MBARI
 
+2011-04-23
+	- removed src/main/gpb/net/ooici/play/instr_driver_interface.proto: already at ion-object-definitions: 
+	  https://github.com/ooici/ion-object-definitions/blob/develop/net/ooici/play/instr_driver_interface.proto
+		  
+		 
+
 2011-04-22
 	- Java-python communication fixed with latest ioncore-python (as of today ~9am)!
 	  All tests (including async ones) PASSING.
