@@ -1,6 +1,10 @@
 SIAM_CI Integration Prototype change log
 Carlos Rueda - MBARI
 
+2011-04-24
+	- Removed src/main/python/* including checked in code that is now under python/ and other preliminary
+	  code 
+	
 2011-04-23
 	- removed src/main/gpb/net/ooici/play/instr_driver_interface.proto: already at ion-object-definitions: 
 	  https://github.com/ooici/ion-object-definitions/blob/develop/net/ooici/play/instr_driver_interface.proto
