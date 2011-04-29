@@ -1,6 +1,13 @@
 SIAM_CI Integration Prototype change log
 Carlos Rueda - MBARI
 
+2011-04-29
+	- pushed project to https://github.com/ooici/siam-integration
+		$ git remote rename origin gitorious
+		$ git remote add ooici git@github.com:ooici/siam-integration.git
+		$ git push -u ooici master
+		
+		
 2011-04-24
 	- Removed src/main/python/* including checked in code that is now under python/ and other preliminary
 	  code 
