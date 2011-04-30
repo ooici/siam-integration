@@ -4,6 +4,15 @@ Carlos Rueda - MBARI
 2011-04-30
 	- re-enabled the SiamCiReceiverTest upon the update to use buildout
 	
+	- code clean-up: removed old request dispatcher mechanism based on direct
+	  manipulation of google protocol buffers (which was implemented prior to
+	  properly enable the use of the ION messaging APIs for this purpose):
+	  	net.ooici.siamci.IRequestDispatcher
+	  	net.ooici.siamci.impl.RequestDispatcher
+	  	net.ooici.siamci.impl.gpb.SiamCiAdapterGpb
+	  	net.ooici.siamci.impl.gpb.SiamCiServerGpb
+	  	net.ooici.siamci.impl.gpb.SiamCiServerGpb_RpcServer
+	
 2011-04-29
 	- pushed project to https://github.com/ooici/siam-integration
 		$ git remote rename origin gitorious
