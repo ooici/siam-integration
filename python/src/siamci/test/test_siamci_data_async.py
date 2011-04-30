@@ -1,12 +1,8 @@
 #!/usr/bin/env python
 
 """
-
-        DATA TESTS - TO BE INCORPORATED IN test_siamci_async.py later
-
-
-@file siamci/test/test_siamci.py
-@brief This module has test cases to test out the SIAM-CI proxy class
+@file siamci/test/test_siamci_data_async.py
+@brief Data aqcuisition related test cases
 @author Carlos Rueda
 """
 import ion.util.ionlog
@@ -22,20 +18,36 @@ from net.ooici.play.instr_driver_interface_pb2 import OK, ERROR
 
 from twisted.trial import unittest
 
-
 from ion.core import ioninit
-#from ion.core import bootstrap
 
-#CONF = ioninit.config('startup.bootstrap-dx') #-
 
-# Static definition of message queues
-#ion_messaging = ioninit.get_config('messaging_cfg', CONF) #-
-
-# Note the ``'spawnargs':{ 'servicename':receiver_service_name }'' included below to properly name
-# the service; if not included, the default name in SiamCiReceiverService.declare would be used.
-receiver_service_name = 'siamci_receiver_test_async'
 
 class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
+    
+    @defer.inlineCallbacks
+    def _start_receiver_service(self, receiver_service_name, timeout=2):
+        """
+        Starts an instance of SiamCiReceiverService with the given name.
+        
+        @note: the given name is also passed in the 'spawnargs' 
+        (ie., ``'spawnargs':{ 'servicename':receiver_service_name }'' 
+        to properly name the service; if not included, the default name in 
+        SiamCiReceiverService.declare would be used.
+        """
+        services = [
+            {'name':receiver_service_name,
+             'module':'siamci.receiver_service',
+             'class':'SiamCiReceiverService',
+             'spawnargs':{ 'servicename':receiver_service_name }
+            }
+        ]
+        sup = yield self._spawn_processes(services)
+        svc_id = yield sup.get_child_id(receiver_service_name)
+        receiver_client = SiamCiReceiverServiceClient(proc=sup, target=svc_id)
+
+        yield receiver_client.setExpectedTimeout(timeout)
+        
+        defer.returnValue(receiver_client)
     
     @defer.inlineCallbacks
     def setUp(self):
@@ -44,19 +56,6 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
         self.siamci = SiamCiAdapterProxy(SiamCiTestCase.pid, SiamCiTestCase.port)
         yield self.siamci.start()
         
-        services = [
-            {'name':receiver_service_name,
-             'module':'siamci.receiver_service',
-             'class':'SiamCiReceiverService',
-             'spawnargs':{ 'servicename':receiver_service_name }
-            }
-        ]
-        sup = yield self._spawn_processes(services) #=
-#        sup = yield bootstrap.bootstrap(ion_messaging, services) #-
-        svc_id = yield sup.get_child_id(receiver_service_name)
-        self.client = SiamCiReceiverServiceClient(proc=sup,target=svc_id)
-        # set a default expected timeout:
-        self.client.setExpectedTimeout(2)
     
 
     @defer.inlineCallbacks
@@ -66,9 +65,10 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
 
     @defer.inlineCallbacks
     def test_execute_StartAcquisition_async(self):
-#        raise unittest.SkipTest('Not implemented yet')
 
-
+        receiver_service_name = 'test_execute_StartAcquisition_async'
+        receiver_client = yield self._start_receiver_service(receiver_service_name)
+        
         # @todo: capture channel from some parameter?
         channel = "val"
         
@@ -79,7 +79,7 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
         publish_id = "data_acquisition;port=" + SiamCiTestCase.port + ";channel=" +channel
         
         # prepare to receive result:
-        yield self.client.expect(publish_id);
+        yield receiver_client.expect(publish_id);
         
         ret = yield self.siamci.execute_StartAcquisition(channel=channel,
                                                          publish_stream="siamci." + receiver_service_name)
@@ -87,40 +87,21 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
         self.assertEquals(ret.result, OK)
         
         # check that all expected were received
-        expected = yield self.client.getExpected(timeout=30)
+        expected = yield receiver_client.getExpected(timeout=30)
         self.assertEquals(len(expected), 0)
         
         # actual response should indicate OK: 
-        response = yield self.client.getAccepted(publish_id)
+        response = yield receiver_client.getAccepted(publish_id)
         self.assertIsSuccessFail(response)
         self.assertEquals(response.result, OK)
+
 
     @defer.inlineCallbacks
     def test_execute_StartAndStopAcquisition_async(self):
         raise unittest.SkipTest('Not implemented yet')
 
-        # @todo: capture channel from some parameter?
-        channel = "val"
-        
-        #
-        # @todo: more robust assignment of publish IDs
-        # In this case should include the particular channel, not indicated yet either!
-        #
-        publish_id = "data_acquisition;port=" + SiamCiTestCase.port + ";channel=" +channel
-        
-        # prepare to receive result:
-        yield self.client.expect(publish_id);
-        
-        ret = yield self.siamci.execute_StartAcquisition(channel=channel,
-                                                         publish_stream="siamci." + receiver_service_name)
-        self.assertIsSuccessFail(ret)
-        self.assertEquals(ret.result, OK)
-        
-        # check that all expected were received
-        expected = yield self.client.getExpected(timeout=30)
-        self.assertEquals(len(expected), 0)
-        
-        # actual response should indicate OK: 
-        response = yield self.client.getAccepted(publish_id)
-        self.assertIsSuccessFail(response)
-        self.assertEquals(response.result, OK)
+        # TODO
+        # this will startAcquisition, wait for a few samples, then
+        # request stopAcquisition, and then verify that this request is
+        # successful 
+

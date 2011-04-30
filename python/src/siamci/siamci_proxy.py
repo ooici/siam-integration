@@ -7,6 +7,7 @@
 """
 import ion.util.ionlog
 log = ion.util.ionlog.getLogger(__name__)
+import logging
 
 from twisted.internet import defer
 
@@ -109,7 +110,7 @@ class SiamCiAdapterProxy():
         @return: the response from the SIAM-CI adapter
         """
         
-        log.debug(show_message(message, "Sending command to " +self.queue))
+        _debug_message(message, "Sending command to " +self.queue)
         
         (response, headers, msg) = yield self.proc.rpc_send(recv=self.queue, operation='command', content=message)
         
@@ -124,7 +125,7 @@ class SiamCiAdapterProxy():
         """
         cmd = yield self._make_command("echo")
         response = yield self._rpc(cmd)
-        log.debug(show_message(response, "ping response:"))
+        _debug_message(response, "ping response:")
 #        from IPython.Shell import IPShellEmbed
 #        ipshell = IPShellEmbed()
 #        ipshell()
@@ -137,7 +138,7 @@ class SiamCiAdapterProxy():
         """
         cmd = yield self._make_command("list_ports", publish_stream=publish_stream)
         response = yield self._rpc(cmd)
-        log.debug(show_message(response, "list_ports response:"))
+        _debug_message(response, "list_ports response:")
         
         defer.returnValue(response)
     
@@ -157,7 +158,7 @@ class SiamCiAdapterProxy():
         assert self.port, "No port provided"
         cmd = yield self._make_command("get_status", [("port", self.port)], publish_stream)
         response = yield self._rpc(cmd)
-        log.debug(show_message(response, "get_status response:"))
+        _debug_message(response, "get_status response:")
         
         defer.returnValue(response)
         
@@ -169,7 +170,7 @@ class SiamCiAdapterProxy():
         assert self.port, "No port provided"
         cmd = yield self._make_command("get_last_sample", [("port", self.port)], publish_stream)
         response = yield self._rpc(cmd)
-        log.debug(show_message(response, "get_last_sample response:"))
+        _debug_message(response, "get_last_sample response:")
         
         defer.returnValue(response)
         
@@ -197,7 +198,7 @@ class SiamCiAdapterProxy():
                 
         cmd = yield self._make_command("fetch_params", args, publish_stream)
         response = yield self._rpc(cmd)
-        log.debug(show_message(response, "fetch_params response:"))
+        _debug_message(response, "fetch_params response:")
         
         defer.returnValue(response)
         
@@ -213,7 +214,7 @@ class SiamCiAdapterProxy():
              
         cmd = yield self._make_command("set_params", args, publish_stream)
         response = yield self._rpc(cmd)
-        log.debug(show_message(response, "fetch_params response:"))
+        _debug_message(response, "fetch_params response:")
         
         defer.returnValue(response)
         
@@ -221,7 +222,8 @@ class SiamCiAdapterProxy():
     @defer.inlineCallbacks
     def execute_StartAcquisition(self, channel, publish_stream):
         """
-        @todo: VERY PRELIMINARY, incomplete!
+        Sends a execute_StartAcquisition command.
+        @todo: very preliminary
         """
 
         assert(channel is not None)
@@ -233,15 +235,60 @@ class SiamCiAdapterProxy():
              
         cmd = yield self._make_command("execute_StartAcquisition", args, publish_stream)
         response = yield self._rpc(cmd)
-        log.debug(show_message(response, "execute_StartAcquisition response:"))
+        _debug_message(response, "execute_StartAcquisition response:")
+        
+        defer.returnValue(response)
+        
+        
+    @defer.inlineCallbacks
+    def execute_StopAcquisition(self, channel, publish_stream):
+        """
+        Sends a execute_StopAcquisition command.
+        @todo: very preliminary
+        """
+
+        assert(channel is not None)
+        assert(publish_stream is not None)
+        
+        log.debug("execute_StopAcquisition: channel='%s' publish_stream='%s'" % (str(channel), str(publish_stream)))
+        
+        args = [("port", self.port), ("channel", channel)]
+             
+        cmd = yield self._make_command("execute_StopAcquisition", args, publish_stream)
+        response = yield self._rpc(cmd)
+        _debug_message(response, "execute_StopAcquisition response:")
+        
+        defer.returnValue(response)
+        
+        
+    @defer.inlineCallbacks
+    def execute_StartAcquisition(self, channel, publish_stream):
+        """
+        Sends a execute_StartAcquisition command.
+        @todo: very preliminary
+        """
+
+        assert(channel is not None)
+        assert(publish_stream is not None)
+        
+        log.debug("execute_StartAcquisition: channel='%s' publish_stream='%s'" % (str(channel), str(publish_stream)))
+        
+        args = [("port", self.port), ("channel", channel)]
+             
+        cmd = yield self._make_command("execute_StartAcquisition", args, publish_stream)
+        response = yield self._rpc(cmd)
+        _debug_message(response, "execute_StartAcquisition response:")
         
         defer.returnValue(response)
         
         
 
-
+def _debug_message(msg, title):
+    if log.getEffectiveLevel() > logging.DEBUG:
+        return
+    log.debug(_show_message(msg, title))
   
-def show_message(msg, title="Message:"):
+def _show_message(msg, title="Message:"):
     prefix = "    | "
     contents = str(msg).strip().replace("\n", "\n"+prefix)
     return title+ "\n    " + str(type(msg)) + "\n" + prefix + contents

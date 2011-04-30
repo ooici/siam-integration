@@ -12,6 +12,8 @@ Carlos Rueda - MBARI
 	  	net.ooici.siamci.impl.gpb.SiamCiAdapterGpb
 	  	net.ooici.siamci.impl.gpb.SiamCiServerGpb
 	  	net.ooici.siamci.impl.gpb.SiamCiServerGpb_RpcServer
+	  	
+	 - preparation for start/stop data acquisition
 	
 2011-04-29
 	- pushed project to https://github.com/ooici/siam-integration
