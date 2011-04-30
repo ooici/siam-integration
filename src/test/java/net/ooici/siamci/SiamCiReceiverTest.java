@@ -26,19 +26,29 @@ import com.rabbitmq.client.AMQP;
  * started as follows:
  * 
  * <pre>
- * cd ioncore-python   # base directory of ioncore-pyton
- * workon by_buildout  # or your corresponding virtenv
- * bin/twistd --pidfile=ps1 -n cc -a sysname=siamci -h localhost ion/siamci/start_receiver_service.py
+    $ cd python      # base directory of the SIAM-CI python code
+    $ workon siamci  # or your corresponding virtenv
+    $ bin/twistd --pidfile=ps1 -n cc -a sysname=siamci -h localhost src/siamci/start_receiver_service.py
+    ...
+    ION Python Capability Container (version 0.4.8)
+    [env: /Users/carueda/ooici3/Dev/virtenvs/siamci/lib/python2.5/site-packages] 
+    [container id: carueda@carueda.51784] 
+    
+    ><> ps()
+    name                id                  supervisor       
+    ---------------------------------------------------------
+    bootstrap           carueda_51784.1     None             
+    siamci_receiver     carueda_51784.2     carueda_51784.1  
+    ---------------------------------------------------------
+    Running processes: 2
+    ><> 
  * </pre>
- * 
- * (which assumes that ion/siam in ioncore-java is a symbolic link to
- * src/main/python/ion/siam in this project).
  * 
  * <p>
  * Then this test can be run as follows:
  * 
  * <pre>
- * SIAM_CI_RECEIVER=- mvn test -Dtest=SiamCiReceiverTest
+    SIAM_CI_RECEIVER=- mvn test -Dtest=SiamCiReceiverTest
  * </pre>
  * 
  * @author carueda
@@ -52,11 +62,10 @@ public class SiamCiReceiverTest extends BaseTestCase {
 			+ " environment variable not set.\n"
 			+ "\n"
 			+ "You would first start the receiver service on the python side:\n"
-			+ "  cd ioncore-python   # base directory of ioncore-pyton\n"
-			+ "  workon by_buildout  # or your corresponding virtenv\n"
-			+ "  bin/twistd --pidfile=ps1 -n cc -a sysname=siamci -h localhost ion/siamci/start_receiver_service.py\n"
-			+ "(which assumes that ion/siam in ioncore-java is a symbolic link to\n"
-			+ "src/main/python/ion/siam in this project).\n" + "\n"
+			+ "  cd python\n"
+			+ "  workon siamci\n"
+			+ "  bin/twistd --pidfile=ps1 -n cc -a sysname=siamci -h localhost src/siamci/start_receiver_service.py\n"
+			+ "\n"
 			+ "Then this test can be run as follows:\n"
 			+ "  SIAM_CI_RECEIVER=- mvn test -Dtest=SiamCiReceiverTest\n";
 
@@ -101,7 +110,7 @@ public class SiamCiReceiverTest extends BaseTestCase {
 				.addIonMessageContent(null, "SomeName", "Identity",
 						someSuccessFail);
 
-		MessagingName mn = new MessagingName("siamci.siamci_receiver");
+        MessagingName mn = new MessagingName("siamci.siamci_receiver");
 
 		String userId = "ANONYMOUS";
 		String expiry = String.valueOf(System.currentTimeMillis() + 30 * 1000);
@@ -110,7 +119,7 @@ public class SiamCiReceiverTest extends BaseTestCase {
 				"acceptResponse", structureBuilder.build(), userId, expiry);
 
 		Object response = msgin.getContent();
-		System.out.println("Response: " + response);
+//		System.out.println("Response: " + response);
 
 		Assert.assertNotNull(response);
 	}

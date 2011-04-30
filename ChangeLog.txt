@@ -1,6 +1,9 @@
 SIAM_CI Integration Prototype change log
 Carlos Rueda - MBARI
 
+2011-04-30
+	- re-enabled the SiamCiReceiverTest upon the update to use buildout
+	
 2011-04-29
 	- pushed project to https://github.com/ooici/siam-integration
 		$ git remote rename origin gitorious
