@@ -1,0 +1,1 @@
+logs/ directory needed when running the tests
