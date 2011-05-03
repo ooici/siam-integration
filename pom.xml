@@ -12,10 +12,10 @@
 		<!-- see http://maven.apache.org/general.html#encoding-warning -->
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-		<siam_version>0.9</siam_version>
-		<rbnb_version>0.1.adhoc</rbnb_version>
-		<siam_instr_version>0.0.1</siam_instr_version>
-		<ionproto_version>0.3.16</ionproto_version>
+		<siam_version>2011-01</siam_version>
+		<rbnb_version>V3.2B5</rbnb_version>
+		<siam_instr_version>0.0.1-SNAPSHOT</siam_instr_version>
+		<ionproto_version>0.3.16-pl15</ionproto_version>
 		<ioncore_version>0.2.5-dev</ioncore_version>
 		<msgpack_version>0.3</msgpack_version>
 	</properties>
@@ -178,18 +178,18 @@
 	<dependencies>
 
 		<dependency>
-			<groupId>org.mbari</groupId>
+			<groupId>org.mbari.interim</groupId>
 			<artifactId>siam</artifactId>
 			<version>${siam_version}</version>
 		</dependency>
 		<dependency>
-			<groupId>adhoc.rbnb</groupId>
+			<groupId>org.mbari.interim</groupId>
 			<artifactId>rbnb</artifactId>
 			<version>${rbnb_version}</version>
 		</dependency>
 		<dependency>
-			<groupId>siam_test_devices</groupId>
-			<artifactId>TestSiamInstrument1</artifactId>
+			<groupId>org.mbari.interim</groupId>
+			<artifactId>siam-test-instr1</artifactId>
 			<version>${siam_instr_version}</version>
 		</dependency>
 
@@ -206,6 +206,12 @@
 		</dependency>
 
 		<dependency>
+			<groupId>org.msgpack</groupId>
+			<artifactId>msgpack</artifactId>
+			<version>${msgpack_version}</version>
+		</dependency>
+		
+		<dependency>
 			<groupId>commons-cli</groupId>
 			<artifactId>commons-cli</artifactId>
 			<version>1.1</version>
@@ -214,11 +220,6 @@
 			<groupId>commons-io</groupId>
 			<artifactId>commons-io</artifactId>
 			<version>1.2</version>
-		</dependency>
-		<dependency>
-			<groupId>msgpack</groupId>
-			<artifactId>msgpack</artifactId>
-			<version>${msgpack_version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework</groupId>
@@ -272,4 +273,23 @@
 			<type>jar</type>
 		</dependency>
 	</dependencies>
+
+	<repositories>
+		<repository>
+			<id>mbari-maven-repository</id>
+			<name>MBARI Maven Repository</name>
+			<url>http://mbari-maven-repository.googlecode.com/svn/repository/</url>
+		</repository>
+		<repository>
+			<id>mbari-maven-snapshot-repository</id>
+			<name>MBARI Maven Snapshot Repository</name>
+			<url>http://mbari-maven-repository.googlecode.com/svn/snapshot-repository/</url>
+		</repository>
+		<repository>
+			<id>msgpack</id>
+			<name>msgpack repository</name>
+			<url>http://msgpack.org/maven2/</url>
+		</repository>
+	</repositories>
+
 </project>

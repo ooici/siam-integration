@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+   This build file is to install OOI-CI dependencies in the local maven repository.
+   See "info" target for more details.
+ -->
+<project name="install-jars" default="info" basedir=".">
+
+	<property name="download_dir" value="download" />
+	
+	<!-- ionproto library -->
+	<property name="ionproto_version" value="0.3.16-pl15" />
+	<property name="ionproto_jar" value="ionproto-${ionproto_version}.jar" />
+	<property name="ionproto_url" value="http://ooici.net/releases/maven/repo/net/ooici/ionproto/${ionproto_version}/${ionproto_jar}" />
+	
+	<!-- ioncore-java library -->
+	<property name="ioncore_version" value="0.2.5-dev" />
+	<property name="ioncore_jar" value="ioncore-java-${ioncore_version}.jar" />
+	<property name="ioncore_url" value="http://ooici.net/releases/maven/repo/net/ooici/ioncore-java/${ioncore_version}/${ioncore_jar}" />
+	
+	
+	<target name="info">
+		<echo>
+   This build file is to install OOI-CI dependencies in the local maven repository.
+			   
+   Note: although these artifacts are located under http://ooici.net/releases/maven/repo/,
+   which suggests they are resolvable using "maven", only ioncore-java seems to be actually 
+   enabled to be resolved in this way (it includes a .pom). For consistency, however, these 
+   artifacts are just downloaded as regular JARs and then installed manually in the local 
+   maven repository. 
+		</echo>
+	</target>
+
+	
+	<target name="download-ionproto" description="downloads ionproto jar">
+		<mkdir dir="${download_dir}"/>
+		<get src="${ionproto_url}" dest="${download_dir}/${ionproto_jar}" verbose="true" usetimestamp="true" />
+	</target>
+
+	<target name="download-ioncore-java" description="downloads ioncore-java jar">
+		<mkdir dir="${download_dir}"/>
+		<get src="${ioncore_url}" dest="${download_dir}/${ioncore_jar}" verbose="true" usetimestamp="true" />
+	</target>
+
+	
+	<target name="install" description="installs OOI-CI dependencies in local maven repository"
+		depends="install-ionproto, install-ioncore-java">
+	</target>
+		
+		
+	<target name="install-ionproto" depends="download-ionproto" description="installs ionproto jar">
+		<install jar="${download_dir}/${ionproto_jar}" groupId="ionproto" artifactId="ionproto" version="${ionproto_version}" /> 
+	</target>
+
+	<target name="install-ioncore-java" depends="download-ioncore-java" description="installs ioncore-java jar">
+		<install jar="${download_dir}/${ioncore_jar}" groupId="ioncore" artifactId="ioncore" version="${ioncore_version}" /> 
+	</target>
+
+	
+	<macrodef name="install">
+	   <attribute name="jar"/>
+	   <attribute name="groupId"/>
+	   <attribute name="artifactId"/>
+	   <attribute name="version"/>
+	   <sequential>
+			<echo message="Installing @{jar}" />
+			<fail message="@{jar} does not exist">
+			     <condition>
+			       <not>
+			       	<resourceexists>
+			       	  <file file="@{jar}"/>
+			       	</resourceexists>
+			       </not>
+			     </condition>
+			</fail>
+	
+			<exec executable="mvn">
+				<arg value="install:install-file" />
+				<arg value="-Dfile=@{jar}" />
+				<arg value="-DgroupId=@{groupId}" />
+				<arg value="-DartifactId=@{artifactId}" />
+				<arg value="-Dversion=@{version}" />
+				<arg value="-Dpackaging=jar" />
+			</exec>
+	   	
+	    </sequential>
+	</macrodef>
+
+</project>

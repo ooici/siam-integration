@@ -1,6 +1,26 @@
 SIAM_CI Integration Prototype change log
 Carlos Rueda - MBARI
 
+2011-05-02
+	- Maven related adjustments to simplify build upon a fresh checkout:
+		- now using MBARI maven repo for some artifacts (see etc/maven/README.txt):
+			- SIAM jar
+			- test instrument jar
+			- DataTurbine RBNB jar
+		  NOTE: these artifacts are under a special groupId intended for "interim" 
+		  artifacts (not official releases). In particular, the SIAM jar is the
+		  one I've been using during my SIAM-CI prototype development; it is not
+		  any official SIAM release.
+		  
+		- msgpack: now using http://msgpack.org/maven2 repository (instead of 
+		  grabbing and installing OOICI's release). Note, use the version used
+		  by ioncore-java (currently msgpack 0.3).
+		  
+		- etc/build.xml moved to etc/maven/build.xml: now, it simply downloads the 
+		  ionproto and ioncore-java libraries from OOI and installs them in the 
+		  local maven repo. 
+		
+		
 2011-04-30
 	- re-enabled the SiamCiReceiverTest upon the update to use buildout
 	
