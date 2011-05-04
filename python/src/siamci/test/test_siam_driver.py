@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 """
-@file siamci/test/test_siam.py
+@file siamci/test/test_siam_driver.py
 @brief This module has test cases to test out the SIAM driver.
-@author Carlos Rueda (using test_SBE49.py as a basis)
-@see ion.agents.instrumentagents.test.test_instrument
+   Initial version based on test_SBE49.py.
+@author Carlos Rueda
 """
 import ion.util.ionlog
 log = ion.util.ionlog.getLogger(__name__)

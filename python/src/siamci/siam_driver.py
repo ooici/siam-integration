@@ -21,6 +21,30 @@ from siamci.siamci_proxy import SiamCiAdapterProxy
 
 from net.ooici.play.instr_driver_interface_pb2 import Command, SuccessFail, OK, ERROR
 
+
+try:
+    from ion.agents.instrumentagents.instrument_constants import InstErrorCode
+except:
+    # these pieces provisionally copied from 'develop' while release > 0.4.8 is available
+    class BaseEnum(object):
+        @classmethod
+        def list(cls):
+            return [getattr(cls,attr) for attr in dir(cls) if \
+                not callable(getattr(cls,attr)) and not attr.startswith('__')]
+        @classmethod
+        def has(cls,item):
+            return item in cls.list()
+        
+    class InstErrorCode(BaseEnum):
+        OK = 'OK'
+        @classmethod
+        def is_ok(cls,x):
+            return x == cls.OK
+        @classmethod
+        def is_error(cls,x):
+            return (cls.has(list(x)) and x != cls.OK)
+
+
        
 class SiamInstrumentDriver(InstrumentDriver):
     """
@@ -44,20 +68,15 @@ class SiamInstrumentDriver(InstrumentDriver):
         """
         Creates an instance of the driver.
         
-        kwargs["spawnargs"]["pid"] will be used to connect to the SIAM-CI adapter service.
+        self.spawn_args.get('pid') will be used to connect to the SIAM-CI adapter service.
         
-        This instance will be for a particular SIAM instrument if the 'port' parameter is given, which
-        is obtained from kwargs["spawnargs"]["port"] if defined. Otherwise, only generic
-        operations (like, list_ports) will be enabled.
+        This instance will be for a particular SIAM instrument if self.spawn_args.get('port')
+        is not None. Otherwise, only generic operations (like, list_ports) will be enabled.
         """
         
         InstrumentDriver.__init__(self, *args, **kwargs)
-        pid = None
-        port = None
-        if kwargs["spawnargs"]:
-            args = kwargs["spawnargs"];
-            if args.has_key('pid'): pid = args['pid']
-            if args.has_key('port'): port = args['port']
+        pid = self.spawn_args.get('pid')
+        port = self.spawn_args.get('port')
             
         log.debug("SiamInstrumentDriver __init__: pid = '" +str(pid)+ "' port = '" +str(port)+ "'")
         self.siamci = SiamCiAdapterProxy(pid, port)
@@ -71,6 +90,89 @@ class SiamInstrumentDriver(InstrumentDriver):
         log.debug('In SiamDriver op_initialize')
         result = True        
         yield self.reply_ok(msg, result)
+        
+        
+    @defer.inlineCallbacks
+    def op_configure(self, content, headers, msg):
+        """
+        Configure the driver to establish communication with the device.
+        @param content a dict containing required and optional
+            configuration parameters.
+        @retval A reply message dict {'success':success,'result':content}.
+        """
+        
+        """
+            Using SBE37_dirver as a basis for this operation
+            
+            @TODO: just starting implementation
+        """
+        
+        assert(isinstance(content,dict)), 'Expected dict content.'
+        params = content.get('params',None)
+        assert(isinstance(params,dict)), 'Expected dict params.'
+        
+        # Timeout not implemented for this op.
+        timeout = content.get('timeout',None)
+        if timeout != None:
+            assert(isinstance(timeout,int)), 'Expected integer timeout'
+            assert(timeout>0), 'Expected positive timeout'
+            pass
+
+        # Set up the reply message and validate the configuration parameters.
+        # Reply with the error message if the parameters not valid.
+        reply = {'success':None,'result':params}
+        reply['success'] = self._validate_configuration(params)
+        
+        log.debug("xxxxxxxxxxx reply['success'] = " + str(reply['success']))
+
+        if InstErrorCode.is_error(reply['success']):
+            yield self.reply_ok(msg,reply)
+            return
+        
+        # Fire EVENT_CONFIGURE with the validated configuration parameters.
+        # Set the error message if the event is not handled in the current
+        # state.
+#        reply['success'] = self.fsm.on_event(SBE37Event.CONFIGURE,params)
+        reply['success'] = "listo"
+
+        yield self.reply_ok(msg, reply)
+
+        
+    def _validate_configuration(self,params):
+        """
+        Validate the configuration is valid.
+        @param params a dict of named configuration parameters
+            {'param1':val1,...,'paramN':valN}.
+        @retval A success/fail value.
+        """
+        
+        """
+            Using SBE37_dirver as a basis for this operation
+            
+            @TODO: just starting implementation
+        """
+        
+        
+#        # Get required parameters.
+#        _ipport = params.get('ipport',None)
+#        _ipaddr = params.get('ipaddr',None)
+#
+#        # fail if missing a required parameter.
+#        if not _ipport or not _ipaddr:
+#            return InstErrorCode.REQUIRED_PARAMETER
+#
+#        # Validate port number.
+#        if not isinstance(_ipport,int) or _ipport <0 or _ipport > 65535:
+#            return InstErrorCode.INVALID_PARAM_VALUE
+#        
+#        # Validate ip address.
+#        # TODO: Add logic to veirfy string format.
+#        if not isinstance(_ipaddr,str): 
+#            return InstErrorCode.INVALID_PARAM_VALUE
+
+        return InstErrorCode.OK
+
+        
 
     @defer.inlineCallbacks
     def op_get_status(self, content, headers, msg):

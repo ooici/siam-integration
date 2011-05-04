@@ -22,7 +22,7 @@ from ion.core import ioninit
 
 
 
-class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
+class TestSiamCiAdapterProxyDataAsync(SiamCiTestCase):
     
     @defer.inlineCallbacks
     def _start_receiver_service(self, receiver_service_name, timeout=2):
@@ -74,7 +74,6 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
         
         #
         # @todo: more robust assignment of publish IDs
-        # In this case should include the particular channel, not indicated yet either!
         #
         publish_id = "data_acquisition;port=" + SiamCiTestCase.port + ";channel=" +channel
         

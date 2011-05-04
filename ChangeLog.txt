@@ -1,6 +1,19 @@
 SIAM_CI Integration Prototype change log
 Carlos Rueda - MBARI
 
+2011-05-03
+	Incorporating instrument agent in the tests:
+		- using latest 'develop' branch image of ioncore-pyhon (new elements
+		  in the instrument_driver and instrument_agent to be in upcoming
+		  release 0.4.9)
+		- adjustments in siam_driver.py
+		- New test_siam_agent.py (based on test_SBE37_agent.py). Tests are skipped
+		  if the new ioncore-python elements cannot be imported.
+		
+		Note: the 'configure' operation is the one in which the
+		SiamCiProxy would instantiated -- To be done.
+	  
+
 2011-05-02
 	- Maven related adjustments to simplify build upon a fresh checkout:
 		- now using MBARI maven repo for some artifacts (see etc/maven/README.txt):
