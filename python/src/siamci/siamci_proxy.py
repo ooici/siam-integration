@@ -84,11 +84,9 @@ class SiamCiAdapterProxy():
         @param publish_stream: Name of queue for asynchronous notification of result
         """
         
+        assert self.proc is not None, "SiamCiAdapterProxy must be started"
+
         if args is None: args = [] 
-        
-        # @todo: for the moment, make sure the proxy is started (later on, we can delegate this
-        # responsability to client code)
-        yield self.start()
         
         cmd = yield self.mc.create_instance(Command_type, MessageName='command sent message')
         cmd.command = cmd_name
