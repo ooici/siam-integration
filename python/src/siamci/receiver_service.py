@@ -96,7 +96,7 @@ class SiamCiReceiverService(ServiceProcess):
     def op_expect(self, content, headers, msg):
         log.info('op_expect: ' +str(content))
         
-        publish_id = yield self._get_publish_id(content, headers, msg)
+        publish_id = self._get_publish_id(content, headers, msg)
         if publish_id:
             self.expect.add(publish_id)
         else:
@@ -113,7 +113,7 @@ class SiamCiReceiverService(ServiceProcess):
 #        ipshell = IPShellEmbed()
 #        ipshell()
 #
-        publish_id = yield self._get_publish_id(content, headers, msg)
+        publish_id = self._get_publish_id(content, headers, msg)
         if publish_id:
             self.accepted[publish_id] = content
             yield self.reply_ok(msg, {'op_acceptResponse' : "OK: response for publish_id='" +str(publish_id)+ "' accepted"})
@@ -180,7 +180,7 @@ class SiamCiReceiverService(ServiceProcess):
         """
         Returns the content received for a given publish_id; None if not received yet.
         """
-        publish_id = yield self._get_publish_id(content, headers, msg)
+        publish_id = self._get_publish_id(content, headers, msg)
         if publish_id:
             if publish_id in self.accepted:
                 yield self.reply_ok(msg, self.accepted[publish_id])
