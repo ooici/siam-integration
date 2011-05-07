@@ -54,6 +54,8 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
      */
     private static final long TIMEOUT = 3 * 1000;
 
+    private static final String SENDER_NAME = "SIAM-CI Adapter (java)";
+
     private final String brokerHost;
 
     private final int brokerPort;
@@ -440,6 +442,8 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
          * "unexpected message".
          */
         headers.put("performative", "inform_result");
+        
+        headers.put("sender-name", SENDER_NAME);
 
         ionClient.sendMessage(msg);
 
@@ -485,6 +489,8 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
 
         // include the publish_id as a header:
         headers.put("publish_id", publishId);
+        
+        headers.put("sender-name", SENDER_NAME);
 
         try {
             /*
