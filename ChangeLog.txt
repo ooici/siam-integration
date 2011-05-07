@@ -1,6 +1,20 @@
 SIAM_CI Integration Prototype change log
 Carlos Rueda - MBARI
 
+2011-05-06
+	- Continued making adjustments on the python side to use the recent updates to 
+	  instrument agent and instrument driver in ioncore-python. Now with the just
+	  released version 0.4.10 and also against 'develop.' After struggling a bit with
+	  some of the most basic tests I discovered that the InstrumentDriverClient.initialize 
+	  operation was missing the @defer.inlineCallbacks decorator! I pushed the fix to 
+	  develop and for convenience also did the fix directly in my local 0.4.10 egg.
+	  
+	  Pushed many adjustments and all tests are passing: PASSED (skips=1, successes=24)
+	
+2011-05-04
+	Incorporating instrument agent in the tests
+	
+	
 2011-05-03
 	Incorporating instrument agent in the tests:
 		- using latest 'develop' branch image of ioncore-pyhon (new elements

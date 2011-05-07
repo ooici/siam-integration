@@ -21,16 +21,11 @@ import ion.util.procutils as pu
 from ion.core.exception import ReceivedError
 import ion.agents.instrumentagents.instrument_agent as instrument_agent
 
-SKIP = None
-try:
-    from ion.agents.instrumentagents.instrument_constants import AgentCommand
-    from ion.agents.instrumentagents.instrument_constants import AgentEvent
-    from ion.agents.instrumentagents.instrument_constants import DriverChannel
-    from ion.agents.instrumentagents.instrument_constants import DriverCommand
-    from ion.agents.instrumentagents.instrument_constants import InstErrorCode
-except:
-    SKIP = """Skipped because ion.agents.instrumentagents.instrument_constants 
-              is not in the ioncore-python used in this run."""
+from ion.agents.instrumentagents.instrument_constants import AgentCommand
+from ion.agents.instrumentagents.instrument_constants import AgentEvent
+from ion.agents.instrumentagents.instrument_constants import DriverChannel
+from ion.agents.instrumentagents.instrument_constants import DriverCommand
+from ion.agents.instrumentagents.instrument_constants import InstErrorCode
 
 from siamci.test.siamcitest import SiamCiTestCase
 
@@ -43,9 +38,6 @@ class TestSiamAgent(SiamCiTestCase):
 #    timeout = 180
 
 
-    skip = SKIP
-
-
     @defer.inlineCallbacks
     def setUp(self):
         yield self._start_container()
@@ -55,7 +47,9 @@ class TestSiamAgent(SiamCiTestCase):
         instr_agent_name = 'InstrumentAgent_' + SiamCiTestCase.port
        
         driver_config = {
-            'pid':SiamCiTestCase.pid, 'port':SiamCiTestCase.port
+            'pid':SiamCiTestCase.pid, 
+            'port':SiamCiTestCase.port,
+            'notify_agent':True
         }        
         agent_config = {}
         
@@ -105,7 +99,7 @@ class TestSiamAgent(SiamCiTestCase):
 
     @defer.inlineCallbacks
     def tearDown(self):
-        pu.asleep(1)
+#        yield pu.asleep(1)
         yield self._stop_container()
    
    
@@ -120,7 +114,7 @@ class TestSiamAgent(SiamCiTestCase):
         
         
     @defer.inlineCallbacks
-    def test_001_initialize(self, close_transaction=True):
+    def _test_001_initialize(self, close_transaction=True):
         # Begin an explicit transaction.
         reply = yield self.ia_client.start_transaction(0)
         success = reply['success']
@@ -153,16 +147,17 @@ class TestSiamAgent(SiamCiTestCase):
         
 #        raise unittest.SkipTest("only partially implemented")
     
-        transaction_id = yield self.test_001_initialize(False) 
+        transaction_id = yield self._test_001_initialize(False) 
         
         # Connect to the device.
         cmd = [AgentCommand.TRANSITION,AgentEvent.GO_ACTIVE]
+        log.debug("About to call self.ia_client.execute_observatory(cmd,transaction_id)")
         reply = yield self.ia_client.execute_observatory(cmd,transaction_id) 
         success = reply['success']
         result = reply['result']
 
         # TODO: Not yet implemented (use SiamCiProxy)
-#        self.assert_(InstErrorCode.is_ok(success))
+        self.assert_(InstErrorCode.is_ok(success))
 
         if close_transaction:
             yield self._close_transaction(transaction_id)
@@ -171,9 +166,9 @@ class TestSiamAgent(SiamCiTestCase):
 
 
     @defer.inlineCallbacks
-    def test_003_clear(self, close_transaction=True):
+    def _test_003_clear(self, close_transaction=True):
         
-#        raise unittest.SkipTest("only partially implemented")
+        raise unittest.SkipTest("only partially implemented")
     
         transaction_id = yield self.test_002_go_active(False) 
         
@@ -182,9 +177,6 @@ class TestSiamAgent(SiamCiTestCase):
         reply = yield self.ia_client.execute_observatory(cmd,transaction_id) 
         success = reply['success']
         result = reply['result']
-
-        #print 'clear reply:'
-        #print reply
 
         self.assert_(InstErrorCode.is_ok(success))
         
@@ -195,11 +187,11 @@ class TestSiamAgent(SiamCiTestCase):
 
         
     @defer.inlineCallbacks
-    def test_004_run(self, close_transaction=True):
+    def _test_004_run(self, close_transaction=True):
         
-#        raise unittest.SkipTest("only partially implemented")
+        raise unittest.SkipTest("only partially implemented")
     
-        transaction_id = yield self.test_003_clear(False) 
+        transaction_id = yield self._test_003_clear(False) 
         
         
         # Start observatory mode.
@@ -221,11 +213,11 @@ class TestSiamAgent(SiamCiTestCase):
         
 
     @defer.inlineCallbacks
-    def test_999_execute_instrument(self):
+    def _test_999_execute_instrument(self):
         
 #        raise unittest.SkipTest("only partially implemented")
     
-        transaction_id = yield self.test_004_run() 
+        transaction_id = yield self._test_004_run() 
         
         
         # somewhat revised up to this point, but very preliminarily

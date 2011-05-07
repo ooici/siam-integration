@@ -11,15 +11,19 @@ from twisted.internet import defer
 
 from ion.test.iontest import IonTestCase
 
-from siamci.siam_driver import SiamInstrumentDriverClient
+from siamci.util.tcolor import red, blue
 from siamci.test.siamcitest import SiamCiTestCase
-
-#from ion.services.dm.distribution.pubsub_service import PubSubClient
-
-#import ion.util.procutils as pu
-#from ion.resources.dm_resource_descriptions import PubSubTopicResource, SubscriptionResource
-
 from twisted.trial import unittest
+
+
+from siamci.siam_driver import SiamInstrumentDriverClient
+from siamci.siam_driver import SiamDriverState
+from siamci.siam_driver import SiamDriverChannel
+from siamci.siam_driver import SiamDriverCommand
+    
+from ion.agents.instrumentagents.instrument_fsm import InstrumentFSM
+from ion.agents.instrumentagents.instrument_constants import InstErrorCode
+
 
 
 class TestSiamInstrumentDriver(SiamCiTestCase):
@@ -31,25 +35,26 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
     @defer.inlineCallbacks
     def setUp(self):
         yield self._start_container()
+        
+        self.driver_config = {
+            'pid':SiamCiTestCase.pid, 
+            'port':SiamCiTestCase.port
+        }        
+        
 
         driver_name = 'SiamInstrumentDriver_' + SiamCiTestCase.port
         
         services = [
-            # not publishing data yet
-#            {'name':'pubsub_registry','module':'ion.services.dm.distribution.pubsub_registry','class':'DataPubSubRegistryService'},
-#            {'name':'pubsub_service','module':'ion.services.dm.distribution.pubsub_service','class':'DataPubsubService'},
-
             {'name': driver_name,
              'module':'siamci.siam_driver',
              'class':'SiamInstrumentDriver',
-             'spawnargs':{ 'pid':SiamCiTestCase.pid, 'port':SiamCiTestCase.port }
+             'spawnargs':self.driver_config
              }
             ]
 
         self.sup = yield self._spawn_processes(services)
         
         self.driver_pid = yield self.sup.get_child_id(driver_name)
-        log.debug("Driver pid %s" % (self.driver_pid))
 
         self.driver_client = SiamInstrumentDriverClient(proc=self.sup,
                                                          target=self.driver_pid)
@@ -60,40 +65,94 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
 
 
     @defer.inlineCallbacks
-    def test_initialize(self):
-        raise unittest.SkipTest('Not implemented yet')
-        result = yield self.driver_client.initialize("dummy-arg")
-        self.assertTrue(result)
+    def _test_001_initialize(self):
+        
+        reply = yield self.driver_client.initialize()
+        success = reply['success']
+        result = reply['result']
+        self.assert_(InstErrorCode.is_ok(success))
+        
+        current_state = yield self.driver_client.get_state()
+        self.assertEqual(current_state, SiamDriverState.UNCONFIGURED)
+        
 
     @defer.inlineCallbacks
-    def test_get_status(self):
+    def _test_002_configure(self):
+
+        yield self._test_001_initialize()
+        
+        params = self.driver_config
+
+        # Configure the driver and verify.
+        reply = yield self.driver_client.configure(params)        
+        current_state = yield self.driver_client.get_state()
+        success = reply['success']
+        result = reply['result']
+                
+        self.assert_(InstErrorCode.is_ok(success))
+        self.assertEqual(result,params)
+        self.assertEqual(current_state, SiamDriverState.DISCONNECTED)
+
+      
+    @defer.inlineCallbacks
+    def test_003_connect(self):
+
+        yield self._test_002_configure();
+        
+        # Establish connection to device and verify.
+        try:
+            reply = yield self.driver_client.connect()
+        except:
+            self.fail('Could not connect to the device.')
+            
+        current_state = yield self.driver_client.get_state()
+        success = reply['success']
+        result = reply['result']
+
+        self.assert_(InstErrorCode.is_ok(success))
+        self.assertEqual(result,None)
+        self.assertEqual(current_state, SiamDriverState.CONNECTED)
+
+        
+        # Dissolve the connection to the device.
+        reply = yield self.driver_client.disconnect()
+        current_state = yield self.driver_client.get_state()
+        success = reply['success']
+        result = reply['result']
+
+        self.assert_(InstErrorCode.is_ok(success))
+        self.assertEqual(result,None)
+        self.assertEqual(current_state, SiamDriverState.DISCONNECTED)
+       
+        
+
+
+
+    @defer.inlineCallbacks
+    def _test_get_status(self):
+        raise unittest.SkipTest('UNDER DEVELOPMENT')
         ret = yield self.driver_client.get_status("dummy arg")
 
     @defer.inlineCallbacks
-    def test_ping(self):
-        ret = yield self.driver_client.ping()
-        self.assertTrue(ret)
-
-    @defer.inlineCallbacks
-    def test_list_ports(self):
-        ret = yield self.driver_client.list_ports()
-
-    @defer.inlineCallbacks
-    def test_get_last_sample(self):
+    def _test_get_last_sample(self):
+        raise unittest.SkipTest('UNDER DEVELOPMENT')
         ret = yield self.driver_client.get_last_sample()
 
     @defer.inlineCallbacks
-    def test_fetch_params_some(self):
+    def _test_fetch_params_some(self):
+        raise unittest.SkipTest('UNDER DEVELOPMENT')
         ret = yield self.driver_client.fetch_params(['startDelayMsec', 'wrongParam'])
         
     @defer.inlineCallbacks
-    def test_fetch_params_all(self):
+    def _test_fetch_params_all(self):
+        raise unittest.SkipTest('UNDER DEVELOPMENT')
         ret = yield self.driver_client.fetch_params([])
         
 
 
     @defer.inlineCallbacks
-    def test_fetch_set1(self):
+    def _test_fetch_set1(self):
+        raise unittest.SkipTest('UNDER DEVELOPMENT')
         """Note: these tests are for successful interaction with driver regarding the
         set_params operation, but not necessarily that the parameter was actually set.
         
@@ -107,33 +166,20 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         ret = yield self.driver_client.set_params(params)
 
     @defer.inlineCallbacks
-    def test_fetch_set2(self):
+    def _test_fetch_set2(self):
+        raise unittest.SkipTest('UNDER DEVELOPMENT')
         """these might not be valid, but we just check the operation completes"""
         params = {'baudrate':'19200', 'someWrongParam' : 'someValue'}
         ret = yield self.driver_client.set_params(params)
 
 
     @defer.inlineCallbacks
-    def test_execute(self):
-        raise unittest.SkipTest('Not implemented yet')
+    def _test_execute(self):
+        raise unittest.SkipTest('UNDER DEVELOPMENT')
         """
         Test the execute command to the Instrument Driver
         @todo: implement
         """
 
 
-#    @defer.inlineCallbacks
-#    def test_sample(self):
-#        raise unittest.SkipTest('Needs new PubSub services')
-#        """
-#        @todo: implement
-#        """
-#        yield self.driver_client.initialize('some arg')
-#
-#        cmd1 = ['ds', 'now']
-#        yield self.driver_client.execute(cmd1)
-#
-#        yield pu.asleep(1)
-#
-#        yield self.driver_client.disconnect(['some arg'])
 
