@@ -26,7 +26,12 @@ public interface ISiam {
 	
 	public Map<String,String> getPortLastSample(String port) throws Exception;
 	
-	public Map<String,String> getPortProperties(String port) throws Exception;
+    /**
+     * @return the names of the channels for the given instrument.
+     */
+    public List<String> getPortChannels(String portName) throws Exception;
+    
+    public Map<String,String> getPortProperties(String port) throws Exception;
 
 	public Map<String, String> setPortProperties(String port, Map<String, String> params) throws Exception;
 }

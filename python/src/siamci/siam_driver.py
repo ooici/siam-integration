@@ -56,7 +56,7 @@ class SiamDriverCommand(DriverCommand):
     """
     Add siam driver specific commands here.
     """
-    pass
+    GET_LAST_SAMPLE = 'DRIVER_CMD_GET_LAST_SAMPLE'
 
 
 # Device channels / transducers.
@@ -665,14 +665,6 @@ class SiamInstrumentDriver(InstrumentDriver):
         yield self.reply_ok(msg, reply)
 
 
-    @defer.inlineCallbacks
-    def op_get_last_sample(self, content, headers, msg):
-        log.debug('In SiamDriver op_get_last_sample')
-        
-        response = yield self.siamci.get_last_sample()
-        log.debug('In SiamDriver op_get_last_sample --> ' + str(response))    
-        yield self.reply_ok(msg, response)
-
 
     @defer.inlineCallbacks
     def op_get(self, content, headers, msg):
@@ -726,7 +718,77 @@ class SiamInstrumentDriver(InstrumentDriver):
         
         
       
+    @defer.inlineCallbacks
+    def op_get_last_sample(self, content, headers, msg):
+        log.debug('In SiamDriver op_get_last_sample')
+        
+        response = yield self.siamci.get_last_sample()
+        log.debug('In SiamDriver op_get_last_sample --> ' + str(response))    
+        yield self.reply_ok(msg, response)
+
       
+      
+      
+    @defer.inlineCallbacks
+    def op_execute(self, content, headers, msg):
+        """
+        Execute a driver command. Commands may be
+        common or specific to the device, with specific commands known through
+        knowledge of the device or a previous get_capabilities query.
+        @param content A dict with channels and command lists and optional
+            timeout:
+            {'channels':[chan_arg,...,chan_arg],
+            'command':[command,arg,...,argN]),
+            'timeout':timeout}.
+        @retval A reply message with a dict
+            {'success':success,
+            'result':{chan_arg:(success,command_specific_values),...,
+            chan_arg:(success,command_specific_values)}}. 
+        """
+        
+        assert(isinstance(content,dict)), 'Expected dict content.'
+
+        # Set up reply dict, get required parameters from message content.
+        reply = {'success':None,'result':None}
+        command = content.get('command',None)
+        channels = content.get('channels',None)
+        timeout = content.get('timeout',None)
+
+        # Fail if required parameters absent.
+        if not command:
+            reply['success'] = InstErrorCode.REQUIRED_PARAMETER
+            yield self.reply_ok(msg,reply)
+            return
+        if not channels:
+            reply['success'] = InstErrorCode.REQUIRED_PARAMETER
+            yield self.reply_ok(msg,reply)
+            return
+
+        assert(isinstance(command,(list,tuple)))        
+        assert(all(map(lambda x:isinstance(x,str),command)))
+        assert(isinstance(channels,(list,tuple)))        
+        assert(all(map(lambda x:isinstance(x,str),channels)))
+        if timeout != None:
+            assert(isinstance(timeout,int)), 'Expected integer timeout'
+            assert(timeout>0), 'Expected positive timeout'
+            pass
+        
+        # Fail if command or channels not valid for siam driver.
+        if not SiamDriverCommand.has(command[0]):
+            reply['success'] = InstErrorCode.UNKNOWN_COMMAND
+            yield self.reply_ok(msg,reply)
+            return
+        
+        instrument_channels = self.siamci.get_channels()
+        
+        for chan in channels:
+            if not chan in instrument_channels:
+                reply['success'] = InstErrorCode.UNKNOWN_CHANNEL
+                reply['result'] = "instrument does not have channel named '" +str(chan)+ "'"
+                yield self.reply_ok(msg,reply)
+                return
+
+        drv_cmd = command[0]
       
         
         

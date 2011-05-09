@@ -23,72 +23,86 @@ import java.util.Map;
  */
 public interface IAsyncSiam {
 
-	/**
-	 * List the ports (ie., instruments) in the SIAM node.
-	 * 
-	 * @param callback
-	 *            Called with the result of the request
-	 * 
-	 * @return null if the request was successfully submitted. Otherwise an
-	 *         error message
-	 */
-	public String listPorts(AsyncCallback<List<PortItem>> callback);
+    /**
+     * List the ports (ie., instruments) in the SIAM node.
+     * 
+     * @param callback
+     *            Called with the result of the request
+     * 
+     * @return null if the request was successfully submitted. Otherwise an
+     *         error message
+     */
+    public String listPorts(AsyncCallback<List<PortItem>> callback);
 
-	/**
-	 * Requests the status of an instrument
-	 * 
-	 * @param port
-	 *            The port associated with the instrument
-	 * @param callback
-	 *            Called with the result of the request
-	 * 
-	 * @return null if the request was successfully submitted. Otherwise an
-	 *         error message
-	 */
-	public String getPortStatus(String port, AsyncCallback<String> callback);
+    /**
+     * Requests the status of an instrument
+     * 
+     * @param port
+     *            The port associated with the instrument
+     * @param callback
+     *            Called with the result of the request
+     * 
+     * @return null if the request was successfully submitted. Otherwise an
+     *         error message
+     */
+    public String getPortStatus(String port, AsyncCallback<String> callback);
 
-	/**
-	 * Requests the last sample from an instrument
-	 * 
-	 * @param port
-	 *            The port associated with the instrument
-	 * @param callback
-	 *            Called with the result of the request
-	 * 
-	 * @return null if the request was successfully submitted. Otherwise an
-	 *         error message
-	 */
-	public String getPortLastSample(String port,
-			AsyncCallback<Map<String, String>> callback);
+    /**
+     * Requests the last sample from an instrument
+     * 
+     * @param port
+     *            The port associated with the instrument
+     * @param callback
+     *            Called with the result of the request
+     * 
+     * @return null if the request was successfully submitted. Otherwise an
+     *         error message
+     */
+    public String getPortLastSample(String port,
+            AsyncCallback<Map<String, String>> callback);
 
-	/**
-	 * Requests the properties of an instrument
-	 * 
-	 * @param port
-	 *            The port associated with the instrument
-	 * @param callback
-	 *            Called with the result of the request
-	 * 
-	 * @return null if the request was successfully submitted. Otherwise an
-	 *         error message
-	 */
-	public String getPortProperties(String port,
-			AsyncCallback<Map<String, String>> callback);
+    /**
+     * Requests the channels associated with an instrument
+     * 
+     * @param port
+     *            The port associated with the instrument
+     * @param callback
+     *            Called with the result of the request
+     * 
+     * @return null if the request was successfully submitted. Otherwise an
+     *         error message
+     */
+    public String getPortChannels(final String port,
+            final AsyncCallback<List<String>> callback);
 
-	/**
-	 * Sets the given properties/
-	 * 
-	 * @param port
-	 *            The port associated with the instrument
-	 * @param params
-	 *            the desired parameter/values
-	 * @param callback
-	 *            Called with the result of the request
-	 * @return null if the request was successfully submitted. Otherwise an
-	 *         error message
-	 * @throws Exception
-	 */
-	public String setPortProperties(String port, Map<String, String> params,
-			AsyncCallback<Map<String, String>> callback);
+    /**
+     * Requests the properties of an instrument
+     * 
+     * @param port
+     *            The port associated with the instrument
+     * @param callback
+     *            Called with the result of the request
+     * 
+     * @return null if the request was successfully submitted. Otherwise an
+     *         error message
+     */
+    public String getPortProperties(String port,
+            AsyncCallback<Map<String, String>> callback);
+
+    /**
+     * Sets the given properties/
+     * 
+     * @param port
+     *            The port associated with the instrument
+     * @param params
+     *            the desired parameter/values
+     * @param callback
+     *            Called with the result of the request
+     * @return null if the request was successfully submitted. Otherwise an
+     *         error message
+     * @throws Exception
+     */
+    public String setPortProperties(String port, Map<String, String> params,
+            AsyncCallback<Map<String, String>> callback);
 
 }

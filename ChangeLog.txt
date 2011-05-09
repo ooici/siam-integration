@@ -2,7 +2,12 @@ SIAM_CI Integration Prototype change log
 Carlos Rueda - MBARI
 
 2011-05-09
-		test_005_get_instrument_params_all ...                                 [OK]
+	- TestSiamInstrumentDriver
+	    test_006_get_instrument_params_subset_good ...                         [OK]
+	    test_007_get_instrument_params_subset_good_and_bad ...                 [OK]
+	    
+	    
+	- SIAM-CI adapter: added get_channels operation
 	
 2011-05-08
 	- Continuing update of SiamInstrumentDriver:

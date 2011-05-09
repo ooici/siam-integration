@@ -136,6 +136,32 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
         
 
     @defer.inlineCallbacks
+    def test_get_channels_async(self):
+        #
+        # @todo: more robust assignment of publish IDs
+        #
+        publish_id = "get_channels;port=" + SiamCiTestCase.port
+        
+        # prepare to receive result:
+        yield self.client.expect(publish_id);
+        
+        # make request:
+        ret = yield self.siamci.get_channels(publish_stream="siamci." + receiver_service_name)
+
+        self.assertIsSuccessFail(ret)
+        self.assertEquals(ret.result, OK)
+        
+        # check that all expected were received
+        expected = yield self.client.getExpected()
+        self.assertEquals(len(expected), 0)
+        
+        # actual response should indicate OK: 
+        response = yield self.client.getAccepted(publish_id)
+        self.assertIsSuccessFail(response)
+        self.assertEquals(response.result, OK)
+        
+
+    @defer.inlineCallbacks
     def test_fetch_params_some_good_async(self):
         #
         # @todo: more robust assignment of publish IDs

@@ -146,6 +146,25 @@ class SiamCiAdapterProxy():
     
     
     @defer.inlineCallbacks
+    def get_channels(self, publish_stream=None):
+        """
+        Gets the names of the channels associated with the instrument identified by the given "port"
+        
+        @param publish_stream:
+        """
+        
+        assert self.port, "No port provided"
+        
+        args = [("port", self.port)]
+        cmd = yield self._make_command("get_channels", args, publish_stream)
+        response = yield self._rpc(cmd)
+        _debug_message(response, "get_channels response:")
+        
+        defer.returnValue(response)
+ 
+     
+     
+    @defer.inlineCallbacks
     def get_status(self, params=None, publish_stream=None):
         """
         Gets the status of a particular instrument as indicated by the given port at creation time.

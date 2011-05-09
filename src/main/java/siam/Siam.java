@@ -5,6 +5,7 @@ import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -21,6 +22,7 @@ import org.mbari.siam.distributed.Node;
 import org.mbari.siam.distributed.NodeInfo;
 import org.mbari.siam.distributed.PortNotFound;
 import org.mbari.siam.distributed.SensorDataPacket;
+import org.mbari.siam.distributed.PacketParser.Field;
 import org.mbari.siam.utils.PrintUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -148,6 +150,26 @@ public class Siam implements ISiam {
 		
 		return result;
     }
+	
+	/**
+	 * @return the names of the channels for the given instrument.
+	 */
+	public List<String> getPortChannels(String portName) throws Exception {
+	    /*
+	     * Strategy: get last sample, parse that sample, and get the fields
+	     * from the parser.
+	     */
+	    Instrument instrument = _getInstrument(portName);
+	    SensorDataPacket sdp = instrument.getLastSample();
+	    Field[] fields = instrument.getParser().parseFields(sdp);
+	    List<String> result = new ArrayList<String>();
+	    for (Field field : fields) {
+	        String name = field.getName();
+	        result.add(name);
+	    }
+	    
+	    return result;
+	}
 	
 	/**
 	 * Adapted from SIAM's PrintInstrumentProperties

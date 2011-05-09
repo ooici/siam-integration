@@ -8,6 +8,7 @@ import net.ooici.siamci.IRequestProcessors;
 import net.ooici.siamci.impl.reqproc.BaseRequestProcessor;
 import net.ooici.siamci.impl.reqproc.EchoRequestProcessor;
 import net.ooici.siamci.impl.reqproc.FetchParamsRequestProcessor;
+import net.ooici.siamci.impl.reqproc.GetChannelsRequestProcessor;
 import net.ooici.siamci.impl.reqproc.GetLastSampleRequestProcessor;
 import net.ooici.siamci.impl.reqproc.GetStatusRequestProcessor;
 import net.ooici.siamci.impl.reqproc.ListPortsRequestProcessor;
@@ -42,8 +43,10 @@ class RequestProcessors implements IRequestProcessors {
 
         list_ports(new ListPortsRequestProcessor()),
 
-        get_status(new GetStatusRequestProcessor()),
+        get_channels(new GetChannelsRequestProcessor()),
 
+        get_status(new GetStatusRequestProcessor()),
+        
         get_last_sample(new GetLastSampleRequestProcessor()),
 
         fetch_params(new FetchParamsRequestProcessor()),

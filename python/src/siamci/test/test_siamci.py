@@ -46,6 +46,12 @@ class TestSiamCiAdapterProxy(SiamCiTestCase):
         self.assertEquals(ret.result, OK)
 
     @defer.inlineCallbacks
+    def test_get_channels(self):
+        ret = yield self.siamci.get_channels()
+        self.assertIsSuccessFail(ret)
+        self.assertEquals(ret.result, OK)
+        
+    @defer.inlineCallbacks
     def test_get_status(self):
         ret = yield self.siamci.get_status()
 
