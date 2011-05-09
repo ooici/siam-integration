@@ -166,7 +166,7 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
     def test_005_get_instrument_params_all(self):
         """
         - connect
-        - get
+        - get with [('instrument','all')]
         - disconnect
         """
         
@@ -177,25 +177,82 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         success = reply['success']
         result = reply['result']      
         self.assert_(InstErrorCode.is_ok(success))  
+
+        # verify all returned params are for 'instrument' and are OK (value doesn't matter)
+        for key in result:
+            ch, pr = key
+            self.assertEqual('instrument', ch)
+            successParam, val = result[key]
+            self.assert_(InstErrorCode.is_ok(successParam))
+        
+#            print blue(pr + "  successParam = " +str(successParam) + "  value = " + str(val))
         
         yield self.__disconnect()
         
         
 
     @defer.inlineCallbacks
-    def _test_fetch_params_all(self):
-        raise unittest.SkipTest('UNDER DEVELOPMENT')
-
-        ret = yield self.driver_client.fetch_params([])
+    def test_006_get_instrument_params_subset_good(self):
+        """
+        - connect
+        - get with [('instrument','startDelayMsec'), ('instrument','diagnosticSampleInterval')]
+        - disconnect
+        """
         
+        yield self.__connect()
+        
+        params = [('instrument','startDelayMsec'), ('instrument','diagnosticSampleInterval')]
+        reply = yield self.driver_client.get(params)
+        success = reply['success']
+        result = reply['result']      
+        self.assert_(InstErrorCode.is_ok(success))  
+        
+        # verify all returned params are for 'instrument' and are OK (value doesn't matter)
+        for key in result:
+            ch, pr = key
+            self.assertEqual('instrument', ch)
+            successParam, val = result[key]
+            self.assert_(InstErrorCode.is_ok(successParam))
+        
+#            print blue(pr + "  successParam = " +str(successParam) + "  value = " + str(val))
 
-
+        yield self.__disconnect()
+        
+        
     @defer.inlineCallbacks
-    def _test_fetch_params_some(self):
-        raise unittest.SkipTest('UNDER DEVELOPMENT')
-        ret = yield self.driver_client.fetch_params(['startDelayMsec', 'wrongParam'])
+    def test_007_get_instrument_params_subset_good_and_bad(self):
+        """
+        - connect
+        - get with [('instrument','startDelayMsec'), ('instrument','INVALID_param')]
+        - disconnect
+        """
+        
+        yield self.__connect()
+        
+        params = [('instrument','startDelayMsec'), ('instrument','INVALID_param')]
+        reply = yield self.driver_client.get(params)
+        success = reply['success']
+        result = reply['result']      
+        self.assert_(InstErrorCode.is_error(success))  
+        
+        #
+        # TODO: Note, the adapter returns a single Error when any of the requested
+        # params is invalid, ie., does not yet provide discriminated errors.
+        # So the result here is None.
+#        successParam, val = result[('instrument','startDelayMsec')]
+#        self.assert_(InstErrorCode.is_ok(successParam))
+#        
+#        successParam, val = result[('instrument','INVALID_param')]
+#        self.assert_(InstErrorCode.is_error(successParam))
+        
+
+        yield self.__disconnect()
         
         
+    @defer.inlineCallbacks
+    def test_008_get_instrument_params_specific_channels(self):
+        raise unittest.SkipTest('Not yet implemented')
+
 
     @defer.inlineCallbacks
     def _test_get_last_sample(self):
