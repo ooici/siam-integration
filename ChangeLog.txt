@@ -1,6 +1,14 @@
 SIAM_CI Integration Prototype change log
 Carlos Rueda - MBARI
 
+2011-05-08
+	- Continuing update of SiamInstrumentDriver:
+	  TestSiamInstrumentDriver
+	    test_001_initialize ...                                                [OK]
+	    test_002_configure ...                                                 [OK]
+	    test_003_connect ...                                                   [OK]
+	    test_004_get_status ...                                                [OK]
+	
 2011-05-06
 	- Continued making adjustments on the python side to use the recent updates to 
 	  instrument agent and instrument driver in ioncore-python. Now with the just

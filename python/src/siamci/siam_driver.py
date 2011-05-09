@@ -633,11 +633,36 @@ class SiamInstrumentDriver(InstrumentDriver):
     def op_get_status(self, content, headers, msg):
         log.debug('In SiamDriver op_get_status')
         
-        response = yield self.siamci.get_status()
-        log.debug("get_status: %s -> %s " % (str(content), str(response)))
+        
+        assert(isinstance(content,dict)), 'Expected dict content.'
+        params = content.get('params',None)
+        """
+        For 'params', how is that a list, eg., [('all','all)], passed from
+        the client gets converted to a tuple here, eg.,  (('all', 'all'),) ?
+        """
+#        self._debug("op_get_status params " +str(params))
+        
+        assert(isinstance(params,(list,tuple))), 'Expected list or tuple params in op_get_status'
+        assert(all(map(lambda x:isinstance(x,tuple),params))), \
+            'Expected tuple elements in params list'
+        
+        # Timeout not implemented for this op.
+        timeout = content.get('timeout',None)
+        if timeout != None:
+            assert(isinstance(timeout,int)), 'Expected integer timeout'
+            assert(timeout>0), 'Expected positive timeout'
+            pass
+        
+        # @todo: Do something with the new possible argument 'timeout'
 
+
+        response = yield self.siamci.get_status(params=params)
+#        self._debug("op_get_status response " +str(response))
         result = response.result
-        yield self.reply_ok(msg, result)
+        reply = {'success':InstErrorCode.OK,'result':result}
+#        self._debug("op_get_status reply " +str(reply))
+
+        yield self.reply_ok(msg, reply)
 
 
     @defer.inlineCallbacks
@@ -747,21 +772,21 @@ class SiamInstrumentDriverClient(InstrumentDriverClient):
         
         defer.returnValue(content)
         
-    @defer.inlineCallbacks
-    def get_status(self, param_dict):
-        """
-        @todo: we override the method in the superclass because that method expects
-        to work with python types (list, tuple)
-        In my current design, we work with the GPBs directly.
-        """
-        
-        log.debug("SiamInstrumentDriverClient get_status " + str(param_dict))
-        (content, headers, message) = yield self.rpc_send('get_status',
-                                                          param_dict)
-        
-        # @todo: conversion to python type 
-        
-        defer.returnValue(content)
+#    @defer.inlineCallbacks
+#    def get_status(self, param_dict):
+#        """
+#        @todo: we override the method in the superclass because that method expects
+#        to work with python types (list, tuple)
+#        In my current design, we work with the GPBs directly.
+#        """
+#        
+#        log.debug("SiamInstrumentDriverClient get_status " + str(param_dict))
+#        (content, headers, message) = yield self.rpc_send('get_status',
+#                                                          param_dict)
+#        
+#        # @todo: conversion to python type 
+#        
+#        defer.returnValue(content)
         
 
 # Spawn of the process using the module name

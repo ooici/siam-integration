@@ -65,7 +65,7 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
 
 
     @defer.inlineCallbacks
-    def _test_001_initialize(self):
+    def test_001_initialize(self):
         
         reply = yield self.driver_client.initialize()
         success = reply['success']
@@ -77,9 +77,9 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         
 
     @defer.inlineCallbacks
-    def _test_002_configure(self):
+    def test_002_configure(self):
 
-        yield self._test_001_initialize()
+        yield self.test_001_initialize()
         
         params = self.driver_config
 
@@ -93,11 +93,11 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         self.assertEqual(result,params)
         self.assertEqual(current_state, SiamDriverState.DISCONNECTED)
 
-      
-    @defer.inlineCallbacks
-    def test_003_connect(self):
 
-        yield self._test_002_configure();
+    @defer.inlineCallbacks
+    def __connect(self):
+
+        yield self.test_002_configure();
         
         # Establish connection to device and verify.
         try:
@@ -112,8 +112,10 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         self.assert_(InstErrorCode.is_ok(success))
         self.assertEqual(result,None)
         self.assertEqual(current_state, SiamDriverState.CONNECTED)
-
         
+        
+    @defer.inlineCallbacks
+    def __disconnect(self):
         # Dissolve the connection to the device.
         reply = yield self.driver_client.disconnect()
         current_state = yield self.driver_client.get_state()
@@ -125,13 +127,40 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         self.assertEqual(current_state, SiamDriverState.DISCONNECTED)
        
         
+      
+    @defer.inlineCallbacks
+    def test_003_connect(self):
+        """
+        - connect
+        - disconnect
+        """
+        
+        yield self.__connect()
+        yield self.__disconnect()
+        
 
 
 
     @defer.inlineCallbacks
-    def _test_get_status(self):
-        raise unittest.SkipTest('UNDER DEVELOPMENT')
-        ret = yield self.driver_client.get_status("dummy arg")
+    def test_004_get_status(self):
+        """
+        - connect
+        - get_status
+        - disconnect
+        """
+        
+        yield self.__connect()
+        
+        # @todo: Only the all-all params is handled; handle other possible params
+        params = [('all','all')]
+        reply = yield self.driver_client.get_status(params)
+        success = reply['success']
+        result = reply['result']      
+        self.assert_(InstErrorCode.is_ok(success))  
+        
+        yield self.__disconnect()
+        
+        
 
     @defer.inlineCallbacks
     def _test_get_last_sample(self):

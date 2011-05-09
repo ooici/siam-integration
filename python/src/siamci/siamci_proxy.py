@@ -16,6 +16,8 @@ from ion.core.messaging import message_client
 
 from ion.core import bootstrap
 
+from siamci.util.tcolor import red, blue
+
 from net.ooici.play.instr_driver_interface_pb2 import Command, SuccessFail, OK, ERROR
 
 Command_type = object_utils.create_type_identifier(object_id=20034, version=1)
@@ -88,6 +90,8 @@ class SiamCiAdapterProxy():
 
         if args is None: args = [] 
         
+        assert(isinstance(args,list))
+        
         cmd = yield self.mc.create_instance(Command_type, MessageName='command sent message')
         cmd.command = cmd_name
         for (c,p) in args:
@@ -142,9 +146,11 @@ class SiamCiAdapterProxy():
     
     
     @defer.inlineCallbacks
-    def get_status(self, publish_stream=None):
+    def get_status(self, params=None, publish_stream=None):
         """
         Gets the status of a particular instrument as indicated by the given port at creation time.
+        
+        @param params: parameters
         
         @param publish_stream: If not None, the result of the command will be published to this
                   queue (routing queue). Otherwise, the result will be returned by this method.
@@ -154,12 +160,26 @@ class SiamCiAdapterProxy():
                  the actual result to be published in the given stream.
         """
         assert self.port, "No port provided"
-        cmd = yield self._make_command("get_status", [("port", self.port)], publish_stream)
+        
+        
+        if params is None: params = []
+        assert(isinstance(params,(list,tuple))), 'Expected list or tuple params in get_status (SiamCiProxy).'
+        assert(all(map(lambda x:isinstance(x,tuple),params))), \
+            'Expected tuple elements in params list'
+            
+        args = [("port", self.port)]
+        # extend args with the elements in params (note that params can be a list or a tuple)
+        for p in params:
+            args.extend([p])
+            
+        cmd = yield self._make_command("get_status", args, publish_stream)
         response = yield self._rpc(cmd)
         _debug_message(response, "get_status response:")
         
         defer.returnValue(response)
         
+
+
     @defer.inlineCallbacks
     def get_last_sample(self, publish_stream=None):
         """
@@ -259,25 +279,7 @@ class SiamCiAdapterProxy():
         defer.returnValue(response)
         
         
-    @defer.inlineCallbacks
-    def execute_StartAcquisition(self, channel, publish_stream):
-        """
-        Sends a execute_StartAcquisition command.
-        @todo: very preliminary
-        """
 
-        assert(channel is not None)
-        assert(publish_stream is not None)
-        
-        log.debug("execute_StartAcquisition: channel='%s' publish_stream='%s'" % (str(channel), str(publish_stream)))
-        
-        args = [("port", self.port), ("channel", channel)]
-             
-        cmd = yield self._make_command("execute_StartAcquisition", args, publish_stream)
-        response = yield self._rpc(cmd)
-        _debug_message(response, "execute_StartAcquisition response:")
-        
-        defer.returnValue(response)
         
         
 
