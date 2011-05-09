@@ -161,22 +161,46 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         yield self.__disconnect()
         
         
+        
+    @defer.inlineCallbacks
+    def test_005_get_instrument_params_all(self):
+        """
+        - connect
+        - get
+        - disconnect
+        """
+        
+        yield self.__connect()
+        
+        params = [('instrument','all')]
+        reply = yield self.driver_client.get(params)
+        success = reply['success']
+        result = reply['result']      
+        self.assert_(InstErrorCode.is_ok(success))  
+        
+        yield self.__disconnect()
+        
+        
 
     @defer.inlineCallbacks
-    def _test_get_last_sample(self):
+    def _test_fetch_params_all(self):
         raise unittest.SkipTest('UNDER DEVELOPMENT')
-        ret = yield self.driver_client.get_last_sample()
+
+        ret = yield self.driver_client.fetch_params([])
+        
+
 
     @defer.inlineCallbacks
     def _test_fetch_params_some(self):
         raise unittest.SkipTest('UNDER DEVELOPMENT')
         ret = yield self.driver_client.fetch_params(['startDelayMsec', 'wrongParam'])
         
-    @defer.inlineCallbacks
-    def _test_fetch_params_all(self):
-        raise unittest.SkipTest('UNDER DEVELOPMENT')
-        ret = yield self.driver_client.fetch_params([])
         
+
+    @defer.inlineCallbacks
+    def _test_get_last_sample(self):
+        raise unittest.SkipTest('UNDER DEVELOPMENT')
+        ret = yield self.driver_client.get_last_sample()
 
 
     @defer.inlineCallbacks

@@ -675,12 +675,61 @@ class SiamInstrumentDriver(InstrumentDriver):
 
 
     @defer.inlineCallbacks
-    def op_fetch_params(self, content, headers, msg):
-        log.debug('In SiamDriver op_fetch_params')
+    def op_get(self, content, headers, msg):
         
-        response = yield self.siamci.fetch_params(content)
-        log.debug('In SiamDriver op_fetch_params --> ' + str(response))    
-        yield self.reply_ok(msg, response)
+        assert(isinstance(content,dict)),'Expected dict content.'
+        params = content.get('params',None)
+        assert(isinstance(params,(list,tuple))),'Expected list or tuple params.'
+
+        # Timeout not implemented for this op.
+        timeout = content.get('timeout',None)
+        if timeout != None:
+            assert(isinstance(timeout,int)), 'Expected integer timeout'
+            assert(timeout>0), 'Expected positive timeout'
+            pass
+        
+        # publish_stream
+        publish_stream = content.get('publish_stream',None)
+        
+        log.debug('In SiamDriver op_get: params = ' +str(params)+ "  publish_stream=" +str(publish_stream))
+        
+        if publish_stream is None: 
+            successFail = yield self.siamci.fetch_params(params)
+        else:
+            successFail = yield self.siamci.fetch_params(params, publish_stream=publish_stream)
+            
+        log.debug('In SiamDriver op_get successFail --> ' + str(successFail))
+        
+        # initialize reply assuming OK
+        reply = {'success':InstErrorCode.OK, 'result':None}
+        
+        if successFail.result != OK:
+            reply['success'] = InstErrorCode.GET_DEVICE_ERR
+            yield self.reply_ok(msg,reply)
+            return
+                
+        result = {}
+        for it in successFail.item:
+            log.debug('In SiamDriver op_get item --> ' + str(it))
+            chName = it.pair.first
+            value = it.pair.second
+            key = ('instrument', chName)
+            result[key] = (InstErrorCode.OK, value)
+            
+            
+        log.debug('In SiamDriver op_get result --> ' + str(result))
+
+        reply['result'] = result
+        
+        yield self.reply_ok(msg,reply)        
+        
+        
+        
+      
+      
+      
+        
+        
 
     @defer.inlineCallbacks
     def op_set_params(self, content, headers, msg):
@@ -741,22 +790,6 @@ class SiamInstrumentDriverClient(InstrumentDriverClient):
         
         
     @defer.inlineCallbacks
-    def fetch_params(self, param_list):
-        """
-        @todo: we override the method in the superclass because that method expects the
-        resulting content to be a dict: assert(isinstance(content, dict))
-        In my current design, we work with the GPBs directly.
-        """
-                
-        log.debug("SiamInstrumentDriverClient fetch_params " + str(param_list))
-        (content, headers, message) = yield self.rpc_send('fetch_params',
-                                                          param_list)
-        
-        # @todo: conversion to python type 
-        
-        defer.returnValue(content)
-
-    @defer.inlineCallbacks
     def set_params(self, param_dict):
         """
         @todo: we override the method in the superclass because that method expects the
@@ -772,21 +805,6 @@ class SiamInstrumentDriverClient(InstrumentDriverClient):
         
         defer.returnValue(content)
         
-#    @defer.inlineCallbacks
-#    def get_status(self, param_dict):
-#        """
-#        @todo: we override the method in the superclass because that method expects
-#        to work with python types (list, tuple)
-#        In my current design, we work with the GPBs directly.
-#        """
-#        
-#        log.debug("SiamInstrumentDriverClient get_status " + str(param_dict))
-#        (content, headers, message) = yield self.rpc_send('get_status',
-#                                                          param_dict)
-#        
-#        # @todo: conversion to python type 
-#        
-#        defer.returnValue(content)
         
 
 # Spawn of the process using the module name

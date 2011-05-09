@@ -206,8 +206,7 @@ class SiamCiAdapterProxy():
         args = [("port", self.port)]
         for it in param_list:
             if isinstance(it, tuple):
-                c, p = it
-                args.extend( [ (c, p) ])
+                args.extend([it])
             else:
                 assert not isinstance(it, (list, dict))
                 

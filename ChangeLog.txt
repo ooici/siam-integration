@@ -1,6 +1,9 @@
 SIAM_CI Integration Prototype change log
 Carlos Rueda - MBARI
 
+2011-05-09
+		test_005_get_instrument_params_all ...                                 [OK]
+	
 2011-05-08
 	- Continuing update of SiamInstrumentDriver:
 	  TestSiamInstrumentDriver
