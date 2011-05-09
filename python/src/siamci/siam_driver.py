@@ -777,14 +777,16 @@ class SiamInstrumentDriver(InstrumentDriver):
         #
         
         if len(channels) == 0 or len(channels) == 1 and SiamDriverChannel.INSTRUMENT == channels[0]:
-            # ok, this means all channels
+            # ok, this means all channels for various operations.
             pass
         else:
             # verify the explicit requested channels are valid
             for chan in channels:
                 if SiamDriverChannel.INSTRUMENT == chan:
                     reply['success'] = InstErrorCode.INVALID_CHANNEL
-                    reply['result'] = "Can only use 'instrument' for a singleton channels list"
+                    reply['result'] = "Can only use '" + \
+                            str(SiamDriverChannel.INSTRUMENT) + \
+                            "' for a singleton channels list"
                     yield self.reply_ok(msg,reply)
                     return
                     
@@ -796,8 +798,11 @@ class SiamInstrumentDriver(InstrumentDriver):
 
         drv_cmd = command[0]
       
+        #############################
+        # dispatch the given command:
+        #############################
         
-        # get channels
+        # GET_CHANNELS ##############################################
         if drv_cmd == SiamDriverCommand.GET_CHANNELS:
             #
             # we already have them from the general preparation above
@@ -807,14 +812,30 @@ class SiamInstrumentDriver(InstrumentDriver):
             yield self.reply_ok(msg,reply)
             return
         
-        # get last sample
+        # GET_LAST_SAMPLE ##############################################
         if drv_cmd == SiamDriverCommand.GET_LAST_SAMPLE:
             yield self.__get_last_sample(channels, reply)
             yield self.reply_ok(msg,reply)
             return
         
+        # START_AUTO_SAMPLING ##############################################
+        if drv_cmd == SiamDriverCommand.START_AUTO_SAMPLING:
+            # publish_stream is required.
+            publish_stream = content.get('publish_stream', None)
+            if publish_stream is None:
+                reply['success'] = InstErrorCode.REQUIRED_PARAMETER
+                reply['result'] = "publish_stream is required for this operation"
+                yield self.reply_ok(msg,reply)
+                return
+                
+            yield self.__start_sampling(channels, publish_stream, reply)
+            yield self.reply_ok(msg,reply)
+            return
+
+        
         #
         # Else: INVALID_COMMAND
+        #
         reply['success'] = InstErrorCode.INVALID_COMMAND
         yield self.reply_ok(msg,reply)
         return
@@ -845,6 +866,45 @@ class SiamInstrumentDriver(InstrumentDriver):
         reply['result'] = result
         
       
+    @defer.inlineCallbacks
+    def __start_sampling(self, channels, publish_stream, reply):
+        log.debug('In SiamDriver __start_sampling channels = ' +str(channels))
+        
+        assert(publish_stream is not None, "publish_stream is required")
+        
+        # the actual channel we will be starting sampling on
+        channel = None
+        
+        if len(channels) != 1:
+            reply['success'] = InstErrorCode.INVALID_CHANNEL
+            reply['result'] = "Can only be one channel for the START_AUTO_SAMPLING operations"
+            return
+                
+        channel = channels[0]
+        if SiamDriverChannel.INSTRUMENT == channel:
+            reply['success'] = InstErrorCode.INVALID_CHANNEL
+            reply['result'] = "Has to be a specific channel, not '" + \
+                    str(SiamDriverChannel.INSTRUMENT)
+            yield self.reply_ok(msg,reply)
+            return
+        
+        
+        
+        response = yield self.execute_StartAcquisition(channel, publish_stream)
+        log.debug('In SiamDriver __start_sampling --> ' + str(response))  
+        
+        if response.result != OK:
+            reply['success'] = InstErrorCode.ERROR
+            yield self.reply_ok(msg, reply)
+            return
+        
+        reply['success'] = InstErrorCode.OK
+        reply['result'] = None
+        
+
+        #
+        # TODO complete handling of data acquisition
+        #
       
       
        

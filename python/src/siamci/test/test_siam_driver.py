@@ -300,7 +300,7 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         success = reply['success']
         result = reply['result']
         
-        log.debug("test_009_get_last_sample result =" +str(result))
+        log.debug("test_010_get_last_sample result =" +str(result))
         
         self.assert_(InstErrorCode.is_ok(success))
         
@@ -314,6 +314,44 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         current_state = yield self.driver_client.get_state()
         self.assertEqual(current_state, SiamDriverState.CONNECTED)
         
+
+        yield self.__disconnect()
+        
+        
+
+    @defer.inlineCallbacks
+    def test_011_acquisition(self):
+        
+        # TODO How to pass publish_stream? or more in general, how to
+        # handle publication of data?
+        raise unittest.SkipTest('UNDER DEVELOPMENT')
+    
+        """
+        - connect
+        - execute with SiamDriverChannel.INSTRUMENT and SiamDriverCommand.START_AUTO_SAMPLING
+        - wait for a few seconds
+        - execute with SiamDriverChannel.INSTRUMENT and SiamDriverCommand.STOP_AUTO_SAMPLING
+        - disconnect
+        """
+        
+        yield self.__connect()
+        
+        channels = [SiamDriverChannel.INSTRUMENT]
+        command = [SiamDriverCommand.START_AUTO_SAMPLING]
+        timeout = 20
+        reply = yield self.driver_client.execute(channels,command,timeout)
+            
+        success = reply['success']
+        result = reply['result']
+        
+        print red("test_011_acquisition result =" +str(result))
+        
+        self.assert_(InstErrorCode.is_ok(success))
+        
+        assert(isinstance(result, dict))    
+        
+
+        # TODO: remaining operations
 
         yield self.__disconnect()
         

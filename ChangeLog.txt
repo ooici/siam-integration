@@ -3,6 +3,7 @@ Carlos Rueda - MBARI
 
 2011-05-09
 	- More adjustments for aligning with InstrumentDriver
+	- alignment of data acquisition via the InstrumentDriver?
 	    
 	    
 	- SIAM-CI adapter: added get_channels operation
