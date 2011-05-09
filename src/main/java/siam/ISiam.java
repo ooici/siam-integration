@@ -24,7 +24,7 @@ public interface ISiam {
 	
 	public String getPortStatus(String port) throws Exception;
 	
-	public Map<String,String> getPortLastSample(String port) throws Exception;
+	public InstrumentSample getPortLastSample(String port) throws Exception;
 	
     /**
      * @return the names of the channels for the given instrument.

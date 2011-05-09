@@ -8,6 +8,7 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import siam.InstrumentSample.SampleDatum;
 import siamcitest.BaseTestCase;
 import siamcitest.ScTestUtils;
 
@@ -165,11 +166,27 @@ public class SiamTestCase extends BaseTestCase {
     @Test
     public void testGetPortLastSample() throws Exception {
         _skipIfNotInstrument();
-        Map<String, String> sample = siam.getPortLastSample(siamInstrumentPort);
+        InstrumentSample sample = siam.getPortLastSample(siamInstrumentPort);
         Assert.assertNotNull(sample);
-        Assert.assertTrue(sample.containsKey("parentId"),
+        Map<String, String> md = sample.getMd();
+        Assert.assertTrue(md.containsKey("parentId"),
                 "sample.containsKey parentId");
 
+//        System.out.println(ScTestUtils.TC.yellow("\n md = " + md));
+        for (SampleDatum datum : sample.getData()) {
+            String name = datum.getName();
+            String value = String.valueOf(datum.getValue());
+            String units = datum.getUnits();
+
+//            System.out.println(ScTestUtils.TC.yellow(String.format("\ndatum: '%s' = %s (%s)",
+//                    name,
+//                    value,
+//                    units)));
+
+            Assert.assertNotNull(name);
+            Assert.assertNotNull(value);
+            Assert.assertNotNull(units);
+        }
     }
 
     /**
@@ -183,7 +200,7 @@ public class SiamTestCase extends BaseTestCase {
         List<String> channels = siam.getPortChannels(siamInstrumentPort);
         Assert.assertNotNull(channels);
         Assert.assertTrue(channels.size() > 0, "channels list not empty");
-//        System.out.println(" channels = " +channels);
+        // System.out.println(" channels = " +channels);
 
     }
 

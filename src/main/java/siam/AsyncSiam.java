@@ -102,7 +102,7 @@ public class AsyncSiam implements IAsyncSiam {
     }
 
     public String getPortLastSample(final String port,
-            final AsyncCallback<Map<String, String>> callback) {
+            final AsyncCallback<InstrumentSample> callback) {
 
         if (callback == null) {
             throw new IllegalArgumentException();
@@ -115,7 +115,7 @@ public class AsyncSiam implements IAsyncSiam {
         es.submit(new Runnable() {
             public void run() {
                 try {
-                    Map<String, String> result = siam.getPortLastSample(port);
+                    InstrumentSample result = siam.getPortLastSample(port);
                     if (log.isTraceEnabled()) {
                         log.trace("To call callback with port last sample. port="
                                 + port + "  result=" + result);

@@ -59,7 +59,7 @@ public interface IAsyncSiam {
      *         error message
      */
     public String getPortLastSample(String port,
-            AsyncCallback<Map<String, String>> callback);
+            AsyncCallback<InstrumentSample> callback);
 
     /**
      * Requests the channels associated with an instrument

@@ -185,7 +185,6 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
             successParam, val = result[key]
             self.assert_(InstErrorCode.is_ok(successParam))
         
-#            print blue(pr + "  successParam = " +str(successParam) + "  value = " + str(val))
         
         yield self.__disconnect()
         
@@ -214,7 +213,6 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
             successParam, val = result[key]
             self.assert_(InstErrorCode.is_ok(successParam))
         
-#            print blue(pr + "  successParam = " +str(successParam) + "  value = " + str(val))
 
         yield self.__disconnect()
         
@@ -255,9 +253,71 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
 
 
     @defer.inlineCallbacks
-    def _test_get_last_sample(self):
-        raise unittest.SkipTest('UNDER DEVELOPMENT')
-        ret = yield self.driver_client.get_last_sample()
+    def test_009_get_channels(self):
+        """
+        - connect
+        - execute with SiamDriverChannel.INSTRUMENT and SiamDriverCommand.GET_CHANNELS
+        - disconnect
+        """
+        
+        yield self.__connect()
+        
+        channels = [SiamDriverChannel.INSTRUMENT]
+        command = [SiamDriverCommand.GET_CHANNELS]
+        timeout = 10
+        reply = yield self.driver_client.execute(channels,command,timeout)
+            
+        success = reply['success']
+        result = reply['result']
+        
+        log.debug("test_009_get_channels result =" +str(result))
+        
+        self.assert_(InstErrorCode.is_ok(success))
+        
+        assert(isinstance(result, (tuple,list)))    
+        
+        current_state = yield self.driver_client.get_state()
+        self.assertEqual(current_state, SiamDriverState.CONNECTED)
+        
+
+        yield self.__disconnect()
+        
+    @defer.inlineCallbacks
+    def test_010_get_last_sample(self):
+        """
+        - connect
+        - execute with SiamDriverChannel.INSTRUMENT and SiamDriverCommand.GET_LAST_SAMPLE
+        - disconnect
+        """
+        
+        yield self.__connect()
+        
+        channels = [SiamDriverChannel.INSTRUMENT]
+        command = [SiamDriverCommand.GET_LAST_SAMPLE]
+        timeout = 10
+        reply = yield self.driver_client.execute(channels,command,timeout)
+            
+        success = reply['success']
+        result = reply['result']
+        
+        log.debug("test_009_get_last_sample result =" +str(result))
+        
+        self.assert_(InstErrorCode.is_ok(success))
+        
+        assert(isinstance(result, dict))    
+        
+        # NOTE: the following specific channels are for the TEstInstrument used
+        # during development (which cannot be asserted in a general setting, of course) 
+#        self.assert_('sequenceNumber' in result)
+#        self.assert_('val' in result)
+        
+        current_state = yield self.driver_client.get_state()
+        self.assertEqual(current_state, SiamDriverState.CONNECTED)
+        
+
+        yield self.__disconnect()
+        
+        
 
 
     @defer.inlineCallbacks

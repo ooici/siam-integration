@@ -56,6 +56,7 @@ class SiamDriverCommand(DriverCommand):
     """
     Add siam driver specific commands here.
     """
+    GET_CHANNELS = 'DRIVER_CMD_GET_CHANNELS'
     GET_LAST_SAMPLE = 'DRIVER_CMD_GET_LAST_SAMPLE'
 
 
@@ -177,7 +178,6 @@ class SiamInstrumentDriver(InstrumentDriver):
 
         success = InstErrorCode.OK
         next_state = None
-        self._debug_print(event)
         
         if event == SiamDriverEvent.ENTER:
             
@@ -221,7 +221,6 @@ class SiamInstrumentDriver(InstrumentDriver):
 
         success = InstErrorCode.OK
         next_state = None
-        self._debug_print(event)
         
         if event == SiamDriverEvent.ENTER:
             
@@ -274,7 +273,6 @@ class SiamInstrumentDriver(InstrumentDriver):
         
         success = InstErrorCode.OK
         next_state = None
-        self._debug_print(event)
         
         if event == SiamDriverEvent.ENTER:
             
@@ -319,7 +317,6 @@ class SiamInstrumentDriver(InstrumentDriver):
         
         success = InstErrorCode.OK
         next_state = None
-        self._debug_print(event)
 
         if event == SiamDriverEvent.ENTER:
             
@@ -386,7 +383,6 @@ class SiamInstrumentDriver(InstrumentDriver):
         
         success = InstErrorCode.OK
         next_state = None
-        self._debug_print(event)
             
         if event == SiamDriverEvent.ENTER:
             
@@ -716,18 +712,6 @@ class SiamInstrumentDriver(InstrumentDriver):
         yield self.reply_ok(msg,reply)        
         
         
-        
-      
-    @defer.inlineCallbacks
-    def op_get_last_sample(self, content, headers, msg):
-        log.debug('In SiamDriver op_get_last_sample')
-        
-        response = yield self.siamci.get_last_sample()
-        log.debug('In SiamDriver op_get_last_sample --> ' + str(response))    
-        yield self.reply_ok(msg, response)
-
-      
-      
       
     @defer.inlineCallbacks
     def op_execute(self, content, headers, msg):
@@ -779,18 +763,92 @@ class SiamInstrumentDriver(InstrumentDriver):
             yield self.reply_ok(msg,reply)
             return
         
-        instrument_channels = self.siamci.get_channels()
+        # get the actual instrument channels:
+        successFail = yield self.siamci.get_channels()
+        if successFail.result != OK:
+            reply['success'] = InstErrorCode.ERROR
+            reply['result'] = "Error retrieving channels"
+            yield self.reply_ok(msg,reply)
+            return
+        instrument_channels = [it.str for it in successFail.item]
         
-        for chan in channels:
-            if not chan in instrument_channels:
-                reply['success'] = InstErrorCode.UNKNOWN_CHANNEL
-                reply['result'] = "instrument does not have channel named '" +str(chan)+ "'"
-                yield self.reply_ok(msg,reply)
-                return
+        #
+        # NOTE: special channel name SiamDriverChannel.INSTRUMENT only accepted in a singleton channels list.
+        #
+        
+        if len(channels) == 0 or len(channels) == 1 and SiamDriverChannel.INSTRUMENT == channels[0]:
+            # ok, this means all channels
+            pass
+        else:
+            # verify the explicit requested channels are valid
+            for chan in channels:
+                if SiamDriverChannel.INSTRUMENT == chan:
+                    reply['success'] = InstErrorCode.INVALID_CHANNEL
+                    reply['result'] = "Can only use 'instrument' for a singleton channels list"
+                    yield self.reply_ok(msg,reply)
+                    return
+                    
+                if not chan in instrument_channels:
+                    reply['success'] = InstErrorCode.UNKNOWN_CHANNEL
+                    reply['result'] = "instrument does not have channel named '" +str(chan)+ "'"
+                    yield self.reply_ok(msg,reply)
+                    return
 
         drv_cmd = command[0]
       
         
+        # get channels
+        if drv_cmd == SiamDriverCommand.GET_CHANNELS:
+            #
+            # we already have them from the general preparation above
+            #
+            reply['success'] = InstErrorCode.OK
+            reply['result'] = instrument_channels
+            yield self.reply_ok(msg,reply)
+            return
+        
+        # get last sample
+        if drv_cmd == SiamDriverCommand.GET_LAST_SAMPLE:
+            yield self.__get_last_sample(channels, reply)
+            yield self.reply_ok(msg,reply)
+            return
+        
+        #
+        # Else: INVALID_COMMAND
+        reply['success'] = InstErrorCode.INVALID_COMMAND
+        yield self.reply_ok(msg,reply)
+        return
+        
+       
+       
+      
+      
+    @defer.inlineCallbacks
+    def __get_last_sample(self, channels, reply):
+        log.debug('In SiamDriver __get_last_sample')
+        
+        response = yield self.siamci.get_last_sample()
+        log.debug('In SiamDriver __get_last_sample --> ' + str(response))  
+        
+        if response.result != OK:
+            reply['success'] = InstErrorCode.ERROR
+            yield self.reply_ok(msg, reply)
+            return
+        
+        result = {}
+        for it in response.item:
+            ch = it.pair.first
+            val = it.pair.second
+            result[ch] = val
+            
+        reply['success'] = InstErrorCode.OK
+        reply['result'] = result
+        
+      
+      
+      
+       
+       
         
 
     @defer.inlineCallbacks
@@ -802,19 +860,6 @@ class SiamInstrumentDriver(InstrumentDriver):
         yield self.reply_ok(msg, response)
 
 
-    def _debug_print(self,event,data=None):
-        """
-        Dump state and event status to stdio.
-        """
-        pass
-#        if DEBUG_PRINT:
-#            print self.fsm.current_state + '  ' + event
-#            if isinstance(data,dict):
-#                for (key,val) in data.iteritems():
-#                    print str(key), '  ', str(val)
-#            elif data != None:
-#                print data
-
 
     def _debug(self, msg):
         print(blue(msg))
@@ -823,34 +868,19 @@ class SiamInstrumentDriver(InstrumentDriver):
 
 class SiamInstrumentDriverClient(InstrumentDriverClient):
     """
-    Instrument driver interface to a SIAM enabled instrument.
-    Operations are supported by the core class SiamCiAdapterProxy.
+    The client class for the instrument driver. This is the client that the
+    instrument agent can use for communicating with the driver.
+    """
     
-    @todo: do translation of GPBs to the native python structures proposed by the 
-           Instrument Driver Interface page. At this point, I'm focusing my attention on
-           the core needed functionality and using the GPBs directly.
-           NOTE: The translation may probably be done only in SiamInstrumentDriverClient
-           and no necessarily in SiamInstrumentDriver. 
-    
-    @todo: NOT all operations are instrument-specific; there are some that are associated
-           with the SIAM node in general, for example, to retrieve all the instruments that
-           are deployed on that node.  The TODO is about separating this more generic 
-           functionality and use relevant ION mechanisms (eg., resource registries) for
-           those purposes.
+    """
+    In this case, this is the driver interface to a SIAM enabled instrument.
+    Operations are mainly supported by the SiamCiAdapterProxy class.
     """
     
 
-    @defer.inlineCallbacks
-    def get_last_sample(self):
-        log.debug("SiamInstrumentDriverClient get_last_sample ...")
-        # 'dummy': an arg required by rpc_send
-        (content, headers, message) = yield self.rpc_send('get_last_sample', 'dummy')
-        
-        # @todo: conversion to python type 
-        
-        defer.returnValue(content)
-        
-        
+    """
+    @TODO: Remove this set_params once the 'get' operation is completed        
+    """        
     @defer.inlineCallbacks
     def set_params(self, param_dict):
         """
