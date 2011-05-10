@@ -835,6 +835,12 @@ class SiamInstrumentDriver(InstrumentDriver):
             yield self.reply_ok(msg,reply)
             return
 
+        # STOP_AUTO_SAMPLING ##############################################
+        if drv_cmd == SiamDriverCommand.STOP_AUTO_SAMPLING:
+            yield self.__stop_sampling(channels, reply)
+            yield self.reply_ok(msg,reply)
+            return
+
         
         #
         # Else: INVALID_COMMAND
@@ -902,10 +908,49 @@ class SiamInstrumentDriver(InstrumentDriver):
                     str(SiamDriverChannel.INSTRUMENT)
             return
         
-        
-        
         response = yield self.siamci.execute_StartAcquisition(channel, self.publish_stream)
         log.debug('In SiamDriver __start_sampling --> ' + str(response))  
+        
+        if response.result != OK:
+            reply['success'] = InstErrorCode.ERROR
+            return
+        
+        reply['success'] = InstErrorCode.OK
+        reply['result'] = {'channel':channel, 'publish_stream':self.publish_stream }
+        
+        
+        
+      
+    @defer.inlineCallbacks
+    def __stop_sampling(self, channels, reply):
+        """
+
+        """
+        
+        log.debug('In SiamDriver __stop_sampling channels = ' +str(channels) + \
+                  " publish_stream = " + str(self.publish_stream))
+        
+        # publish_stream is required.
+        if self.publish_stream is None:
+            reply['success'] = InstErrorCode.ERROR
+            reply['result'] = "publish_stream is required for this operation"
+            return
+        
+        if len(channels) != 1:
+            reply['success'] = InstErrorCode.INVALID_CHANNEL
+            reply['result'] = "Can only be one channel for the START_AUTO_SAMPLING operation"
+            return
+                
+        # the actual channel we will be sampling on
+        channel = channels[0]
+        if SiamDriverChannel.INSTRUMENT == channel:
+            reply['success'] = InstErrorCode.INVALID_CHANNEL
+            reply['result'] = "Has to be a specific channel, not '" + \
+                    str(SiamDriverChannel.INSTRUMENT)
+            return
+        
+        response = yield self.siamci.execute_StopAcquisition(channel, self.publish_stream)
+        log.debug('In SiamDriver __stop_sampling --> ' + str(response))  
         
         if response.result != OK:
             reply['success'] = InstErrorCode.ERROR

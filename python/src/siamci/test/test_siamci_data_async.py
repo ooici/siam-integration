@@ -73,7 +73,7 @@ class TestSiamCiAdapterProxyDataAsync(SiamCiTestCase):
 
     @defer.inlineCallbacks
     def test_execute_StartAndStopAcquisition_async(self):
-        raise unittest.SkipTest('Not implemented yet')
+        raise unittest.SkipTest('Likely to be removed here -- see test_siam_driver')
 
         # TODO
         # this will startAcquisition, wait for a few samples, then

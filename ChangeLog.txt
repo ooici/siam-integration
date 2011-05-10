@@ -4,7 +4,7 @@ Carlos Rueda - MBARI
 2011-05-09
 	- More adjustments for aligning with InstrumentDriver
 	- alignment of data acquisition via the InstrumentDriver
-		- start sampling done (with our receiver service in liue of InstrumentAgent)
+		test_011_acquisition_start_wait_stop ...                               [OK]
 	    
 	    
 	- SIAM-CI adapter: added get_channels operation
