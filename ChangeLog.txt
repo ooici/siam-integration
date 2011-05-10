@@ -1,6 +1,9 @@
 SIAM_CI Integration Prototype change log
 Carlos Rueda - MBARI
 
+2011-05-10
+	- Using ioncore-python 0.4.11
+	
 2011-05-09
 	- SIAM-CI adapter: added get_channels operation
 	
