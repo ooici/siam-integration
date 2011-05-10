@@ -840,7 +840,8 @@ class SiamInstrumentDriver(InstrumentDriver):
         # get the actual instrument channels:
         successFail = yield self.siamci.get_channels()
         if successFail.result != OK:
-            reply['success'] = InstErrorCode.ERROR
+            # TODO: some more appropriate error code
+            reply['success'] = InstErrorCode.UNKNOWN_ERROR
             reply['result'] = "Error retrieving channels"
             yield self.reply_ok(msg,reply)
             return
@@ -924,7 +925,8 @@ class SiamInstrumentDriver(InstrumentDriver):
         log.debug('In SiamDriver __get_last_sample --> ' + str(response))  
         
         if response.result != OK:
-            reply['success'] = InstErrorCode.ERROR
+            # TODO: some more appropriate error code
+            reply['success'] = InstErrorCode.UNKNOWN_ERROR
             yield self.reply_ok(msg, reply)
             return
         
@@ -954,7 +956,8 @@ class SiamInstrumentDriver(InstrumentDriver):
         
         # publish_stream is required.
         if self.publish_stream is None:
-            reply['success'] = InstErrorCode.ERROR
+            # TODO: some more appropriate error code
+            reply['success'] = InstErrorCode.UNKNOWN_ERROR
             reply['result'] = "publish_stream is required for this operation"
             return
         
@@ -975,7 +978,9 @@ class SiamInstrumentDriver(InstrumentDriver):
         log.debug('In SiamDriver __start_sampling --> ' + str(response))  
         
         if response.result != OK:
-            reply['success'] = InstErrorCode.ERROR
+            log.warning("execute_StartAcquisition failed: " +str(response))
+            # TODO: some more appropriate error code
+            reply['success'] = InstErrorCode.UNKNOWN_ERROR
             return
         
         reply['success'] = InstErrorCode.OK
@@ -995,8 +1000,8 @@ class SiamInstrumentDriver(InstrumentDriver):
         
         # publish_stream is required.
         if self.publish_stream is None:
-            reply['success'] = InstErrorCode.ERROR
-            reply['result'] = "publish_stream is required for this operation"
+            reply['success'] = InstErrorCode.REQUIRED_PARAMETER
+            reply['result'] = "publish_stream is required for this operation; use set_publish_stream operation"
             return
         
         if len(channels) != 1:
@@ -1016,7 +1021,8 @@ class SiamInstrumentDriver(InstrumentDriver):
         log.debug('In SiamDriver __stop_sampling --> ' + str(response))  
         
         if response.result != OK:
-            reply['success'] = InstErrorCode.ERROR
+            # TODO: some more appropriate error code
+            reply['success'] = InstErrorCode.UNKNOWN_ERROR
             return
         
         reply['success'] = InstErrorCode.OK

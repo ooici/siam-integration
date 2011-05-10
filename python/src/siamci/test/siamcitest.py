@@ -118,7 +118,9 @@ class SiamCiTestCase(IonTestCase):
         
         @return: A new instance of SiamCiReceiverServiceClient associated
                  with the service.
+        """
         
+        """
         @note: the given name is also passed in the 'spawnargs' 
         (ie., ``'spawnargs':{ 'servicename':receiver_service_name }'' 
         to properly name the service; if not included, the default name in 
