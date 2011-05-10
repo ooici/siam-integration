@@ -135,6 +135,12 @@ class SiamInstrumentDriver(InstrumentDriver):
         self.siamci = None
 
 
+        """
+        Used in certain operations to enable handling of notifications from the
+        SIAM-CI adapter service in lieu of IntrumentAgent
+        """
+        self.publish_stream = None
+
 
         """
         Instrument state handlers
@@ -676,15 +682,13 @@ class SiamInstrumentDriver(InstrumentDriver):
             assert(timeout>0), 'Expected positive timeout'
             pass
         
-        # publish_stream
-        publish_stream = content.get('publish_stream',None)
         
-        log.debug('In SiamDriver op_get: params = ' +str(params)+ "  publish_stream=" +str(publish_stream))
+        log.debug('In SiamDriver op_get: params = ' +str(params)+ "  publish_stream=" +str(self.publish_stream))
         
-        if publish_stream is None: 
+        if self.publish_stream is None: 
             successFail = yield self.siamci.fetch_params(params)
         else:
-            successFail = yield self.siamci.fetch_params(params, publish_stream=publish_stream)
+            successFail = yield self.siamci.fetch_params(params, publish_stream=self.publish_stream)
             
         log.debug('In SiamDriver op_get successFail --> ' + str(successFail))
         
@@ -713,6 +717,13 @@ class SiamInstrumentDriver(InstrumentDriver):
         
         
       
+    @defer.inlineCallbacks
+    def op_set_publish_stream(self, content, headers, msg):
+        self.publish_stream = content.get('publish_stream', None)
+        reply = {'success':InstErrorCode.OK, 'result':self.publish_stream}
+        yield self.reply_ok(msg, reply)
+        
+        
     @defer.inlineCallbacks
     def op_execute(self, content, headers, msg):
         """
@@ -805,7 +816,7 @@ class SiamInstrumentDriver(InstrumentDriver):
         # GET_CHANNELS ##############################################
         if drv_cmd == SiamDriverCommand.GET_CHANNELS:
             #
-            # we already have them from the general preparation above
+            # we already have the channels from the general preparation above
             #
             reply['success'] = InstErrorCode.OK
             reply['result'] = instrument_channels
@@ -820,15 +831,7 @@ class SiamInstrumentDriver(InstrumentDriver):
         
         # START_AUTO_SAMPLING ##############################################
         if drv_cmd == SiamDriverCommand.START_AUTO_SAMPLING:
-            # publish_stream is required.
-            publish_stream = content.get('publish_stream', None)
-            if publish_stream is None:
-                reply['success'] = InstErrorCode.REQUIRED_PARAMETER
-                reply['result'] = "publish_stream is required for this operation"
-                yield self.reply_ok(msg,reply)
-                return
-                
-            yield self.__start_sampling(channels, publish_stream, reply)
+            yield self.__start_sampling(channels, reply)
             yield self.reply_ok(msg,reply)
             return
 
@@ -867,45 +870,50 @@ class SiamInstrumentDriver(InstrumentDriver):
         
       
     @defer.inlineCallbacks
-    def __start_sampling(self, channels, publish_stream, reply):
-        log.debug('In SiamDriver __start_sampling channels = ' +str(channels))
+    def __start_sampling(self, channels, reply):
+        """
+        If successful, 
+            reply['success'] = InstErrorCode.OK
+            reply['result'] = {'channel':channel, 'publish_stream':self.publish_stream }
+            
+        where channel is the channel in the singleton channels list
+
+        """
         
-        assert(publish_stream is not None, "publish_stream is required")
+        log.debug('In SiamDriver __start_sampling channels = ' +str(channels) + \
+                  " publish_stream = " + str(self.publish_stream))
         
-        # the actual channel we will be starting sampling on
-        channel = None
+        # publish_stream is required.
+        if self.publish_stream is None:
+            reply['success'] = InstErrorCode.ERROR
+            reply['result'] = "publish_stream is required for this operation"
+            return
         
         if len(channels) != 1:
             reply['success'] = InstErrorCode.INVALID_CHANNEL
-            reply['result'] = "Can only be one channel for the START_AUTO_SAMPLING operations"
+            reply['result'] = "Can only be one channel for the START_AUTO_SAMPLING operation"
             return
                 
+        # the actual channel we will be sampling on
         channel = channels[0]
         if SiamDriverChannel.INSTRUMENT == channel:
             reply['success'] = InstErrorCode.INVALID_CHANNEL
             reply['result'] = "Has to be a specific channel, not '" + \
                     str(SiamDriverChannel.INSTRUMENT)
-            yield self.reply_ok(msg,reply)
             return
         
         
         
-        response = yield self.execute_StartAcquisition(channel, publish_stream)
+        response = yield self.siamci.execute_StartAcquisition(channel, self.publish_stream)
         log.debug('In SiamDriver __start_sampling --> ' + str(response))  
         
         if response.result != OK:
             reply['success'] = InstErrorCode.ERROR
-            yield self.reply_ok(msg, reply)
             return
         
         reply['success'] = InstErrorCode.OK
-        reply['result'] = None
+        reply['result'] = {'channel':channel, 'publish_stream':self.publish_stream }
         
-
-        #
-        # TODO complete handling of data acquisition
-        #
-      
       
        
        
@@ -938,6 +946,26 @@ class SiamInstrumentDriverClient(InstrumentDriverClient):
     """
     
 
+    @defer.inlineCallbacks
+    def set_publish_stream(self, publish_stream):
+        """
+        Sets the publish stream.  This is a convenience to allow the testing of asynchronous
+        notifications from the SIAM-CI adapter service in lieu of InstrumentAgent
+        mechanism (eg., the op_publish operation).
+        
+        @param publish_stream: the publish stream name.  
+                  Can be None to disable the associated handling.
+        """
+        
+        log.debug("SiamInstrumentDriverClient set_publish_stream " + str(publish_stream))
+        content_outgoing = {'publish_stream':publish_stream}
+        
+        (content, headers, message) = yield self.rpc_send('set_publish_stream',
+                                                          content_outgoing)
+        
+        defer.returnValue(content)
+        
+        
     """
     @TODO: Remove this set_params once the 'get' operation is completed        
     """        

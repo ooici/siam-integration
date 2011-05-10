@@ -27,14 +27,10 @@ from ion.agents.instrumentagents.instrument_constants import InstErrorCode
 
 
 class TestSiamInstrumentDriver(SiamCiTestCase):
-    """
-    @todo: complement the tests here with more rigourous checks. In general, at the moment 
-    the focus of the tests are on the proxy. 
-    """
     
     @defer.inlineCallbacks
     def setUp(self):
-        yield self._start_container()
+        yield self._start_container(sysname="siamci")
         
         self.driver_config = {
             'pid':SiamCiTestCase.pid, 
@@ -321,13 +317,9 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
 
     @defer.inlineCallbacks
     def test_011_acquisition(self):
-        
-        # TODO How to pass publish_stream? or more in general, how to
-        # handle publication of data?
-        raise unittest.SkipTest('UNDER DEVELOPMENT')
-    
         """
         - connect
+        - start receiver service (in lieu of InstrumentAgent)
         - execute with SiamDriverChannel.INSTRUMENT and SiamDriverCommand.START_AUTO_SAMPLING
         - wait for a few seconds
         - execute with SiamDriverChannel.INSTRUMENT and SiamDriverCommand.STOP_AUTO_SAMPLING
@@ -336,7 +328,21 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         
         yield self.__connect()
         
-        channels = [SiamDriverChannel.INSTRUMENT]
+        # start receiver service and set the publish_stream
+        receiver_service_name = 'test_siam_driver_receiver' 
+        receiver_client = yield self._start_receiver_service(receiver_service_name)
+        publish_stream = "siamci." + receiver_service_name
+        reply = yield self.driver_client.set_publish_stream(publish_stream)
+        success = reply['success']
+        result = reply['result']
+        self.assert_(InstErrorCode.is_ok(success))
+        
+        #
+        # TODO Note: specify a concrete channel; SiamDriverChannel.INSTRUMENT is
+        # not handled.   "val" happens to be one of the actual channels of 
+        # the instrument I'm using during development
+        channel = "val"
+        channels = [channel]
         command = [SiamDriverCommand.START_AUTO_SAMPLING]
         timeout = 20
         reply = yield self.driver_client.execute(channels,command,timeout)
@@ -344,20 +350,21 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         success = reply['success']
         result = reply['result']
         
-        print red("test_011_acquisition result =" +str(result))
-        
         self.assert_(InstErrorCode.is_ok(success))
         
         assert(isinstance(result, dict))    
+        self.assertEqual(result.get("channel", None), channel)
+        self.assertEqual(result.get("publish_stream", None), publish_stream)
         
-
-        # TODO: remaining operations
+        #
+        # TODO: remaining steps (wait, stop, ...)
+        # ...
+        
 
         yield self.__disconnect()
         
         
-
-
+        
     @defer.inlineCallbacks
     def _test_fetch_set1(self):
         raise unittest.SkipTest('UNDER DEVELOPMENT')

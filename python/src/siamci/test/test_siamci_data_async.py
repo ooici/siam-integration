@@ -13,7 +13,7 @@ from ion.test.iontest import IonTestCase
 
 from siamci.siamci_proxy import SiamCiAdapterProxy
 from siamci.test.siamcitest import SiamCiTestCase
-from siamci.receiver_service import SiamCiReceiverServiceClient
+
 from net.ooici.play.instr_driver_interface_pb2 import OK, ERROR
 
 from twisted.trial import unittest
@@ -24,30 +24,6 @@ from ion.core import ioninit
 
 class TestSiamCiAdapterProxyDataAsync(SiamCiTestCase):
     
-    @defer.inlineCallbacks
-    def _start_receiver_service(self, receiver_service_name, timeout=2):
-        """
-        Starts an instance of SiamCiReceiverService with the given name.
-        
-        @note: the given name is also passed in the 'spawnargs' 
-        (ie., ``'spawnargs':{ 'servicename':receiver_service_name }'' 
-        to properly name the service; if not included, the default name in 
-        SiamCiReceiverService.declare would be used.
-        """
-        services = [
-            {'name':receiver_service_name,
-             'module':'siamci.receiver_service',
-             'class':'SiamCiReceiverService',
-             'spawnargs':{ 'servicename':receiver_service_name }
-            }
-        ]
-        sup = yield self._spawn_processes(services)
-        svc_id = yield sup.get_child_id(receiver_service_name)
-        receiver_client = SiamCiReceiverServiceClient(proc=sup, target=svc_id)
-
-        yield receiver_client.setExpectedTimeout(timeout)
-        
-        defer.returnValue(receiver_client)
     
     @defer.inlineCallbacks
     def setUp(self):
