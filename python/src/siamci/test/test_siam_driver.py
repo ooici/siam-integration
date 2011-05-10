@@ -2,7 +2,7 @@
 """
 @file siamci/test/test_siam_driver.py
 @brief This module has test cases to test out the SIAM driver.
-   Initial version based on test_SBE49.py.
+   Initial version based on test_SBE49.py and then on test_SBE37
 @author Carlos Rueda
 """
 import ion.util.ionlog
@@ -165,7 +165,7 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         
         
     @defer.inlineCallbacks
-    def test_005_get_instrument_params_all(self):
+    def test_005_get_params_all(self):
         """
         - connect
         - get with [('instrument','all')]
@@ -193,7 +193,7 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         
 
     @defer.inlineCallbacks
-    def test_006_get_instrument_params_subset_good(self):
+    def test_005_get_params_subset_good(self):
         """
         - connect
         - get with [('instrument','startDelayMsec'), ('instrument','diagnosticSampleInterval')]
@@ -220,7 +220,7 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         
         
     @defer.inlineCallbacks
-    def test_007_get_instrument_params_subset_good_and_bad(self):
+    def test_005_get_params_subset_good_and_bad(self):
         """
         - connect
         - get with [('instrument','startDelayMsec'), ('instrument','INVALID_param')]
@@ -250,9 +250,60 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         
         
     @defer.inlineCallbacks
-    def test_008_get_instrument_params_specific_channels(self):
+    def test_005_get_params_specific_channels(self):
         raise unittest.SkipTest('Not yet implemented')
 
+
+    @defer.inlineCallbacks
+    def test_006_set_params_valid(self):
+        """
+        - connect
+        - set a couple of valid parameters
+        - disconnect
+        
+        @todo: A more complete test would involve the retrieval of the settable parameters,
+        ideally along with an indication of valid (range of) values, and then set the 
+        parameter with one such value.
+        """
+        
+        yield self.__connect()
+        
+        channel = SiamDriverChannel.INSTRUMENT
+        """these parameters happen to be present in the TestInstrument1 instrument """
+        params = {(channel,'startDelayMsec'):'600', (channel,'packetSetSize'):'21'}
+        reply = yield self.driver_client.set(params)
+        success = reply['success']
+        result = reply['result']
+        
+        self.assert_(InstErrorCode.is_ok(success))
+        
+        assert(isinstance(result, dict))   
+        self.assertEqual(result.get("startDelayMsec", None), '600')
+        self.assertEqual(result.get("packetSetSize", None), '21')
+        
+        yield self.__disconnect()
+        
+
+    @defer.inlineCallbacks
+    def test_006_set_params_invalid(self):
+        """
+        - connect
+        - set some invalid parameters (we just check the operation completes)
+        - disconnect
+        """
+        
+        yield self.__connect()
+        
+        channel = SiamDriverChannel.INSTRUMENT
+        params = {(channel,'baudrate'):'19200', (channel,'someWrongParam'):'someValue'}
+        reply = yield self.driver_client.set(params)
+        success = reply['success']
+        result = reply['result']
+        
+        self.assert_(InstErrorCode.is_error(success))
+        
+        yield self.__disconnect()
+        
 
     @defer.inlineCallbacks
     def __connect_and_get_channels(self):
@@ -283,7 +334,7 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         
         
     @defer.inlineCallbacks
-    def test_009_get_channels(self):
+    def test_007_get_channels(self):
         """
         - connect 
         - get channels reported by instrument
@@ -298,7 +349,7 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         
         
     @defer.inlineCallbacks
-    def test_010_get_last_sample(self):
+    def test_008_get_last_sample(self):
         """
         - connect
         - execute with SiamDriverChannel.INSTRUMENT and SiamDriverCommand.GET_LAST_SAMPLE
@@ -335,7 +386,7 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         
 
     @defer.inlineCallbacks
-    def test_011_acquisition_start_wait_stop(self):
+    def test_009_acquisition_start_wait_stop(self):
         """
         - connect and get channels reported by instrument
         - select a reported channel randomly
@@ -425,37 +476,3 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         yield self.__disconnect()
         
         
-        
-    @defer.inlineCallbacks
-    def _test_fetch_set1(self):
-        raise unittest.SkipTest('UNDER DEVELOPMENT')
-        """Note: these tests are for successful interaction with driver regarding the
-        set_params operation, but not necessarily that the parameter was actually set.
-        
-        @todo: A more complete test would involve the retrieval of the settable parameters,
-        ideally along with an indication of valid (range of) values, and then set the 
-        parameter with one such value.
-        """
-        
-        """these happen to be present in the TestInstrument1 instrument """
-        params = {'startDelayMsec':'600', 'packetSetSize' : '21'}
-        ret = yield self.driver_client.set_params(params)
-
-    @defer.inlineCallbacks
-    def _test_fetch_set2(self):
-        raise unittest.SkipTest('UNDER DEVELOPMENT')
-        """these might not be valid, but we just check the operation completes"""
-        params = {'baudrate':'19200', 'someWrongParam' : 'someValue'}
-        ret = yield self.driver_client.set_params(params)
-
-
-    @defer.inlineCallbacks
-    def _test_execute(self):
-        raise unittest.SkipTest('UNDER DEVELOPMENT')
-        """
-        Test the execute command to the Instrument Driver
-        @todo: implement
-        """
-
-
-

@@ -2,12 +2,89 @@ SIAM_CI Integration Prototype change log
 Carlos Rueda - MBARI
 
 2011-05-09
-	- More adjustments for aligning with InstrumentDriver
-	- alignment of data acquisition via the InstrumentDriver
-		test_011_acquisition_start_wait_stop ...                               [OK]
-	    
-	    
 	- SIAM-CI adapter: added get_channels operation
+	
+	- All interim SiamInstrumentDriver operations (which used a different signature
+	  in general) now following those specified in InstrumentDriver.
+	  Note that TestSiamInstrumentDriver also includes a test to start and stop data 
+	  acquisition, which uses an instance of the receiver service in lieu of 
+	  the InstrumentAgent.
+	    
+	- Next: resume on TestSiamAgent.
+	
+	- All the current tests look like this:
+		$ SIAM_CI=- bin/trial src/siamci/test/
+		siamci.test.test_echo_service_in_java
+		  JavaEchoTest
+		    test_send_message_instance1 ...                                        [OK]
+		    test_send_message_instance2 ...                                        [OK]
+		siamci.test.test_receiver_service
+		  SiamCiReceiverServiceTest
+		    test_expect_1 ...                                                      [OK]
+		    test_expect_accept_1 ...                                               [OK]
+		siamci.test.test_siam_agent
+		  TestSiamAgent
+		    test_002_go_active ...                                                 [OK]
+		siamci.test.test_siam_driver
+		  TestSiamInstrumentDriver
+		    test_001_initialize ...                                                [OK]
+		    test_002_configure ...                                                 [OK]
+		    test_003_connect ...                                                   [OK]
+		    test_004_get_status ...                                                [OK]
+		    test_005_get_params_all ...                                            [OK]
+		    test_005_get_params_specific_channels ...                         [SKIPPED]
+		    test_005_get_params_subset_good ...                                    [OK]
+		    test_005_get_params_subset_good_and_bad ...                            [OK]
+		    test_006_set_params_invalid ...                                        [OK]
+		    test_006_set_params_valid ...                                          [OK]
+		    test_007_get_channels ...                                              [OK]
+		    test_008_get_last_sample ...                                           [OK]
+		    test_009_acquisition_start_wait_stop ...                               [OK]
+		siamci.test.test_siamci
+		  TestSiamCiAdapterProxy
+		    test_fetch_params_all ...                                              [OK]
+		    test_fetch_params_some_good ...                                        [OK]
+		    test_fetch_params_some_wrong ...                                       [OK]
+		    test_get_channels ...                                                  [OK]
+		    test_get_last_sample ...                                               [OK]
+		    test_get_status ...                                                    [OK]
+		    test_list_ports ...                                                    [OK]
+		    test_ping ...                                                          [OK]
+		    test_set_params_good ...                                               [OK]
+		    test_set_params_wrong ...                                              [OK]
+		siamci.test.test_siamci_async
+		  TestSiamCiAdapterProxyAsync
+		    test_fetch_params_all_async ...                                        [OK]
+		    test_fetch_params_some_good_async ...                                  [OK]
+		    test_fetch_params_some_wrong_async ...                                 [OK]
+		    test_get_channels_async ...                                            [OK]
+		    test_get_last_sample_async ...                                         [OK]
+		    test_get_status_async ...                                              [OK]
+		    test_list_ports_async ...                                              [OK]
+		    test_set_params_good_async_timeout_30 ...                              [OK]
+		    test_set_params_wrong_async ...                                        [OK]
+		siamci.test.test_siamci_data_async
+		  TestSiamCiAdapterProxyDataAsync
+		    test_execute_StartAcquisition_async ...                                [OK]
+		    test_execute_StartAndStopAcquisition_async ...                    [SKIPPED]
+		
+		===============================================================================
+		[SKIPPED]
+		Not yet implemented
+		
+		siamci.test.test_siam_driver.TestSiamInstrumentDriver.test_005_get_params_specific_channels
+		===============================================================================
+		[SKIPPED]
+		Likely to be removed from here -- see test_siam_driver
+		
+		siamci.test.test_siamci_data_async.TestSiamCiAdapterProxyDataAsync.test_execute_StartAndStopAcquisition_async
+		-------------------------------------------------------------------------------
+		Ran 39 tests in 36.118s
+		
+		PASSED (skips=2, successes=37)
+	    
+	    
+	    
 	
 2011-05-08
 	- Continuing update of SiamInstrumentDriver:

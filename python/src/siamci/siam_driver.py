@@ -716,6 +716,69 @@ class SiamInstrumentDriver(InstrumentDriver):
         yield self.reply_ok(msg,reply)        
         
         
+        
+    @defer.inlineCallbacks
+    def op_set(self, content, headers, msg):
+        log.debug('In SiamDriver op_set')
+        
+        assert(isinstance(content,dict)), 'Expected dict content.'
+        
+        #
+        # params should be of the form:
+        #    {(chan_arg,param_arg):value,...,(chan_arg,param_arg):value}
+        #
+        params = content.get('params',None)
+        assert(isinstance(params,dict)), 'Expected dict params.'
+
+        assert(all(map(lambda x: isinstance(x,(list,tuple)),
+                       params.keys()))), 'Expected list or tuple dict keys.'
+        assert(all(map(lambda x: isinstance(x,str),
+                       params.values()))), 'Expected string dict values.'
+        
+        # Timeout not implemented for this op.
+        timeout = content.get('timeout',None)
+        if timeout != None:
+            assert(isinstance(timeout,int)), 'Expected integer timeout'
+            assert(timeout>0), 'Expected positive timeout'
+            pass
+         
+         
+        reply = {'success':None,'result':None}
+        
+        #
+        # TODO accept the format of the params as indicated above. For the
+        # moment, we convert the input:
+        #     {(chan_arg,param_arg):value,...,(chan_arg,param_arg):value}
+        # into
+        #     {param_arg:value,..., param_arg:value}
+        # while checking that all chan_arg in the input are equal to
+        # SiamDriverChannel.INSTRUMENT.
+        
+        params_for_proxy = {}
+        for (chan,param) in params.keys():
+            if SiamDriverChannel.INSTRUMENT != chan:
+                reply['success'] = InstErrorCode.INVALID_CHANNEL
+                reply['result'] = "Only " +str(SiamDriverChannel.INSTRUMENT) + " accepted for channel; given: " + chan
+                yield self.reply_ok(msg,reply)
+                return
+            
+            val = params[(chan,param)]
+            params_for_proxy[param] = val
+            
+        
+        log.debug("params_for_proxy = " + str(params_for_proxy) + "  **** self.siamci = " + str(self.siamci))
+        response = yield self.siamci.set_params(params_for_proxy)
+        log.debug('In SiamDriver op_set_params --> ' + str(response))    
+        if response.result == OK:
+            reply['success'] = InstErrorCode.OK
+            reply['result'] = params_for_proxy    # just informative
+        else:
+            reply['success'] = InstErrorCode.SET_DEVICE_ERR
+            
+        yield self.reply_ok(msg, reply)
+        
+ 
+         
       
     @defer.inlineCallbacks
     def op_set_publish_stream(self, content, headers, msg):
@@ -961,18 +1024,6 @@ class SiamInstrumentDriver(InstrumentDriver):
         
       
        
-       
-        
-
-    @defer.inlineCallbacks
-    def op_set_params(self, content, headers, msg):
-        log.debug('In SiamDriver op_set_params')
-        
-        response = yield self.siamci.fetch_params(content)
-        log.debug('In SiamDriver op_set_params --> ' + str(response))    
-        yield self.reply_ok(msg, response)
-
-
 
     def _debug(self, msg):
         print(blue(msg))
@@ -983,9 +1034,7 @@ class SiamInstrumentDriverClient(InstrumentDriverClient):
     """
     The client class for the instrument driver. This is the client that the
     instrument agent can use for communicating with the driver.
-    """
     
-    """
     In this case, this is the driver interface to a SIAM enabled instrument.
     Operations are mainly supported by the SiamCiAdapterProxy class.
     """
@@ -995,11 +1044,10 @@ class SiamInstrumentDriverClient(InstrumentDriverClient):
     def set_publish_stream(self, publish_stream):
         """
         Sets the publish stream.  This is a convenience to allow the testing of asynchronous
-        notifications from the SIAM-CI adapter service in lieu of InstrumentAgent
+        notifications from the SIAM-CI adapter service in lieu of the InstrumentAgent
         mechanism (eg., the op_publish operation).
         
-        @param publish_stream: the publish stream name.  
-                  Can be None to disable the associated handling.
+        @param publish_stream: the publish stream name.  Can be None.
         """
         
         log.debug("SiamInstrumentDriverClient set_publish_stream " + str(publish_stream))
@@ -1010,25 +1058,6 @@ class SiamInstrumentDriverClient(InstrumentDriverClient):
         
         defer.returnValue(content)
         
-        
-    """
-    @TODO: Remove this set_params once the 'get' operation is completed        
-    """        
-    @defer.inlineCallbacks
-    def set_params(self, param_dict):
-        """
-        @todo: we override the method in the superclass because that method expects the
-        resulting content to be a dict: assert(isinstance(content, dict))
-        In my current design, we work with the GPBs directly.
-        """
-        
-        log.debug("SiamInstrumentDriverClient set_params " + str(param_dict))
-        (content, headers, message) = yield self.rpc_send('set_params',
-                                                          param_dict)
-        
-        # @todo: conversion to python type 
-        
-        defer.returnValue(content)
         
         
 

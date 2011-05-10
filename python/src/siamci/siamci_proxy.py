@@ -240,17 +240,26 @@ class SiamCiAdapterProxy():
         
         
     @defer.inlineCallbacks
-    def set_params(self, content, publish_stream=None):
+    def set_params(self, params, publish_stream=None):
+        """
+        TODO: note, currently, params must be a dict with string keys and values
+        with the understanding that all parameters are for the
+        instrument as a whole (ie., not for specific channels).
+        """
 
-        assert(isinstance(content, dict))
-        log.debug("set_params: " + str(content))
+        assert(isinstance(params, dict))
+        assert(all(map(lambda x: isinstance(x,str),
+                       params.keys()))), 'Each key must be a string'
+        assert(all(map(lambda x: isinstance(x,str),
+                       params.values()))), 'Each value must be a string'
+        
         
         args = [("port", self.port)]
-        args.extend( [ (key, content[key]) for key in content.keys()] )
+        args.extend([item for item in params.items()])
              
         cmd = yield self._make_command("set_params", args, publish_stream)
         response = yield self._rpc(cmd)
-        _debug_message(response, "fetch_params response:")
+        _debug_message(response, "set_params response:")
         
         defer.returnValue(response)
         
