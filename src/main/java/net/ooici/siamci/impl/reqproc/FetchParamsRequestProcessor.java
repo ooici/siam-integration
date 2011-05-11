@@ -33,12 +33,10 @@ public class FetchParamsRequestProcessor extends BaseRequestProcessor {
     private static final String CMD_NAME = "fetch_params";
 
     /**
-     * Equal to "instrument" per <a href="https://confluence.oceanobservatories.org/display/syseng/CIAD+SA+SV+Instrument+Driver+Interface"
-     * >the instrument driver interface page</a> (accessed 2011-05-10). See also
-     * SiamDriverChannel.INSTRUMENT constant on the python side.
+     * Equal to the value of the SiamDriverChannel.INSTRUMENT constant on the
+     * python side.
      */
-    private static final Object INSTRUMENT = "instrument";
-    
+    private static final Object INSTRUMENT = "CHANNEL_INSTRUMENT";
 
     public GeneratedMessage processRequest(int reqId, Command cmd) {
 
@@ -100,6 +98,7 @@ public class FetchParamsRequestProcessor extends BaseRequestProcessor {
      */
     private GeneratedMessage _getAndPublishResult(final int reqId,
             final Command cmd, final String port, final String publishStream) {
+        
         _checkAsyncSetup();
 
         /*

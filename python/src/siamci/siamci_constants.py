@@ -48,12 +48,7 @@ class SiamDriverChannel(BaseEnum):
     belonging to a concrete SIAM instrument driver.
     """
     
-    """
-    This is equal to 'instrument' per the instrument driver interface page: 
-    https://confluence.oceanobservatories.org/display/syseng/CIAD+SA+SV+Instrument+Driver+Interface
-    (accessed 2011-05-10).
-    """
-    INSTRUMENT = 'instrument'
+    INSTRUMENT = DriverChannel.INSTRUMENT
     
 
 class SiamDriverAnnouncement(DriverAnnouncement):
