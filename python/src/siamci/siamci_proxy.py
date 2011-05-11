@@ -16,6 +16,7 @@ from ion.core.messaging import message_client
 
 from ion.core import bootstrap
 
+from siamci.siamci_constants import SiamDriverChannel
 from siamci.util.tcolor import red, blue
 
 from net.ooici.play.instr_driver_interface_pb2 import Command, SuccessFail, OK, ERROR
@@ -229,8 +230,7 @@ class SiamCiAdapterProxy():
             else:
                 assert not isinstance(it, (list, dict))
                 
-                # see https://confluence.oceanobservatories.org/display/CIDev/Instrument+Driver+Interface#InstrumentDriverInterface-getmessage
-                args.extend( [ ('instrument', it) ])
+                args.extend( [ (SiamDriverChannel.INSTRUMENT, it) ])
                 
         cmd = yield self._make_command("fetch_params", args, publish_stream)
         response = yield self._rpc(cmd)

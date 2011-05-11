@@ -9,71 +9,23 @@ import ion.util.ionlog
 log = ion.util.ionlog.getLogger(__name__)
 from twisted.internet import defer  #, reactor
 
-
+from ion.core.process.process import ProcessFactory
 
 from ion.agents.instrumentagents.instrument_agent import InstrumentDriver
 from ion.agents.instrumentagents.instrument_agent import InstrumentDriverClient
-#from ion.agents.instrumentagents.instrument_agent import publish_msg_type
+from ion.agents.instrumentagents.instrument_constants import InstErrorCode
+from ion.agents.instrumentagents.instrument_fsm import InstrumentFSM
 
-from ion.core.process.process import ProcessFactory
+from siamci.siamci_constants import SiamDriverEvent
+from siamci.siamci_constants import SiamDriverState
+from siamci.siamci_constants import SiamDriverChannel
+from siamci.siamci_constants import SiamDriverCommand
+from siamci.siamci_constants import SiamDriverAnnouncement
 
 from siamci.siamci_proxy import SiamCiAdapterProxy
 from siamci.util.tcolor import red, blue
 
-
 from net.ooici.play.instr_driver_interface_pb2 import Command, SuccessFail, OK, ERROR
-
-from ion.agents.instrumentagents.instrument_constants import DriverCommand
-from ion.agents.instrumentagents.instrument_constants import DriverState
-from ion.agents.instrumentagents.instrument_constants import DriverEvent
-from ion.agents.instrumentagents.instrument_constants import DriverAnnouncement
-from ion.agents.instrumentagents.instrument_constants import DriverChannel
-from ion.agents.instrumentagents.instrument_constants import BaseEnum
-from ion.agents.instrumentagents.instrument_constants import InstErrorCode
-
-from ion.agents.instrumentagents.instrument_fsm import InstrumentFSM
-
-from ion.agents.instrumentagents.instrument_constants import InstErrorCode
-
-
-
-# Device states.
-class SiamDriverState(DriverState):
-    """
-    Add siam driver specific states here.
-    """
-    pass
-
-# Device events.
-class SiamDriverEvent(DriverEvent):
-    """
-    Add siam driver specific events here.
-    """
-    pass
-
-# Device commands.
-class SiamDriverCommand(DriverCommand):
-    """
-    Add siam driver specific commands here.
-    """
-    GET_CHANNELS = 'DRIVER_CMD_GET_CHANNELS'
-    GET_LAST_SAMPLE = 'DRIVER_CMD_GET_LAST_SAMPLE'
-
-
-# Device channels / transducers.
-class SiamDriverChannel(DriverChannel):
-    """
-    siam driver channels.
-    """
-    pass
-
-class SiamDriverAnnouncement(DriverAnnouncement):
-    """
-    Add siam driver specific announcements here.
-    """
-    pass
-
-
 
 
        
@@ -705,7 +657,7 @@ class SiamInstrumentDriver(InstrumentDriver):
             log.debug('In SiamDriver op_get item --> ' + str(it))
             chName = it.pair.first
             value = it.pair.second
-            key = ('instrument', chName)
+            key = (SiamDriverChannel.INSTRUMENT, chName)
             result[key] = (InstErrorCode.OK, value)
             
             
@@ -758,7 +710,10 @@ class SiamInstrumentDriver(InstrumentDriver):
         for (chan,param) in params.keys():
             if SiamDriverChannel.INSTRUMENT != chan:
                 reply['success'] = InstErrorCode.INVALID_CHANNEL
-                reply['result'] = "Only " +str(SiamDriverChannel.INSTRUMENT) + " accepted for channel; given: " + chan
+                errmsg = "Only " +str(SiamDriverChannel.INSTRUMENT) + \
+                        " accepted for channel; given: " + chan
+                reply['result'] = errmsg
+                log.warning("op_set: " +errmsg)
                 yield self.reply_ok(msg,reply)
                 return
             
@@ -841,8 +796,10 @@ class SiamInstrumentDriver(InstrumentDriver):
         successFail = yield self.siamci.get_channels()
         if successFail.result != OK:
             # TODO: some more appropriate error code
-            reply['success'] = InstErrorCode.UNKNOWN_ERROR
-            reply['result'] = "Error retrieving channels"
+            reply['success'] = InstErrorCode.EXE_DEVICE_ERR
+            errmsg = "Error retrieving channels"
+            reply['result'] = errmsg
+            log.warning("op_execute: " +errmsg)
             yield self.reply_ok(msg,reply)
             return
         instrument_channels = [it.str for it in successFail.item]
@@ -859,15 +816,19 @@ class SiamInstrumentDriver(InstrumentDriver):
             for chan in channels:
                 if SiamDriverChannel.INSTRUMENT == chan:
                     reply['success'] = InstErrorCode.INVALID_CHANNEL
-                    reply['result'] = "Can only use '" + \
+                    errmsg = "Can only use '" + \
                             str(SiamDriverChannel.INSTRUMENT) + \
                             "' for a singleton channels list"
+                    reply['result'] = errmsg
+                    log.warning("op_execute: " +errmsg)
                     yield self.reply_ok(msg,reply)
                     return
                     
                 if not chan in instrument_channels:
                     reply['success'] = InstErrorCode.UNKNOWN_CHANNEL
-                    reply['result'] = "instrument does not have channel named '" +str(chan)+ "'"
+                    errmsg = "instrument does not have channel named '" +str(chan)+ "'"
+                    reply['result'] = errmsg
+                    log.warning("op_execute: " +errmsg)
                     yield self.reply_ok(msg,reply)
                     return
 
@@ -926,7 +887,7 @@ class SiamInstrumentDriver(InstrumentDriver):
         
         if response.result != OK:
             # TODO: some more appropriate error code
-            reply['success'] = InstErrorCode.UNKNOWN_ERROR
+            reply['success'] = InstErrorCode.EXE_DEVICE_ERR
             yield self.reply_ok(msg, reply)
             return
         
@@ -954,37 +915,78 @@ class SiamInstrumentDriver(InstrumentDriver):
         log.debug('In SiamDriver __start_sampling channels = ' +str(channels) + \
                   " publish_stream = " + str(self.publish_stream))
         
-        # publish_stream is required.
-        if self.publish_stream is None:
-            # TODO: some more appropriate error code
-            reply['success'] = InstErrorCode.UNKNOWN_ERROR
-            reply['result'] = "publish_stream is required for this operation"
-            return
-        
         if len(channels) != 1:
             reply['success'] = InstErrorCode.INVALID_CHANNEL
-            reply['result'] = "Can only be one channel for the START_AUTO_SAMPLING operation"
+            errmsg = "Can only be one channel for the START_AUTO_SAMPLING operation"
+            reply['result'] = errmsg
+            log.warning("__start_sampling: " +errmsg)
             return
                 
         # the actual channel we will be sampling on
         channel = channels[0]
         if SiamDriverChannel.INSTRUMENT == channel:
             reply['success'] = InstErrorCode.INVALID_CHANNEL
-            reply['result'] = "Has to be a specific channel, not '" + \
-                    str(SiamDriverChannel.INSTRUMENT)
+            errmsg = "Has to be a specific channel, not '" + \
+                    str(SiamDriverChannel.INSTRUMENT) + "'"
+            reply['result'] = errmsg
+            log.warning("__start_sampling: " +errmsg)
             return
         
-        response = yield self.siamci.execute_StartAcquisition(channel, self.publish_stream)
-        log.debug('In SiamDriver __start_sampling --> ' + str(response))  
         
-        if response.result != OK:
-            log.warning("execute_StartAcquisition failed: " +str(response))
-            # TODO: some more appropriate error code
-            reply['success'] = InstErrorCode.UNKNOWN_ERROR
+        #
+        # either publish_stream is given OR notify_agent, with
+        # publish_stream having precedence just because was my first
+        # implemented functionality (but if general, not both properties
+        # would be indicated).
+        #
+        
+        if self.publish_stream is not None:
+            response = yield self.siamci.execute_StartAcquisition(channel, self.publish_stream)
+            log.debug('In SiamDriver __start_sampling --> ' + str(response))  
+            
+            if response.result != OK:
+                log.warning("execute_StartAcquisition failed: " +str(response))
+                # TODO: some more appropriate error code
+                reply['success'] = InstErrorCode.EXE_DEVICE_ERR
+                return
+            
+            reply['success'] = InstErrorCode.OK
+            reply['result'] = {'channel':channel, 'publish_stream':self.publish_stream }
             return
         
-        reply['success'] = InstErrorCode.OK
-        reply['result'] = {'channel':channel, 'publish_stream':self.publish_stream }
+          
+        #  
+        # if we are interacting with an Instrument Agent, we need to notify it
+        # whenever we get data from the instrument.
+        #
+        if self.notify_agent:
+            """
+            TODO implement.  This could probably be done as follows: use a
+            customized receiver service; set the publish_stream accordingly; and
+            call self.siamci.execute_StartAcquisition(channel, publish_stream) as
+            above. The customized receiver would send the notifications to the
+            agent. Alternatively, do the execute_StartAcquisition thing as above
+            but providing more information such that the java side does the
+            notifications directly to the agent (however, by looking at
+            instrument_agent.py, seems like the operation (op_publish in this
+            case, I think) requires the sender to be a child process, which
+            wouldn't be the case for the external SIAM-CI adapter service...)
+            """
+            reply['success'] = InstErrorCode.NOT_IMPLEMENTED
+            errmsg = "Notification of data to the agent not implemented yet"
+            reply['result'] = errmsg
+            log.warning("__start_sampling: " +errmsg)
+            return
+        
+        # TODO: some more appropriate error code
+        reply['success'] = InstErrorCode.EXE_DEVICE_ERR
+        errmsg = "publish_stream is required for this operation"
+        reply['result'] = errmsg
+        log.warning("__start_sampling: " +errmsg)
+        return
+        
+        
+        
         
         
         
@@ -1001,20 +1003,26 @@ class SiamInstrumentDriver(InstrumentDriver):
         # publish_stream is required.
         if self.publish_stream is None:
             reply['success'] = InstErrorCode.REQUIRED_PARAMETER
-            reply['result'] = "publish_stream is required for this operation; use set_publish_stream operation"
+            errmsg = "publish_stream is required for this operation; use set_publish_stream operation"
+            reply['result'] = errmsg
+            log.warning("__stop_sampling: " +errmsg)
             return
         
         if len(channels) != 1:
             reply['success'] = InstErrorCode.INVALID_CHANNEL
-            reply['result'] = "Can only be one channel for the START_AUTO_SAMPLING operation"
+            errmsg = "Can only be one channel for the START_AUTO_SAMPLING operation"
+            reply['result'] = errmsg
+            log.warning("__stop_sampling: " +errmsg)
             return
                 
         # the actual channel we will be sampling on
         channel = channels[0]
         if SiamDriverChannel.INSTRUMENT == channel:
             reply['success'] = InstErrorCode.INVALID_CHANNEL
-            reply['result'] = "Has to be a specific channel, not '" + \
-                    str(SiamDriverChannel.INSTRUMENT)
+            errmsg = "Has to be a specific channel, not '" + \
+                    str(SiamDriverChannel.INSTRUMENT) + "'"
+            reply['result'] = errmsg
+            log.warning("__stop_sampling: " +errmsg)
             return
         
         response = yield self.siamci.execute_StopAcquisition(channel, self.publish_stream)
@@ -1022,7 +1030,7 @@ class SiamInstrumentDriver(InstrumentDriver):
         
         if response.result != OK:
             # TODO: some more appropriate error code
-            reply['success'] = InstErrorCode.UNKNOWN_ERROR
+            reply['success'] = InstErrorCode.EXE_DEVICE_ERR
             return
         
         reply['success'] = InstErrorCode.OK

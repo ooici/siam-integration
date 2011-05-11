@@ -4,6 +4,26 @@ Carlos Rueda - MBARI
 2011-05-10
 	- Using ioncore-python 0.4.11
 	
+	- More alignment with instrument agent:
+	  TestSiamAgent
+	    test_001_initialize ...                                                [OK]
+	    test_002_go_active_and_run ...                                         [OK]
+	    test_003_get_set_params_verify ...                                     [OK]
+	    
+	- still deciding on practical approach in this prototype to enable data acquisition 
+	  and notification to the instrument agent.
+	  Some possible approaches:
+        1- use a customized receiver service; set the publish_stream accordingly; 
+        call self.siamci.execute_StartAcquisition(channel, publish_stream); the 
+        customized receiver would send the notifications to the agent. 
+        2- Alternatively, do the execute_StartAcquisition as above
+        but providing more information such that the java side does the
+        notifications directly to the agent (however, by looking at
+        instrument_agent.py, seems like the operation (op_publish in this
+        case, I think) requires the sender to be a child process, which
+        wouldn't be the case for the external SIAM-CI adapter service...)
+	
+	
 2011-05-09
 	- SIAM-CI adapter: added get_channels operation
 	

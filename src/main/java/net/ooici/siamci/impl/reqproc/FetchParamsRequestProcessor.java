@@ -32,6 +32,14 @@ public class FetchParamsRequestProcessor extends BaseRequestProcessor {
 
     private static final String CMD_NAME = "fetch_params";
 
+    /**
+     * Equal to "instrument" per <a href="https://confluence.oceanobservatories.org/display/syseng/CIAD+SA+SV+Instrument+Driver+Interface"
+     * >the instrument driver interface page</a> (accessed 2011-05-10). See also
+     * SiamDriverChannel.INSTRUMENT constant on the python side.
+     */
+    private static final Object INSTRUMENT = "instrument";
+    
+
     public GeneratedMessage processRequest(int reqId, Command cmd) {
 
         if (cmd.getArgsCount() == 0) {
@@ -150,14 +158,14 @@ public class FetchParamsRequestProcessor extends BaseRequestProcessor {
         }
         else {
             /*
-             * all params requested also if the first pair is ('instrument',
+             * all params requested also if the first pair is ('INSTRUMENT',
              * 'all').
              */
             ChannelParameterPair cp = cmd.getArgs(1);
             final String ch = cp.getChannel();
             final String pr = cp.getParameter();
 
-            if ("instrument".equals(ch) && "all".equals(pr)) {
+            if (INSTRUMENT.equals(ch) && "all".equals(pr)) {
                 all_params_requested = true;
             }
 
@@ -167,8 +175,9 @@ public class FetchParamsRequestProcessor extends BaseRequestProcessor {
              */
             if (all_params_requested && cmd.getArgsCount() > 2) {
                 String error = _rid(reqId) + CMD_NAME
-                        + ": since first pair was ('instrument', 'all'), "
-                        + "no more pairs are expected: " + cmd.getArgs(2) + "'";
+                        + ": since first pair was ('" + INSTRUMENT
+                        + "', 'all'), " + "no more pairs are expected: "
+                        + cmd.getArgs(2) + "'";
                 log.warn(error);
                 return ScUtils.createFailResponse(error);
 
@@ -204,12 +213,13 @@ public class FetchParamsRequestProcessor extends BaseRequestProcessor {
             final String ch = cp.getChannel();
             final String pr = cp.getParameter();
 
-            if ("instrument".equals(ch)) {
+            if (INSTRUMENT.equals(ch)) {
                 requestedParams.add(pr);
             }
             else {
                 String error = _rid(reqId) + CMD_NAME
-                        + ": first element in pair must be 'instrument'. "
+                        + ": first element in pair must be '" + INSTRUMENT
+                        + "'. "
                         + "Particular channel name is NOT yet implemented: '"
                         + ch + "'";
                 log.warn(error);

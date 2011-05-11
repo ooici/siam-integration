@@ -11,15 +11,14 @@ from twisted.internet import defer
 
 from ion.test.iontest import IonTestCase
 
-from siamci.util.tcolor import red, blue
-from siamci.test.siamcitest import SiamCiTestCase
 from twisted.trial import unittest
 
-
+from siamci.test.siamcitest import SiamCiTestCase
+from siamci.util.tcolor import red, blue
 from siamci.siam_driver import SiamInstrumentDriverClient
-from siamci.siam_driver import SiamDriverState
-from siamci.siam_driver import SiamDriverChannel
-from siamci.siam_driver import SiamDriverCommand
+from siamci.siamci_constants import SiamDriverState
+from siamci.siamci_constants import SiamDriverChannel
+from siamci.siamci_constants import SiamDriverCommand
     
 from ion.agents.instrumentagents.instrument_fsm import InstrumentFSM
 from ion.agents.instrumentagents.instrument_constants import InstErrorCode
@@ -168,22 +167,22 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
     def test_005_get_params_all(self):
         """
         - connect
-        - get with [('instrument','all')]
+        - get with [(SiamDriverChannel.INSTRUMENT,'all')]
         - disconnect
         """
         
         yield self.__connect()
         
-        params = [('instrument','all')]
+        params = [(SiamDriverChannel.INSTRUMENT,'all')]
         reply = yield self.driver_client.get(params)
         success = reply['success']
         result = reply['result']      
         self.assert_(InstErrorCode.is_ok(success))  
 
-        # verify all returned params are for 'instrument' and are OK (value doesn't matter)
+        # verify all returned params are for SiamDriverChannel.INSTRUMENT and are OK (value doesn't matter)
         for key in result:
             ch, pr = key
-            self.assertEqual('instrument', ch)
+            self.assertEqual(SiamDriverChannel.INSTRUMENT, ch)
             successParam, val = result[key]
             self.assert_(InstErrorCode.is_ok(successParam))
         
@@ -196,22 +195,22 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
     def test_005_get_params_subset_good(self):
         """
         - connect
-        - get with [('instrument','startDelayMsec'), ('instrument','diagnosticSampleInterval')]
+        - get with [(SiamDriverChannel.INSTRUMENT,'startDelayMsec'), (SiamDriverChannel.INSTRUMENT,'diagnosticSampleInterval')]
         - disconnect
         """
         
         yield self.__connect()
         
-        params = [('instrument','startDelayMsec'), ('instrument','diagnosticSampleInterval')]
+        params = [(SiamDriverChannel.INSTRUMENT,'startDelayMsec'), (SiamDriverChannel.INSTRUMENT,'diagnosticSampleInterval')]
         reply = yield self.driver_client.get(params)
         success = reply['success']
         result = reply['result']      
         self.assert_(InstErrorCode.is_ok(success))  
         
-        # verify all returned params are for 'instrument' and are OK (value doesn't matter)
+        # verify all returned params are for SiamDriverChannel.INSTRUMENT and are OK (value doesn't matter)
         for key in result:
             ch, pr = key
-            self.assertEqual('instrument', ch)
+            self.assertEqual(SiamDriverChannel.INSTRUMENT, ch)
             successParam, val = result[key]
             self.assert_(InstErrorCode.is_ok(successParam))
         
@@ -223,13 +222,13 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
     def test_005_get_params_subset_good_and_bad(self):
         """
         - connect
-        - get with [('instrument','startDelayMsec'), ('instrument','INVALID_param')]
+        - get with [(SiamDriverChannel.INSTRUMENT,'startDelayMsec'), (SiamDriverChannel.INSTRUMENT,'INVALID_param')]
         - disconnect
         """
         
         yield self.__connect()
         
-        params = [('instrument','startDelayMsec'), ('instrument','INVALID_param')]
+        params = [(SiamDriverChannel.INSTRUMENT,'startDelayMsec'), (SiamDriverChannel.INSTRUMENT,'INVALID_param')]
         reply = yield self.driver_client.get(params)
         success = reply['success']
         result = reply['result']      
@@ -239,10 +238,10 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         # TODO: Note, the adapter returns a single Error when any of the requested
         # params is invalid, ie., does not yet provide discriminated errors.
         # So the result here is None.
-#        successParam, val = result[('instrument','startDelayMsec')]
+#        successParam, val = result[(SiamDriverChannel.INSTRUMENT,'startDelayMsec')]
 #        self.assert_(InstErrorCode.is_ok(successParam))
 #        
-#        successParam, val = result[('instrument','INVALID_param')]
+#        successParam, val = result[(SiamDriverChannel.INSTRUMENT,'INVALID_param')]
 #        self.assert_(InstErrorCode.is_error(successParam))
         
 
