@@ -1,6 +1,12 @@
-SIAM_CI Integration Prototype change log
+SIAM-CI Integration Prototype change log
 Carlos Rueda - MBARI
 
+2011-05-11
+	- Using ioncore-python 0.4.13.
+	- During testing with TestSiamAgent, noticed that InstErrorCode.get_string(cls,x)
+	  is missing x = cls.get_list_val(x) before the cls.has(x) check (email sent to 
+	  Edward). Did this fix in my local repo and directly in my local 0.4.13 egg.
+	
 2011-05-10
 	- Using ioncore-python 0.4.11, which now makes possible to remove all files
 	  under res/*.  But the following are retained for local configuration:

@@ -1,8 +1,5 @@
-SiamCi integration prototype
-Created 2/9/2011
+SIAM-CI integration prototype
 Carlos Rueda - MBARI
-
-This is the SIAM-CI integration prototype.
 
 Documentation is mainly maintained at:
   - https://confluence.oceanobservatories.org/display/CIDev/SIAM-CI+status
