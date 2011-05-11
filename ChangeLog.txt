@@ -2,7 +2,11 @@ SIAM_CI Integration Prototype change log
 Carlos Rueda - MBARI
 
 2011-05-10
-	- Using ioncore-python 0.4.11
+	- Using ioncore-python 0.4.11, which now makes possible to remove all files
+	  under res/*.  But the following are retained for local configuration:
+		res/config/ionlocal.config
+		res/logging/loglevelslocal.cfg
+	  
 	
 	- More alignment with instrument agent:
 	  TestSiamAgent
