@@ -16,10 +16,6 @@ from ion.core import ioninit
 
 from siamci.receiver_service import SiamCiReceiverServiceClient
 
-#CONF = ioninit.config('startup.bootstrap-dx') #-
-
-# Static definition of message queues
-#ion_messaging = ioninit.get_config('messaging_cfg', CONF) #-
 
 # Note the ``'spawnargs':{ 'servicename':receiver_service_name }'' included below to properly name
 # the service; if not included, the default name in SiamCiReceiverService.declare would be used.
