@@ -2,6 +2,8 @@ SIAM-CI Integration Prototype change log
 Carlos Rueda - MBARI
 
 2011-05-11
+	- added siam instrument agent get_last_sample test. Interestingly, the operation
+	  is SIAM Driver specific, but it is handled well through the intrument agent.
 	- Using ioncore-python 0.4.13.
 	- During testing with TestSiamAgent, noticed that InstErrorCode.get_string(cls,x)
 	  is missing x = cls.get_list_val(x) before the cls.has(x) check (email sent to 

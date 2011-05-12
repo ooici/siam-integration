@@ -27,13 +27,10 @@ from ion.agents.instrumentagents.instrument_constants import AgentStatus
 from ion.agents.instrumentagents.instrument_constants import AgentState
 from ion.agents.instrumentagents.instrument_constants import DriverCommand
 from ion.agents.instrumentagents.instrument_constants import InstErrorCode
-#from ion.agents.instrumentagents.instrument_constants import DriverChannel
 
-# note, use our SiamDriverChannel, which defines INSTRUMENT as 'instrument' 
-# (per the instrument driver interface page), while DriverChannel defines
-# INSTRUMENT as'CHANNEL_INSTRUMENT'
 from siamci.siamci_constants import SiamDriverChannel
 from siamci.test.siamcitest import SiamCiTestCase
+from siamci.siamci_constants import SiamDriverCommand
 from siamci.util.tcolor import red, blue
 
 
@@ -122,7 +119,13 @@ class TestSiamAgent(SiamCiTestCase):
         
         
     @defer.inlineCallbacks
-    def test_001_initialize(self, close_transaction=True):
+    def _test_001_initialize(self, close_transaction=True):
+        """
+        - start transaction
+        - initialize
+        - return transaction id
+        """
+        
         # Begin an explicit transaction.
         reply = yield self.ia_client.start_transaction(0)
         success = reply['success']
@@ -131,7 +134,7 @@ class TestSiamAgent(SiamCiTestCase):
         self.assertEqual(type(tid),str)
         self.assertEqual(len(tid),36)
     
-        log.debug("tid = " + str(tid))
+        log.debug("_test_001_initialize tid = " + str(tid))
         
         # Issue state transition commands to bring the agent into
         # observatory mode.
@@ -151,7 +154,7 @@ class TestSiamAgent(SiamCiTestCase):
 
         
     @defer.inlineCallbacks
-    def test_002_go_active_and_run(self, close_transaction=True):
+    def _test_002_go_active_and_run(self, close_transaction=True):
         """
         - initialize
         - GO_ACTIVE
@@ -160,7 +163,7 @@ class TestSiamAgent(SiamCiTestCase):
         - check AgentState.OBSERVATORY_MODE
         """
         
-        tid = yield self.test_001_initialize(False) 
+        tid = yield self._test_001_initialize(False) 
         
         # Connect to the device.
         cmd = [AgentCommand.TRANSITION,AgentEvent.GO_ACTIVE]
@@ -203,7 +206,7 @@ class TestSiamAgent(SiamCiTestCase):
 
 
     @defer.inlineCallbacks
-    def test_003_get_set_params_verify(self, close_transaction=True):
+    def _test_003_get_set_params_verify(self, close_transaction=True):
         """
         - go active and run
         - get params
@@ -211,7 +214,7 @@ class TestSiamAgent(SiamCiTestCase):
         - get params and verify
         """
         
-        tid = yield self.test_002_go_active_and_run(False) 
+        tid = yield self._test_002_go_active_and_run(False) 
         
         channel = SiamDriverChannel.INSTRUMENT
  
@@ -260,7 +263,36 @@ class TestSiamAgent(SiamCiTestCase):
  
 
     @defer.inlineCallbacks
-    def test_010_execute_instrument(self, close_transaction=True):
+    def test_004_get_last_sample(self, close_transaction=True):
+        """
+        - go active and run
+        - get params, set params, verify
+        - execute a few things
+        """
+        
+        tid = yield self._test_003_get_set_params_verify(False) 
+        
+        chans = [SiamDriverChannel.INSTRUMENT]
+        cmd = [SiamDriverCommand.GET_LAST_SAMPLE]
+        reply = yield self.ia_client.execute_device(chans,cmd,tid)
+        success = reply['success']
+        result = reply['result']
+
+        # temporary: instead of failing, skip
+        if not InstErrorCode.is_ok(success): raise unittest.SkipTest(result)
+        
+        print blue('test_004_get_last_sample result = ' + str(result))
+        
+        self.assert_(InstErrorCode.is_ok(success))
+ 
+        if close_transaction:
+            yield self._close_transaction(tid)
+
+        defer.returnValue(tid)
+ 
+        
+    @defer.inlineCallbacks
+    def _test_010_execute_instrument(self, close_transaction=True):
         """
         - go active and run
         - get params, set params, verify
@@ -269,7 +301,7 @@ class TestSiamAgent(SiamCiTestCase):
         
 #        raise unittest.SkipTest("only partially implemented")
     
-        tid = yield self.test_003_get_set_params_verify(False) 
+        tid = yield self._test_003_get_set_params_verify(False) 
         
         channel = SiamDriverChannel.INSTRUMENT
  

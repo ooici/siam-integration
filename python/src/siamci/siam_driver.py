@@ -7,6 +7,8 @@
 """
 import ion.util.ionlog
 log = ion.util.ionlog.getLogger(__name__)
+import logging
+
 from twisted.internet import defer  #, reactor
 
 from ion.core.process.process import ProcessFactory
@@ -53,7 +55,8 @@ class SiamInstrumentDriver(InstrumentDriver):
         """
         
         InstrumentDriver.__init__(self, *args, **kwargs)
-        log.debug("\nSiamDriver __init__: spawn_args = " +str(self.spawn_args))
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug("\nSiamDriver __init__: spawn_args = " +str(self.spawn_args))
         
         
         """
@@ -132,7 +135,8 @@ class SiamInstrumentDriver(InstrumentDriver):
         EVENT_INITIALIZE: Reset communication parameters to null values.
         """
         
-        log.debug("state_handler_unconfigured: event = " +str(event) + "\n\t\t params = " + str(params))
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug("state_handler_unconfigured: event = " +str(event) + "\n\t\t params = " + str(params))
 
         success = InstErrorCode.OK
         next_state = None
@@ -160,7 +164,6 @@ class SiamInstrumentDriver(InstrumentDriver):
         else:
             success = InstErrorCode.INCORRECT_STATE
             
-#        log.debug("UUUUUUU NEXT STATE: " +str(next_state))
         return (success,next_state)
 
 
@@ -175,7 +178,8 @@ class SiamInstrumentDriver(InstrumentDriver):
         EVENT_CONNECT: Switch to STATE_CONNECTING.
         """
         
-        log.debug("state_handler_disconnected: event = " +str(event) + "\n\t\t params = " + str(params))
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug("state_handler_disconnected: event = " +str(event) + "\n\t\t params = " + str(params))
 
         success = InstErrorCode.OK
         next_state = None
@@ -227,7 +231,8 @@ class SiamInstrumentDriver(InstrumentDriver):
         EVENT_CONNECTION_FAILED: Switch to STATE_DISCONNECTED.
         """
         
-        log.debug("state_handler_connecting: event = " +str(event) + "\n\t\t params = " + str(params))
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug("state_handler_connecting: event = " +str(event) + "\n\t\t params = " + str(params))
         
         success = InstErrorCode.OK
         next_state = None
@@ -271,7 +276,8 @@ class SiamInstrumentDriver(InstrumentDriver):
         EVENT_DATA_RECEIVED: Pass.
         """
         
-        log.debug("state_handler_connected: event = " +str(event) + "\n\t\t params = " + str(params))
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug("state_handler_connected: event = " +str(event) + "\n\t\t params = " + str(params))
         
         success = InstErrorCode.OK
         next_state = None
@@ -488,7 +494,10 @@ class SiamInstrumentDriver(InstrumentDriver):
         self.pid = params['pid']
         self.port = params['port']
 
-        log.debug("SiamInstrumentDriver _configure: pid = '" + str(self.pid) + "' port = '" + str(self.port) + "'")
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug("SiamInstrumentDriver _configure: pid = '" + \
+                      str(self.pid) + "' port = '" + str(self.port) + "'")
+            
         self.siamci = SiamCiAdapterProxy(self.pid, self.port)
         
         return True
@@ -594,7 +603,6 @@ class SiamInstrumentDriver(InstrumentDriver):
         For 'params', how is that a list, eg., [('all','all)], passed from
         the client gets converted to a tuple here, eg.,  (('all', 'all'),) ?
         """
-#        self._debug("op_get_status params " +str(params))
         
         assert(isinstance(params,(list,tuple))), 'Expected list or tuple params in op_get_status'
         assert(all(map(lambda x:isinstance(x,tuple),params))), \
@@ -611,10 +619,8 @@ class SiamInstrumentDriver(InstrumentDriver):
 
 
         response = yield self.siamci.get_status(params=params)
-#        self._debug("op_get_status response " +str(response))
         result = response.result
         reply = {'success':InstErrorCode.OK,'result':result}
-#        self._debug("op_get_status reply " +str(reply))
 
         yield self.reply_ok(msg, reply)
 
@@ -635,14 +641,17 @@ class SiamInstrumentDriver(InstrumentDriver):
             pass
         
         
-        log.debug('In SiamDriver op_get: params = ' +str(params)+ "  publish_stream=" +str(self.publish_stream))
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug('In SiamDriver op_get: params = ' +\
+                      str(params)+ "  publish_stream=" +str(self.publish_stream))
         
         if self.publish_stream is None: 
             successFail = yield self.siamci.fetch_params(params)
         else:
             successFail = yield self.siamci.fetch_params(params, publish_stream=self.publish_stream)
             
-        log.debug('In SiamDriver op_get successFail --> ' + str(successFail))
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug('In SiamDriver op_get successFail --> ' + str(successFail))
         
         # initialize reply assuming OK
         reply = {'success':InstErrorCode.OK, 'result':None}
@@ -654,14 +663,17 @@ class SiamInstrumentDriver(InstrumentDriver):
                 
         result = {}
         for it in successFail.item:
-            log.debug('In SiamDriver op_get item --> ' + str(it))
+            # what? logging does not have a TRACE level!
+#            if log.getEffectiveLevel() <= logging.TRACE:
+#                log.trace('In SiamDriver op_get item --> ' + str(it))
             chName = it.pair.first
             value = it.pair.second
             key = (SiamDriverChannel.INSTRUMENT, chName)
             result[key] = (InstErrorCode.OK, value)
             
             
-        log.debug('In SiamDriver op_get result --> ' + str(result))
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug('In SiamDriver op_get result --> ' + str(result))
 
         reply['result'] = result
         
@@ -721,9 +733,13 @@ class SiamInstrumentDriver(InstrumentDriver):
             params_for_proxy[param] = val
             
         
-        log.debug("params_for_proxy = " + str(params_for_proxy) + "  **** self.siamci = " + str(self.siamci))
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug("params_for_proxy = " + str(params_for_proxy) + "  **** self.siamci = " + str(self.siamci))
+            
         response = yield self.siamci.set_params(params_for_proxy)
-        log.debug('In SiamDriver op_set_params --> ' + str(response))    
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug('In SiamDriver op_set_params --> ' + str(response))
+                
         if response.result == OK:
             reply['success'] = InstErrorCode.OK
             reply['result'] = params_for_proxy    # just informative
@@ -883,7 +899,8 @@ class SiamInstrumentDriver(InstrumentDriver):
         log.debug('In SiamDriver __get_last_sample')
         
         response = yield self.siamci.get_last_sample()
-        log.debug('In SiamDriver __get_last_sample --> ' + str(response))  
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug('In SiamDriver __get_last_sample --> ' + str(response))  
         
         if response.result != OK:
             # TODO: some more appropriate error code
@@ -912,8 +929,9 @@ class SiamInstrumentDriver(InstrumentDriver):
 
         """
         
-        log.debug('In SiamDriver __start_sampling channels = ' +str(channels) + \
-                  " publish_stream = " + str(self.publish_stream))
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug('In SiamDriver __start_sampling channels = ' +str(channels) + \
+                      " publish_stream = " + str(self.publish_stream))
         
         if len(channels) != 1:
             reply['success'] = InstErrorCode.INVALID_CHANNEL
@@ -942,7 +960,8 @@ class SiamInstrumentDriver(InstrumentDriver):
         
         if self.publish_stream is not None:
             response = yield self.siamci.execute_StartAcquisition(channel, self.publish_stream)
-            log.debug('In SiamDriver __start_sampling --> ' + str(response))  
+            if log.getEffectiveLevel() <= logging.DEBUG:
+                log.debug('In SiamDriver __start_sampling --> ' + str(response))  
             
             if response.result != OK:
                 log.warning("execute_StartAcquisition failed: " +str(response))
@@ -997,8 +1016,9 @@ class SiamInstrumentDriver(InstrumentDriver):
 
         """
         
-        log.debug('In SiamDriver __stop_sampling channels = ' +str(channels) + \
-                  " publish_stream = " + str(self.publish_stream))
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug('In SiamDriver __stop_sampling channels = ' +str(channels) + \
+                      " publish_stream = " + str(self.publish_stream))
         
         # publish_stream is required.
         if self.publish_stream is None:
@@ -1026,7 +1046,8 @@ class SiamInstrumentDriver(InstrumentDriver):
             return
         
         response = yield self.siamci.execute_StopAcquisition(channel, self.publish_stream)
-        log.debug('In SiamDriver __stop_sampling --> ' + str(response))  
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug('In SiamDriver __stop_sampling --> ' + str(response))  
         
         if response.result != OK:
             # TODO: some more appropriate error code
@@ -1038,11 +1059,6 @@ class SiamInstrumentDriver(InstrumentDriver):
         
       
        
-
-    def _debug(self, msg):
-        print(blue(msg))
-#        log.debug(red(msg))
-
 
 class SiamInstrumentDriverClient(InstrumentDriverClient):
     """
