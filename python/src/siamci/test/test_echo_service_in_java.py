@@ -42,6 +42,8 @@ class JavaEchoTest(SiamCiTestCase):
         This test uses the support provided by IonTestCase, ie., by using self.test_sup.rpc_send(..),
         """
         
+        self._check_skip()
+        
         mc = message_client.MessageClient(proc=self.test_sup)
         message = yield mc.create_instance(Command_type, MessageName='command sent message')
         message.command ='echo'
@@ -54,10 +56,6 @@ class JavaEchoTest(SiamCiTestCase):
         log.debug(show_message(message, "Sending command to " +pid))
         
         (response, headers, msg) = yield self.test_sup.rpc_send(pid, 'echo', message)
-        
-#        from IPython.Shell import IPShellEmbed
-#        ipshell = IPShellEmbed()
-#        ipshell()
         
         self.assertIsInstance(response, message_client.MessageInstance)
         
@@ -72,8 +70,10 @@ class JavaEchoTest(SiamCiTestCase):
         Tests the RPC request/response without using the support provided by IonTestCase,
         ie., not using self.test_sup.rpc_send(..), but instead by creating a bootstrap.create_supervisor() 
         and using its rpc_send method directly.  
-        This served as a basis to implement the SiamCiAdapterProxy.
+        This originally served as a basis to implement the SiamCiAdapterProxy.
         """
+        
+        self._check_skip()
         
         p1 = yield bootstrap.create_supervisor()
         

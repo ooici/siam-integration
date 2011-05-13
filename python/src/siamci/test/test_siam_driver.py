@@ -29,7 +29,7 @@ import ion.util.procutils as pu
 
 class TestSiamInstrumentDriver(SiamCiTestCase):
     
-    # Increase timeout for Trial tests
+    # increase timeout for Trial tests
     timeout = 120
     
     
@@ -68,6 +68,8 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
     @defer.inlineCallbacks
     def test_001_initialize(self):
         
+        self._check_skip()
+                        
         reply = yield self.driver_client.initialize()
         success = reply['success']
         result = reply['result']
@@ -80,6 +82,8 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
     @defer.inlineCallbacks
     def test_002_configure(self):
 
+        self._check_skip()
+                
         yield self.test_001_initialize()
         
         params = self.driver_config
@@ -136,6 +140,8 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         - disconnect
         """
         
+        self._check_skip()
+                
         yield self.__connect()
         yield self.__disconnect()
         
@@ -150,6 +156,8 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         - disconnect
         """
         
+        self._check_skip()
+                
         yield self.__connect()
         
         # @todo: Only the all-all params is handled; handle other possible params
@@ -171,6 +179,8 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         - disconnect
         """
         
+        self._check_skip()
+                
         yield self.__connect()
         
         params = [(SiamDriverChannel.INSTRUMENT,'all')]
@@ -199,6 +209,8 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         - disconnect
         """
         
+        self._check_skip()
+                
         yield self.__connect()
         
         params = [(SiamDriverChannel.INSTRUMENT,'startDelayMsec'), (SiamDriverChannel.INSTRUMENT,'diagnosticSampleInterval')]
@@ -226,6 +238,8 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         - disconnect
         """
         
+        self._check_skip()
+                
         yield self.__connect()
         
         params = [(SiamDriverChannel.INSTRUMENT,'startDelayMsec'), (SiamDriverChannel.INSTRUMENT,'INVALID_param')]
@@ -250,7 +264,9 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         
     @defer.inlineCallbacks
     def test_005_get_params_specific_channels(self):
+        self._check_skip()
         raise unittest.SkipTest('Not yet implemented')
+        
 
 
     @defer.inlineCallbacks
@@ -264,6 +280,8 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         ideally along with an indication of valid (range of) values, and then set the 
         parameter with one such value.
         """
+        
+        self._check_skip()
         
         yield self.__connect()
         
@@ -291,6 +309,8 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         - disconnect
         """
         
+        self._check_skip()
+        
         yield self.__connect()
         
         channel = SiamDriverChannel.INSTRUMENT
@@ -309,6 +329,8 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         """
         @return: the reported channels
         """
+        
+        self._check_skip()
         
         yield self.__connect()
         
@@ -340,6 +362,8 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         - disconnect
         """
         
+        self._check_skip()
+        
         channels = yield self.__connect_and_get_channels()
         
         log.debug("test_009_get_channels channels =" +str(channels))
@@ -354,6 +378,8 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         - execute with SiamDriverChannel.INSTRUMENT and SiamDriverCommand.GET_LAST_SAMPLE
         - disconnect
         """
+        
+        self._check_skip()
         
         yield self.__connect()
         
@@ -396,6 +422,8 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         - disconnect
         """
         
+        self._check_skip()
+                
         #
         # connect and get channels
         #
@@ -447,7 +475,7 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         self.assertEqual(result.get("publish_stream", None), publish_stream)
         
         #
-        # Wait for a few samples to be notified to the receiver service
+        # wait for a few samples to be notified to the receiver service
         #
         yield pu.asleep(20)
 

@@ -14,6 +14,13 @@ from ion.agents.instrumentagents.instrument_constants import DriverAnnouncement
 from ion.agents.instrumentagents.instrument_constants import DriverChannel
 from ion.agents.instrumentagents.instrument_constants import InstErrorCode
 
+"""
+@TODO: Some of the classes below extend corresponding classes in the
+       general CI instrument framework. Sure, that's the idea. However,
+       there is still a need to examine and align these various 
+       components; for example, there are probably certain elements 
+       (states, events) that are not necessarily applicable to a SIAM driver(?).
+"""
 
 # Device states.
 class SiamDriverState(DriverState):

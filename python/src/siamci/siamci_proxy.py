@@ -40,7 +40,8 @@ class SiamCiAdapterProxy():
     If the 'publish_stream' is None (the default), then no such asynchronous behavior is enabled,
     with the command result being returned by the method itself.
     
-    @note: All operations here work at the level of GPBs.
+    @note: All operations here work at the level of GPBs. See
+    https://github.com/ooici/ion-object-definitions/blob/develop/net/ooici/play/instr_driver_interface.proto
     """
 
     def __init__(self, queue, port=None):
@@ -91,11 +92,11 @@ class SiamCiAdapterProxy():
 
         if args is None: args = [] 
         
-        assert(isinstance(args,list))
+        assert(isinstance(args, list))
         
         cmd = yield self.mc.create_instance(Command_type, MessageName='command sent message')
         cmd.command = cmd_name
-        for (c,p) in args:
+        for (c, p) in args:
             arg = cmd.args.add()
             arg.channel = c
             arg.parameter = p
@@ -113,9 +114,12 @@ class SiamCiAdapterProxy():
         @return: the response from the SIAM-CI adapter
         """
         
-        _debug_message(message, "Sending command to " +self.queue)
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug(_show_message(message, "Sending command to " + self.queue))
         
-        (response, headers, msg) = yield self.proc.rpc_send(recv=self.queue, operation='command', content=message)
+        (response, headers, msg) = yield self.proc.rpc_send(recv=self.queue, 
+                                                            operation='command', 
+                                                            content=message)
         
         defer.returnValue(response)
         
@@ -128,10 +132,10 @@ class SiamCiAdapterProxy():
         """
         cmd = yield self._make_command("echo")
         response = yield self._rpc(cmd)
-        _debug_message(response, "ping response:")
-#        from IPython.Shell import IPShellEmbed
-#        ipshell = IPShellEmbed()
-#        ipshell()
+        
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug(_show_message(response, "ping response:"))
+            
         defer.returnValue(response.command == "echo")
         
     @defer.inlineCallbacks
@@ -141,7 +145,9 @@ class SiamCiAdapterProxy():
         """
         cmd = yield self._make_command("list_ports", publish_stream=publish_stream)
         response = yield self._rpc(cmd)
-        _debug_message(response, "list_ports response:")
+        
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug(_show_message(response, "list_ports response:"))
         
         defer.returnValue(response)
     
@@ -159,7 +165,9 @@ class SiamCiAdapterProxy():
         args = [("port", self.port)]
         cmd = yield self._make_command("get_channels", args, publish_stream)
         response = yield self._rpc(cmd)
-        _debug_message(response, "get_channels response:")
+        
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug(_show_message(response, "get_channels response:"))
         
         defer.returnValue(response)
  
@@ -183,8 +191,8 @@ class SiamCiAdapterProxy():
         
         
         if params is None: params = []
-        assert(isinstance(params,(list,tuple))), 'Expected list or tuple params in get_status (SiamCiProxy).'
-        assert(all(map(lambda x:isinstance(x,tuple),params))), \
+        assert(isinstance(params, (list, tuple))), 'Expected list or tuple params in get_status (SiamCiProxy).'
+        assert(all(map(lambda x:isinstance(x, tuple), params))), \
             'Expected tuple elements in params list'
             
         args = [("port", self.port)]
@@ -194,7 +202,9 @@ class SiamCiAdapterProxy():
             
         cmd = yield self._make_command("get_status", args, publish_stream)
         response = yield self._rpc(cmd)
-        _debug_message(response, "get_status response:")
+        
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug(_show_message(response, "get_status response:"))
         
         defer.returnValue(response)
         
@@ -208,7 +218,9 @@ class SiamCiAdapterProxy():
         assert self.port, "No port provided"
         cmd = yield self._make_command("get_last_sample", [("port", self.port)], publish_stream)
         response = yield self._rpc(cmd)
-        _debug_message(response, "get_last_sample response:")
+        
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug(_show_message(response, "get_last_sample response:"))
         
         defer.returnValue(response)
         
@@ -230,11 +242,13 @@ class SiamCiAdapterProxy():
             else:
                 assert not isinstance(it, (list, dict))
                 
-                args.extend( [ (SiamDriverChannel.INSTRUMENT, it) ])
+                args.extend([ (SiamDriverChannel.INSTRUMENT, it) ])
                 
         cmd = yield self._make_command("fetch_params", args, publish_stream)
         response = yield self._rpc(cmd)
-        _debug_message(response, "fetch_params response:")
+        
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug(_show_message(response, "fetch_params response:"))
         
         defer.returnValue(response)
         
@@ -248,9 +262,9 @@ class SiamCiAdapterProxy():
         """
 
         assert(isinstance(params, dict))
-        assert(all(map(lambda x: isinstance(x,str),
+        assert(all(map(lambda x: isinstance(x, str),
                        params.keys()))), 'Each key must be a string'
-        assert(all(map(lambda x: isinstance(x,str),
+        assert(all(map(lambda x: isinstance(x, str),
                        params.values()))), 'Each value must be a string'
         
         
@@ -259,7 +273,9 @@ class SiamCiAdapterProxy():
              
         cmd = yield self._make_command("set_params", args, publish_stream)
         response = yield self._rpc(cmd)
-        _debug_message(response, "set_params response:")
+        
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug(_show_message(response, "set_params response:"))
         
         defer.returnValue(response)
         
@@ -268,7 +284,6 @@ class SiamCiAdapterProxy():
     def execute_StartAcquisition(self, channel, publish_stream):
         """
         Sends a execute_StartAcquisition command.
-        @todo: very preliminary
         """
 
         assert(channel is not None)
@@ -280,7 +295,9 @@ class SiamCiAdapterProxy():
              
         cmd = yield self._make_command("execute_StartAcquisition", args, publish_stream)
         response = yield self._rpc(cmd)
-        _debug_message(response, "execute_StartAcquisition response:")
+        
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug(_show_message(response, "execute_StartAcquisition response:"))
         
         defer.returnValue(response)
         
@@ -289,7 +306,6 @@ class SiamCiAdapterProxy():
     def execute_StopAcquisition(self, channel, publish_stream):
         """
         Sends a execute_StopAcquisition command.
-        @todo: very preliminary
         """
 
         assert(channel is not None)
@@ -301,21 +317,16 @@ class SiamCiAdapterProxy():
              
         cmd = yield self._make_command("execute_StopAcquisition", args, publish_stream)
         response = yield self._rpc(cmd)
-        _debug_message(response, "execute_StopAcquisition response:")
+        
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug(_show_message(response, "execute_StopAcquisition response:"))
         
         defer.returnValue(response)
         
         
 
         
-        
-
-def _debug_message(msg, title):
-    if log.getEffectiveLevel() > logging.DEBUG:
-        return
-    log.debug(_show_message(msg, title))
-  
 def _show_message(msg, title="Message:"):
     prefix = "    | "
-    contents = str(msg).strip().replace("\n", "\n"+prefix)
-    return title+ "\n    " + str(type(msg)) + "\n" + prefix + contents
+    contents = str(msg).strip().replace("\n", "\n" + prefix)
+    return title + "\n    " + str(type(msg)) + "\n" + prefix + contents

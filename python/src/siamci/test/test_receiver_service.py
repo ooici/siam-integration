@@ -9,11 +9,11 @@
 
 from twisted.internet import defer
 
-from ion.test.iontest import IonTestCase
 import ion.util.ionlog
 from ion.core import ioninit
 #from ion.core import bootstrap #-
 
+from siamci.test.siamcitest import SiamCiTestCase
 from siamci.receiver_service import SiamCiReceiverServiceClient
 
 
@@ -21,7 +21,7 @@ from siamci.receiver_service import SiamCiReceiverServiceClient
 # the service; if not included, the default name in SiamCiReceiverService.declare would be used.
 receiver_service_name = 'siamci_receiver_test'
 
-class SiamCiReceiverServiceTest(IonTestCase):
+class SiamCiReceiverServiceTest(SiamCiTestCase):
     """
     Basic tests of SiamCiReceiverService.
     """
@@ -48,6 +48,7 @@ class SiamCiReceiverServiceTest(IonTestCase):
 
     @defer.inlineCallbacks
     def test_expect_1(self):
+        self._check_skip()
         publish_id = "some_publish_id"
         yield self.client.expect(publish_id)
         expected = yield self.client.getExpected()
@@ -56,6 +57,7 @@ class SiamCiReceiverServiceTest(IonTestCase):
 
     @defer.inlineCallbacks
     def test_expect_accept_1(self):
+        self._check_skip()
         publish_id = "some_publish_id"
         yield self.client.expect(publish_id)
         yield self.client.acceptResponse(publish_id)

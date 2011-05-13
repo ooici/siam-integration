@@ -39,8 +39,8 @@ log = ion.util.ionlog.getLogger(__name__)
 
 class TestSiamAgent(SiamCiTestCase):
 
-    # Increase the timeout so we can handle longer instrument interactions.
-#    timeout = 180
+    # increase timeout for Trial tests
+    timeout = 120
 
 
     @defer.inlineCallbacks
@@ -119,12 +119,14 @@ class TestSiamAgent(SiamCiTestCase):
         
         
     @defer.inlineCallbacks
-    def _test_001_initialize(self, close_transaction=True):
+    def test_001_initialize(self, close_transaction=True):
         """
         - start transaction
         - initialize
         - return transaction id
         """
+        
+        self._check_skip()
         
         # Begin an explicit transaction.
         reply = yield self.ia_client.start_transaction(0)
@@ -134,7 +136,7 @@ class TestSiamAgent(SiamCiTestCase):
         self.assertEqual(type(tid),str)
         self.assertEqual(len(tid),36)
     
-        log.debug("_test_001_initialize tid = " + str(tid))
+        log.debug("test_001_initialize tid = " + str(tid))
         
         # Issue state transition commands to bring the agent into
         # observatory mode.
@@ -154,7 +156,7 @@ class TestSiamAgent(SiamCiTestCase):
 
         
     @defer.inlineCallbacks
-    def _test_002_go_active_and_run(self, close_transaction=True):
+    def test_002_go_active_run(self, close_transaction=True):
         """
         - initialize
         - GO_ACTIVE
@@ -163,7 +165,9 @@ class TestSiamAgent(SiamCiTestCase):
         - check AgentState.OBSERVATORY_MODE
         """
         
-        tid = yield self._test_001_initialize(False) 
+        self._check_skip()
+        
+        tid = yield self.test_001_initialize(False) 
         
         # Connect to the device.
         cmd = [AgentCommand.TRANSITION,AgentEvent.GO_ACTIVE]
@@ -205,8 +209,41 @@ class TestSiamAgent(SiamCiTestCase):
         defer.returnValue(tid)
 
 
+        
     @defer.inlineCallbacks
-    def _test_003_get_set_params_verify(self, close_transaction=True):
+    def test_003_go_active_run_reset(self, close_transaction=True):
+        """
+        TODO
+        """
+
+        self._check_skip()
+        
+        tid = yield self.test_002_go_active_run(False) 
+
+        # Reset the agent to disconnect and bring down the driver and client.
+        cmd = [AgentCommand.TRANSITION,AgentEvent.RESET]
+        reply = yield self.ia_client.execute_observatory(cmd,tid)
+        success = reply['success']
+        result = reply['result']
+        self.assert_(InstErrorCode.is_ok(success))
+
+        # Check agent state.
+        params = [AgentStatus.AGENT_STATE]
+        reply = yield self.ia_client.get_observatory_status(params,tid)
+        success = reply['success']
+        result = reply['result']
+        agent_state = result[AgentStatus.AGENT_STATE][1]
+        self.assert_(InstErrorCode.is_ok(success))        
+        self.assert_(agent_state == AgentState.UNINITIALIZED)        
+
+        if close_transaction:
+            yield self._close_transaction(tid)
+
+        defer.returnValue(tid)
+ 
+
+    @defer.inlineCallbacks
+    def test_010_params_get_set_verify(self, close_transaction=True):
         """
         - go active and run
         - get params
@@ -214,7 +251,9 @@ class TestSiamAgent(SiamCiTestCase):
         - get params and verify
         """
         
-        tid = yield self._test_002_go_active_and_run(False) 
+        self._check_skip()
+        
+        tid = yield self.test_002_go_active_run(False) 
         
         channel = SiamDriverChannel.INSTRUMENT
  
@@ -263,14 +302,16 @@ class TestSiamAgent(SiamCiTestCase):
  
 
     @defer.inlineCallbacks
-    def test_004_get_last_sample(self, close_transaction=True):
+    def test_020_acquisition_get_last_sample(self, close_transaction=True):
         """
         - go active and run
-        - get params, set params, verify
-        - execute a few things
+        - execute GET_LAST_SAMPLE
+        - verify successful completion
         """
         
-        tid = yield self._test_003_get_set_params_verify(False) 
+        self._check_skip()
+        
+        tid = yield self.test_002_go_active_run(False) 
         
         chans = [SiamDriverChannel.INSTRUMENT]
         cmd = [SiamDriverCommand.GET_LAST_SAMPLE]
@@ -279,9 +320,7 @@ class TestSiamAgent(SiamCiTestCase):
         result = reply['result']
 
         # temporary: instead of failing, skip
-        if not InstErrorCode.is_ok(success): raise unittest.SkipTest(result)
-        
-        print blue('test_004_get_last_sample result = ' + str(result))
+        if not InstErrorCode.is_ok(success): raise unittest.SkipTest(str(result))
         
         self.assert_(InstErrorCode.is_ok(success))
  
@@ -292,16 +331,17 @@ class TestSiamAgent(SiamCiTestCase):
  
         
     @defer.inlineCallbacks
-    def _test_010_execute_instrument(self, close_transaction=True):
+    def test_021_acquisition_start_wait_stop(self, close_transaction=True):
         """
-        - go active and run
-        - get params, set params, verify
-        - execute a few things
+        - go active an run
+        - execute START_AUTO_SAMPLING
+        - wait for a few seconds
+        - execute STOP_AUTO_SAMPLING
         """
         
-#        raise unittest.SkipTest("only partially implemented")
-    
-        tid = yield self._test_003_get_set_params_verify(False) 
+        self._check_skip()
+        
+        tid = yield self.test_002_go_active_run(False) 
         
         channel = SiamDriverChannel.INSTRUMENT
  
@@ -316,7 +356,7 @@ class TestSiamAgent(SiamCiTestCase):
         result = reply['result']
 
         # temporary: instead of failing, skip
-        if not InstErrorCode.is_ok(success): raise unittest.SkipTest(result)
+        if not InstErrorCode.is_ok(success): raise unittest.SkipTest(str(result))
         
         self.assert_(InstErrorCode.is_ok(success))
 
@@ -347,48 +387,11 @@ class TestSiamAgent(SiamCiTestCase):
         
         self.assert_(InstErrorCode.is_ok(success))
         
-        # Restore original configuration.
-        print red('=============== restoring config')
-        reply = yield self.ia_client.set_device(orig_config,tid)
-        success = reply['success']
-        result = reply['result']
+        if close_transaction:
+            yield self._close_transaction(tid)
 
-        self.assert_(InstErrorCode.is_ok(success))
-
-        # Verify the original configuration was restored.    
-        params = [(channel,'all')]
-        reply = yield self.ia_client.get_device(params,tid)
-        success = reply['success']
-        result = reply['result']
-
-        # Strip off individual success vals to create a set params to
-        # restore original config later.
-        final_config = dict(map(lambda x : (x[0],x[1][1]),result.items()))
-
-        self.assert_(InstErrorCode.is_ok(success))
-        for (key,val) in orig_config.iteritems():
-            if isinstance(val,float):
-                self.assertAlmostEqual(val,final_config[key],4)
-            else:
-                self.assertEqual(val,final_config[key])
-                
-        # Reset the agent to disconnect and bring down the driver and client.
-        cmd = [AgentCommand.TRANSITION,AgentEvent.RESET]
-        reply = yield self.ia_client.execute_observatory(cmd,tid)
-        success = reply['success']
-        result = reply['result']
-        self.assert_(InstErrorCode.is_ok(success))
-
-        # Check agent state.
-        params = [AgentStatus.AGENT_STATE]
-        reply = yield self.ia_client.get_observatory_status(params,tid)
-        success = reply['success']
-        result = reply['result']
-        agent_state = result[AgentStatus.AGENT_STATE][1]
-        self.assert_(InstErrorCode.is_ok(success))        
-        self.assert_(agent_state == AgentState.UNINITIALIZED)        
-
-        # End the transaction.
-        reply = yield self.ia_client.end_transaction(tid)
-        success = reply['success']
-        self.assert_(InstErrorCode.is_ok(success))
+        defer.returnValue(tid)
+        
+        
+        
+       

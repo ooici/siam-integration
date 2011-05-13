@@ -33,30 +33,34 @@ class TestSiamCiAdapterProxy(SiamCiTestCase):
         yield self.siamci.stop()
         yield self._stop_container()
 
-
     @defer.inlineCallbacks
     def test_ping(self):
+        self._check_skip()
         ret = yield self.siamci.ping()
         self.assertTrue(ret)
 
     @defer.inlineCallbacks
     def test_list_ports(self):
+        self._check_skip()
         ret = yield self.siamci.list_ports()
         self.assertIsSuccessFail(ret)
         self.assertEquals(ret.result, OK)
 
     @defer.inlineCallbacks
     def test_get_channels(self):
+        self._check_skip()
         ret = yield self.siamci.get_channels()
         self.assertIsSuccessFail(ret)
         self.assertEquals(ret.result, OK)
         
     @defer.inlineCallbacks
     def test_get_status(self):
+        self._check_skip()
         ret = yield self.siamci.get_status()
 
     @defer.inlineCallbacks
     def test_get_last_sample(self):
+        self._check_skip()
         ret = yield self.siamci.get_last_sample()
         self.assertIsSuccessFail(ret)
         self.assertEquals(ret.result, OK)
@@ -64,6 +68,7 @@ class TestSiamCiAdapterProxy(SiamCiTestCase):
     @defer.inlineCallbacks
     def test_fetch_params_some_good(self):
         """fetch specific list of parameters"""
+        self._check_skip()
         ret = yield self.siamci.fetch_params(['startDelayMsec'])
         self.assertIsSuccessFail(ret)
         self.assertEquals(ret.result, OK)
@@ -71,6 +76,7 @@ class TestSiamCiAdapterProxy(SiamCiTestCase):
     @defer.inlineCallbacks
     def test_fetch_params_some_wrong(self):
         """fetch specific list of parameters"""
+        self._check_skip()
         ret = yield self.siamci.fetch_params(['startDelayMsec', 'WRONG_PARAM'])
         self.assertIsSuccessFail(ret)
         self.assertEquals(ret.result, ERROR)
@@ -78,18 +84,21 @@ class TestSiamCiAdapterProxy(SiamCiTestCase):
     @defer.inlineCallbacks
     def test_fetch_params_all(self):
         """fetch all parameters"""
+        self._check_skip()
         ret = yield self.siamci.fetch_params()
         self.assertIsSuccessFail(ret)
         self.assertEquals(ret.result, OK)
         
     @defer.inlineCallbacks
     def test_set_params_good(self):
+        self._check_skip()
         ret = yield self.siamci.set_params({'startDelayMsec' : '1000' })
         self.assertIsSuccessFail(ret)
         self.assertEquals(ret.result, OK)
         
     @defer.inlineCallbacks
     def test_set_params_wrong(self):
+        self._check_skip()
         ret = yield self.siamci.set_params({'startDelayMsec' : '1000'
                                             , 'WRONG_PARAM' : 'fooVal'
                                           })

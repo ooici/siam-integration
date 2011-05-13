@@ -3,7 +3,8 @@
 """
 @file siamci/receiver_service.py
 @author Carlos Rueda
-@brief Simple service to receive asynchronous reponses from the SIAM-CI adapter
+@brief Simple service to receive asynchronous responses from 
+the SIAM-CI adapter in java
 """
 
 import sys
@@ -11,8 +12,9 @@ import traceback
 
 import ion.util.ionlog
 log = ion.util.ionlog.getLogger(__name__)
-from twisted.internet import defer
+import logging
 
+from twisted.internet import defer
 
 from ion.core.object import object_utils
 from ion.core.process.process import ProcessFactory
@@ -20,14 +22,7 @@ from ion.core.process.service_process import ServiceProcess, ServiceClient
 
 from ion.core.messaging.message_client import MessageClient
 
-#TODO: remove the try once some > 0.4.8 release is available
-try:
-    # this is the new way as of some time *after* ioncore-python 0.4.8 (which is the latest
-    # release as of time of writing (2011-04-23).
-    from ion.services.coi.resource_registry.resource_client import ResourceClient
-except:
-    # the "old" way.   
-    from ion.services.coi.resource_registry_beta.resource_client import ResourceClient
+from ion.services.coi.resource_registry.resource_client import ResourceClient
 
 import ion.util.procutils as pu
 
@@ -35,6 +30,7 @@ import ion.util.procutils as pu
 class SiamCiReceiverService(ServiceProcess):
     """
     Simple service to receive asynchronous reponses from the SIAM-CI adapter
+    in java
     """
     # Declaration of service
     declare = ServiceProcess.service_declare(name='siamci_receiver',
@@ -58,43 +54,43 @@ class SiamCiReceiverService(ServiceProcess):
 
 
     def slc_init(self):
-        log.info('SiamCiReceiverService.slc_init()')
-        pass
+        log.debug('SiamCiReceiverService.slc_init()')
 
     def slc_terminate(self):
         """
         Just logs the expect and accepted sets
         """
-        log.info('SiamCiReceiverService.slc_terminate() ======= ')
-        for e in self.expect:
-            log.info('---- expect: ' +str(e))
-        for a in self.accepted:
-            log.info('---accepted: ' +str(a))
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug('SiamCiReceiverService.slc_terminate() ======= ')
+            for e in self.expect:
+                log.debug('---- expect: ' +str(e))
+            for a in self.accepted:
+                log.debug('---accepted: ' +str(a))
 
 
     def _get_publish_id(self, content, headers, msg):
         """
         Gets the publish_id from the headers or the content.
         Note: the java client puts the publish_id in the headers; we check there first.        
-        If not found in the headers, we check in the content; this is basically to support 
-        python-side clients for testing purposes.
+        If not found in the headers, we check in the content (if it is a dict); this is 
+        basically to support python-side clients for testing purposes.
         
         @return: the publish ID; None if not found
         """
         publish_id = None
         if 'publish_id' in headers.keys():
             publish_id = headers['publish_id']
-            log.info('_get_publish_id: publish_id = "'+publish_id+ '" (from headers)')
-        elif 'publish_id' in content.keys():
+            log.debug('_get_publish_id: publish_id = "'+publish_id+ '" (from headers)')
+        elif isinstance(content, dict) and 'publish_id' in content.keys():
             publish_id = content['publish_id']
-            log.info('_get_publish_id: publish_id = "'+publish_id+ '" (from content)')
+            log.debug('_get_publish_id: publish_id = "'+publish_id+ '" (from content)')
             
         return publish_id
        
     
     @defer.inlineCallbacks
     def op_expect(self, content, headers, msg):
-        log.info('op_expect: ' +str(content))
+        log.debug('op_expect: ' +str(content))
         
         publish_id = self._get_publish_id(content, headers, msg)
         if publish_id:
@@ -107,12 +103,6 @@ class SiamCiReceiverService(ServiceProcess):
 
     @defer.inlineCallbacks
     def op_acceptResponse(self, content, headers, msg):
-        log.info('op_acceptResponse: ' +str(headers))
-#        
-#        from IPython.Shell import IPShellEmbed
-#        ipshell = IPShellEmbed()
-#        ipshell()
-#
         publish_id = self._get_publish_id(content, headers, msg)
         if publish_id:
             self.accepted[publish_id] = content
@@ -147,7 +137,7 @@ class SiamCiReceiverService(ServiceProcess):
         @return: a list with expected id's that have not been received
         """
         
-        log.info('op_getExpected: ' +str(headers))
+        log.debug('op_getExpected: ' +str(headers))
         
         timeout = None
         if 'timeout' in content.keys() and content['timeout']:
@@ -261,7 +251,7 @@ class SiamCiReceiverServiceClient(ServiceClient):
             timeout = 15.0
             
         (content, headers, payload) = yield self.rpc_send('getExpected', payload, timeout=timeout)
-        log.info('getExpected service reply: ' + str(content))
+        log.debug('getExpected service reply: ' + str(content))
         defer.returnValue(content)
         
     @defer.inlineCallbacks
@@ -273,7 +263,7 @@ class SiamCiReceiverServiceClient(ServiceClient):
             raise Exception("publish_id cannot be None")
         payload = {'publish_id':publish_id}
         (content, headers, payload) = yield self.rpc_send('getAccepted', payload)
-        log.info('getAccepted service reply: ' + str(content))
+        log.debug('getAccepted service reply: ' + str(content))
         defer.returnValue(content)
         
 

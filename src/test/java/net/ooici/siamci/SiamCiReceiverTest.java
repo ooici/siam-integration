@@ -29,24 +29,19 @@ import com.rabbitmq.client.AMQP;
     $ cd python      # base directory of the SIAM-CI python code
     $ workon siamci  # or your corresponding virtenv
     $ bin/twistd --pidfile=ps1 -n cc -a sysname=siamci -h localhost src/siamci/start_receiver_service.py
+    2011-05-12 16:31:37-0700 [-] Log opened.
+    2011-05-12 16:31:37-0700 [-] twistd 11.0.0 (/Users/carueda/ooici3/Dev/virtenvs/siamci/bin/python 2.5.4) starting up.
+    2011-05-12 16:31:37-0700 [-] reactor class: twisted.internet.selectreactor.SelectReactor.
+    2011-05-12 16:31:37.663 [start_receiver_service: 55] INFO :Starting siamci_receiver service ...
     ...
-    ION Python Capability Container (version 0.4.8)
+    ION Python Capability Container (version 0.4.13)
     [env: /Users/carueda/ooici3/Dev/virtenvs/siamci/lib/python2.5/site-packages] 
-    [container id: carueda@carueda.51784] 
+    [container id: carueda@carueda.local.53913] 
     
-    ><> ps()
-    name                id                  supervisor       
-    ---------------------------------------------------------
-    bootstrap           carueda_51784.1     None             
-    siamci_receiver     carueda_51784.2     carueda_51784.1  
-    ---------------------------------------------------------
-    Running processes: 2
-    ><> 
+    ><> 2011-05-12 16:31:45.095 [receiver_service:111] WARNING:op_acceptResponse: publish_id not given
  * </pre>
  * 
- * <p>
- * Then this test can be run as follows:
- * 
+ * The last line is generated when you run this test:
  * <pre>
     SIAM_CI_RECEIVER=- mvn test -Dtest=SiamCiReceiverTest
  * </pre>

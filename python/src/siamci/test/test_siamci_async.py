@@ -40,6 +40,8 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
 
     @defer.inlineCallbacks
     def test_list_ports_async(self):
+        self._check_skip()
+
         #
         # @todo: more robust assignment of publish IDs
         #
@@ -66,6 +68,8 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
 
     @defer.inlineCallbacks
     def test_get_status_async(self):
+        self._check_skip()
+
         #
         # @todo: more robust assignment of publish IDs
         #
@@ -92,6 +96,8 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
 
     @defer.inlineCallbacks
     def test_get_last_sample_async(self):
+        self._check_skip()
+
         #
         # @todo: more robust assignment of publish IDs
         #
@@ -118,6 +124,8 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
 
     @defer.inlineCallbacks
     def test_get_channels_async(self):
+        self._check_skip()
+
         #
         # @todo: more robust assignment of publish IDs
         #
@@ -144,6 +152,8 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
 
     @defer.inlineCallbacks
     def test_fetch_params_some_good_async(self):
+        self._check_skip()
+
         #
         # @todo: more robust assignment of publish IDs
         #
@@ -169,6 +179,8 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
         
     @defer.inlineCallbacks
     def test_fetch_params_some_wrong_async(self):
+        self._check_skip()
+
         #
         # @todo: more robust assignment of publish IDs
         #
@@ -194,6 +206,8 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
         
     @defer.inlineCallbacks
     def test_fetch_params_all_async(self):
+        self._check_skip()
+
         #
         # @todo: more robust assignment of publish IDs
         #
@@ -217,6 +231,8 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
 
     @defer.inlineCallbacks
     def test_set_params_good_async_timeout_30(self):
+        self._check_skip()
+
         #
         # @todo: more robust assignment of publish IDs
         #
@@ -241,6 +257,8 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
 
     @defer.inlineCallbacks
     def test_set_params_wrong_async(self):
+        self._check_skip()
+
         #
         # @todo: more robust assignment of publish IDs
         #
