@@ -1,6 +1,19 @@
 SIAM-CI Integration Prototype change log
 Carlos Rueda - MBARI
 
+2011-05-13
+	- better diagnostics at initialization of the SiamCI adapter program in java because
+	  of its dependency on various runtime components:
+	  - SIAM node: check connection.
+	  - RBNB server: check connection if any reported SIAM instrument has the relevant 
+	    publishHost property associated.
+	    
+	- CI java libraries upgrade:
+		ioncore 0.2.6-dev -- latest release as of today
+		ionproto 0.3.21-pl1 - as indicated in ioncore-java's .pom
+	  Some minor required code updates and also some clean-up.
+	
+	  
 2011-05-12
 	- more on testing involving instrument agent 
 	- completed start/stop data aquisition test in test_siamci_data_async.py

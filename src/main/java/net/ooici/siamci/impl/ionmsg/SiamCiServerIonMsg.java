@@ -15,7 +15,6 @@ import java.util.concurrent.Executors;
 
 import net.ooici.core.container.Container;
 import net.ooici.core.container.Container.Structure;
-import net.ooici.core.message.IonMessage.IonMsg;
 import net.ooici.play.InstrDriverInterface.Command;
 import net.ooici.siamci.IPublisher;
 import net.ooici.siamci.IRequestProcessor;
@@ -566,12 +565,8 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
                 + reply.getContent().getClass());
         StructureManager sm = StructureManager.Factory(reply);
         log.trace(">>>> Heads:");
-        for (String key : sm.getHeadIds()) {
-            log.trace(_rid(reqId) + "  headId = " + key);
-            GPBWrapper<IonMsg> msgWrap = sm.getObjectWrapper(key);
-            log.trace(_rid(reqId) + "  object wrapper = " + msgWrap);
-            // IonMsg msg = msgWrap.getObjectValue();
-        }
+
+        log.trace(_rid(reqId) + "  headId = " + sm.getHeadId());
         log.trace("\n" + _rid(reqId) + ">>>> Items:");
         for (String key : sm.getItemIds()) {
             log.trace(_rid(reqId) + "  itemId = " + key);

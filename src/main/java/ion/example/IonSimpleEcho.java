@@ -8,7 +8,6 @@ import ion.core.utils.StructureManager;
 
 import java.util.Map;
 
-import net.ooici.core.message.IonMessage.IonMsg;
 import net.ooici.play.InstrDriverInterface.Command;
 
 /**
@@ -147,13 +146,7 @@ public class IonSimpleEcho {
         System.out.println("\n------------------<_unpack>--------------------------------");
         System.out.println(" reply.getContent class = " +reply.getContent().getClass());
         StructureManager sm = StructureManager.Factory(reply);
-        System.out.println(">>>> Heads:");
-        for(String key : sm.getHeadIds()) {
-            System.out.println(key);
-            GPBWrapper<IonMsg> msgWrap = sm.getObjectWrapper(key);
-            System.out.println(msgWrap);
-//            IonMsg msg = msgWrap.getObjectValue();
-        }
+        System.out.println(">>>> Head: " + sm.getHeadId());
         System.out.println("\n>>>> Items:");
         for(String key : sm.getItemIds()) {
             System.out.println(key);

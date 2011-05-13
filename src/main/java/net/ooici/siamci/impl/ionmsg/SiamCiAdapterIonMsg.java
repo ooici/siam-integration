@@ -14,8 +14,7 @@ import org.slf4j.LoggerFactory;
  */
 public class SiamCiAdapterIonMsg implements ISiamCiAdapter {
 
-    private static final Logger log = LoggerFactory
-            .getLogger(SiamCiAdapterIonMsg.class);
+    private static final Logger log = LoggerFactory.getLogger(SiamCiAdapterIonMsg.class);
 
     private final String brokerHost;
     private final int brokerPort;
@@ -48,15 +47,18 @@ public class SiamCiAdapterIonMsg implements ISiamCiAdapter {
         this.requestProcessors = requestProcessors;
     }
 
-    
     public void start() throws Exception {
-        siamCiProcess = new SiamCiServerIonMsg(brokerHost, brokerPort,
-                queueName, ionExchange, requestProcessors);
+        siamCiProcess = new SiamCiServerIonMsg(brokerHost,
+                brokerPort,
+                queueName,
+                ionExchange,
+                requestProcessors);
 
         thread = new Thread(siamCiProcess, siamCiProcess.getClass()
                 .getSimpleName());
+
         if (log.isDebugEnabled()) {
-            log.debug("Starting process thread");
+            log.debug("Starting thread " + thread.getName());
         }
         thread.start();
     }

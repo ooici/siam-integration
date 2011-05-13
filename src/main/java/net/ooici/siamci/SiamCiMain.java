@@ -3,6 +3,7 @@ package net.ooici.siamci;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
@@ -12,7 +13,9 @@ import net.ooici.siamci.SiamCi.SiamCiParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import siam.ISiam;
 import siam.PortItem;
+import siam.SiamUtils;
 
 /**
  * Main SiamCi program. For usage, see {@link #main(String[])}.
@@ -160,22 +163,28 @@ public class SiamCiMain {
      * Starts the service.
      */
     private void _start() throws Exception {
-        _showServiceInfo();
+        _showServiceParameter();
+        _startComponents();
         _setShutdownHook();
         _showPorts();
         _startAdapter();
     }
 
-    private void _showServiceInfo() {
+    private void _showServiceParameter() {
         log.info("Parameters: " + siamCiParams);
 
     }
 
+    private void _startComponents() throws Exception {
+        SiamCi.instance().getSiam().start();
+    }
+
     private void _showPorts() {
         log.info("Listing instruments in the SIAM node:");
+        ISiam siam = SiamCi.instance().getSiam();
         List<PortItem> ports;
         try {
-            ports = SiamCi.instance().getSiam().listPorts();
+            ports = siam.listPorts();
         }
         catch (Exception e) {
             log.warn("Error retrieving list of ports", e);
@@ -186,11 +195,71 @@ public class SiamCiMain {
             log.info(" * port='" + pi.portName + "' device='" + pi.deviceId
                     + "' service='" + pi.serviceName + "'");
         }
+
+        _checkRbnbConnectionIfNeeded(siam, ports);
+    }
+
+    /**
+     * In case any of the reported instruments may be reporting data, do a quick
+     * check that connection to the RBNB server is OK; log a warning if not.
+     */
+    private void _checkRbnbConnectionIfNeeded(ISiam siam, List<PortItem> ports) {
+        /*
+         * just use the first reported instrument with an associated RBNB host.
+         */
+        String rbnbHost = null;
+        String portName = null;
+        for (PortItem pi : ports) {
+            Map<String, String> props = null;
+            try {
+                props = siam.getPortProperties(pi.portName);
+            }
+            catch (Exception e) {
+                /*
+                 * Ignore the exception here. Any associated error with this
+                 * instrument should be handled later by other parts of the
+                 * code. A likely situation here is java.rmi.UnmarshalException,
+                 * which happens when the reported instrument does not have its
+                 * associated JAR in the current JRE.
+                 */
+                continue;
+            }
+            rbnbHost = SiamUtils.getRbnbHost(props);
+            if (rbnbHost != null) {
+                portName = pi.portName;
+                break;
+            }
+        }
+
+        if (rbnbHost == null) {
+            // no check necessary
+            return;
+        }
+
+        /*
+         * Do the check.
+         */
+        if (log.isDebugEnabled()) {
+            log.debug("Checking connection with OSDT RBNB server on host '"
+                    + rbnbHost + "' ...");
+        }
+        try {
+            SiamUtils.checkConnectionToRbnb(rbnbHost,
+                    "client-for-testing-connection");
+        }
+        catch (Exception e) {
+            log.warn("Error while testing connection with RBNB server on host '"
+                    + rbnbHost
+                    + "', which is a property associated with instrument on port '"
+                    + portName
+                    + "'. Make sure that server is running, otherwise data "
+                    + "acquisition commands on this instrument will fail. "
+                    + "[exception message: '" + e.getMessage() + "']");
+        }
     }
 
     private void _startAdapter() throws Exception {
-        log.info("Starting SIAM-CI adapter. SIAM node host: "
-                + siamCiParams.siamHost);
+        log.info("Starting SIAM-CI adapter");
         SiamCi.instance().getSiamCiAdapter().start();
     }
 

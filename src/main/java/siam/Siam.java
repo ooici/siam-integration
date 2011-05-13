@@ -67,41 +67,82 @@ public class Siam implements ISiam {
 
     private static Node _getNode(String host) throws MalformedURLException,
             RemoteException, NotBoundException {
+
         String nodeURL = getNodeURL(host);
+        log.info("Looking up '" + nodeURL + "' to connect with SIAM node ...");
         return (Node) Naming.lookup(nodeURL.toString());
+    }
+
+    /**
+     * Logs a simplified version of the throwable and its chain of causes
+     * without the full stacktrace.
+     */
+    private static void _logError(Throwable t) {
+        String prefix = "";
+        StringBuilder sb = new StringBuilder();
+        while (t != null) {
+            sb.append(prefix + t.getClass().getName() + ": " + t.getMessage()
+                    + "\n");
+            t = t.getCause();
+            prefix = "caused by: ";
+        }
+        log.error(sb.toString());
     }
 
     // /////////
     // Instance.
     // /////////
 
-    private final Node node;
-    private final long nodeId;
-    private final NodeInfo nodeInfo;
+    private final String host;
+
+    // assigned by start()
+    private Node node;
+    private long nodeId;
+    private NodeInfo nodeInfo;
 
     /**
-     * Creates a point of access to a SIAM node instance.
+     * Creates a point of access to a SIAM node instance. To actually enable the
+     * connection, call {@link #start()}.
      * 
      * @param host
-     * @throws NotBoundException
-     * @throws RemoteException
-     * @throws MalformedURLException
      */
-    public Siam(String host) throws Exception {
-        node = _getNode(host);
-        nodeId = node.getId();
-        nodeInfo = node.getNodeInfo();
+    public Siam(String host) {
+        this.host = host;
+    }
+
+    private void _checkConnection() {
+        if (node == null) {
+            throw new RuntimeException("start() must be called first");
+        }
+    }
+
+    public void start() throws Exception {
+        if (node != null) {
+            throw new RuntimeException("already connected");
+        }
+        try {
+            node = _getNode(host);
+            nodeId = node.getId();
+            nodeInfo = node.getNodeInfo();
+        }
+        catch (Exception e) {
+            _logError(e);
+            throw e;
+        }
     }
 
     public long getNodeId() {
+        _checkConnection();
         return nodeId;
     }
 
     public String getNodeInfo() {
+        _checkConnection();
         return nodeInfo.toString();
     }
 
     public List<PortItem> listPorts() throws Exception {
+        _checkConnection();
         return new PortLister(node).listPorts();
     }
 
@@ -133,6 +174,7 @@ public class Siam implements ISiam {
     }
 
     public String getPortStatus(String port) throws Exception {
+        _checkConnection();
         Instrument instrument = _getInstrument(port);
         return SiamUtils.statusMnem(instrument.getStatus());
     }
@@ -141,6 +183,7 @@ public class Siam implements ISiam {
      * Adapted from SIAM's GetLastSample
      */
     public InstrumentSample getPortLastSample(String portName) throws Exception {
+        _checkConnection();
         Instrument instrument = _getInstrument(portName);
         SensorDataPacket sdp = instrument.getLastSample();
 
@@ -178,6 +221,7 @@ public class Siam implements ISiam {
      * @return the names of the channels for the given instrument.
      */
     public List<String> getPortChannels(String portName) throws Exception {
+        _checkConnection();
         /*
          * Strategy: get last sample, parse that sample, and get the fields from
          * the parser.
@@ -199,6 +243,9 @@ public class Siam implements ISiam {
      */
     public Map<String, String> getPortProperties(String portName)
             throws Exception {
+
+        _checkConnection();
+
         Instrument instrument = _getInstrument(portName);
 
         HashMap<String, String> result = new LinkedHashMap<String, String>();
@@ -221,6 +268,9 @@ public class Siam implements ISiam {
      */
     public Map<String, String> setPortProperties(String portName,
             Map<String, String> params) throws Exception {
+
+        _checkConnection();
+
         Instrument instrument = _getInstrument(portName);
 
         StringBuilder sb = new StringBuilder();
@@ -263,6 +313,7 @@ public class Siam implements ISiam {
         final String port = args.length >= 2 ? args[1] : "testPort";
 
         Siam siam = new Siam(host);
+        siam.start();
 
         PrintWriter out = new PrintWriter(System.out, true);
 

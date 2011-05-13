@@ -30,7 +30,7 @@ public abstract class BaseRequestProcessor implements IRequestProcessor {
     protected IPublisher _getPublisher() {
         return SiamCi.instance().getPublisher();
     }
-    
+
     /**
      * throws {@link IllegalStateException} if any required object for
      * asynchronous handling is missing.
@@ -69,23 +69,6 @@ public abstract class BaseRequestProcessor implements IRequestProcessor {
             return props;
         }
         catch (Exception e) {
-            return null;
-        }
-    }
-
-    /**
-     * Gets the value of the "publisherHost" property.
-     * 
-     * @param props
-     *            the properties associated to a certain instrument
-     * @return the value, or null if it is not associated
-     */
-    protected String _getRbnbHost(Map<String, String> props) {
-        String rbnbHost = props.get("publisherHost");
-        if (rbnbHost != null && rbnbHost.trim().length() > 0) {
-            return rbnbHost.trim();
-        }
-        else {
             return null;
         }
     }

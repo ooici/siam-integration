@@ -11,6 +11,8 @@ import net.ooici.siamci.utils.ScUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import siam.SiamUtils;
+
 import com.google.protobuf.GeneratedMessage;
 
 /**
@@ -88,7 +90,7 @@ public class StartOrStopAcquisitionRequestProcessor extends
             return ScUtils.createFailResponse(msg);
         }
 
-        String rbnbHost = _getRbnbHost(props);
+        String rbnbHost = SiamUtils.getRbnbHost(props);
         if (rbnbHost == null) {
             String msg = _rid(reqId)
                     + CMD_NAME
@@ -156,7 +158,7 @@ public class StartOrStopAcquisitionRequestProcessor extends
 
         if (start) {
             /*
-             * create (f necessary) the data manager for the given rbnbHost and
+             * create (if necessary) the data manager for the given rbnbHost and
              * instrument port
              */
             dataManager = dataManagers.createDataManagerIfAbsent(rbnbHost, port);

@@ -81,23 +81,18 @@ public class IonMock {
         }
         
         StructureManager sm = StructureManager.Factory(reply);
-        log.info(">>>> Heads:");
-        for(String key : sm.getHeadIds()) {
-        	log.info(key);
-            GPBWrapper<IonMsg> msgWrap = sm.getObjectWrapper(key);
-            log.info("msgWrap= " +msgWrap);
-//            IonMsg msg = msgWrap.getObjectValue();
-        }
-        log.info("\n>>>> Items:");
-        for(String key : sm.getItemIds()) {
-        	log.info(key);
-            GPBWrapper<Command> demWrap = sm.getObjectWrapper(key);
-            log.info("demWrap= " +demWrap);
-//            Command dem = demWrap.getObjectValue();
-        }
+        log.info(">>>> Head: " + sm.getHeadId());
+//        log.info("\n>>>> Items:");
+//        for(String key : sm.getItemIds()) {
+//        	log.info(key);
+//            GPBWrapper<Command> demWrap = sm.getObjectWrapper(key);
+//            log.info("demWrap= " +demWrap);
+////            Command dem = demWrap.getObjectValue();
+//        }
 
         baseProcess.dispose();
     }
+    @SuppressWarnings("unchecked")
     private static Container.Structure makeCommand1() {
     	
     	Command command = Command.newBuilder()
