@@ -103,7 +103,7 @@ public class StartOrStopAcquisitionRequestProcessor extends
 
         String turbineName;
         try {
-            turbineName = _getTurbineName(props, channel);
+            turbineName = siam.getTurbineName(port, channel); 
         }
         catch (Exception e) {
             String msg = _rid(reqId) + CMD_NAME

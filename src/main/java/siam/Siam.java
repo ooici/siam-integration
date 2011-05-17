@@ -262,6 +262,26 @@ public class Siam implements ISiam {
 
         return result;
     }
+    
+    public String getTurbineName(String portName, String channelName) throws Exception {
+        Map<String, String> props = getPortProperties(portName);
+        
+        String serviceName = props.get("serviceName");
+        String isiID = props.get("isiID");
+
+        if (serviceName == null || serviceName.trim().length() == 0) {
+            throw new Exception("'serviceName' property no associated with instrument");
+        }
+        if (isiID == null || isiID.trim().length() == 0) {
+            throw new Exception("'isiID' property no associated with instrument");
+        }
+        serviceName = serviceName.trim();
+        isiID = isiID.trim();
+
+        String turbineName = serviceName.replace(' ', '_') + "-" + isiID + "/"
+                + channelName;
+        return turbineName;        
+    }
 
     /**
      * Adapted from SIAM's SetInstrumentProperty

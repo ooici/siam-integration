@@ -3,6 +3,10 @@ package siam;
 import java.util.List;
 import java.util.Map;
 
+import net.ooici.siamci.IDataManager;
+
+import org.mbari.siam.core.BaseInstrumentService;
+
 /**
  * This is a high-level API to access SIAM functionality.
  * 
@@ -47,4 +51,28 @@ public interface ISiam {
 
     public Map<String, String> setPortProperties(String port,
             Map<String, String> params) throws Exception;
+
+    /**
+     * Gets the full name for the requested instrument's channel in a form that
+     * is compliant with the "turbineName" used by SIAM. See
+     * {@link BaseInstrumentService#run()}. This name is in particular used for
+     * data acquisition operations. See {@link IDataManager}.
+     * 
+     * <p>
+     * The returned name is composed as follows: <br/>
+     * {@code serviceName.replace(' ', '_') + "-" + isiID} <br/>
+     * where serviceName and isiID are the value of the corresponding properties
+     * 'serviceName' and 'isiID'.
+     * 
+     * @param portName
+     *            The instrument's port
+     * @param channelName
+     *            The name of desired channel in the given instrument
+     * @return the "turbine" name for the channel
+     * @throws Exception
+     *             if any of the required properties is missing.
+     */
+    public String getTurbineName(String portName, String channelName)
+            throws Exception;
+
 }
