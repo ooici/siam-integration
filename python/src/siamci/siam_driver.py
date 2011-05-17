@@ -901,7 +901,6 @@ class SiamInstrumentDriver(InstrumentDriver):
         if response.result != OK:
             # TODO: some more appropriate error code
             reply['success'] = InstErrorCode.EXE_DEVICE_ERR
-            yield self.reply_ok(msg, reply)
             return
         
         result = {}
