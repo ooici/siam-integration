@@ -1,6 +1,11 @@
 SIAM-CI Integration Prototype change log
 Carlos Rueda - MBARI
 
+2011-05-16
+	- upgraded to use ioncore-python 0.4.14 and also updated my local 'develop' repo
+	  for ioncore-python (latest commit 10544c17bcd70b00410308c9f1c07524065a374b). 
+	  In both cases, all tests passing as before.
+	
 2011-05-13
 	- better diagnostics at initialization of the SiamCI adapter program in java because
 	  of its dependency on various runtime components:

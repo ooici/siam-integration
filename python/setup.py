@@ -41,7 +41,7 @@ setup(
     package_dir = {'': 'src'},
 
     install_requires = [
-        'ioncore>=0.4.13'                
+        'ioncore>=0.4.14'                
                        ],
 
     include_package_data = True
