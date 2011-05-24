@@ -10,7 +10,7 @@ This is the python part.
 2- If not already, run bootstrap.py to set up buildout:  
 	$ python bootstrap.py
     
-3- Run this as many times as you change buildout.cfg and/or any parent files:
+3- Run this whenever you change setup.py, buildout.cfg and/or any parent files:
 	$ bin/buildout
 
 4- Run the SIAM-CI integration tests:

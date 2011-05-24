@@ -9,12 +9,12 @@
 	<property name="download_dir" value="download" />
 	
 	<!-- ioncore-java library -->
-	<property name="ioncore_version" value="0.2.6-dev" />
+	<property name="ioncore_version" value="0.2.8" />
 	<property name="ioncore_jar" value="ioncore-java-${ioncore_version}.jar" />
 	<property name="ioncore_url" value="http://ooici.net/releases/maven/repo/net/ooici/ioncore-java/${ioncore_version}/${ioncore_jar}" />
 	
 	<!-- ionproto library, version according to ioncore-java's .pom -->
-	<property name="ionproto_version" value="0.3.21-pl1" />
+	<property name="ionproto_version" value="0.3.25" />
 	<property name="ionproto_jar" value="ionproto-${ionproto_version}.jar" />
 	<property name="ionproto_url" value="http://ooici.net/releases/maven/repo/net/ooici/ionproto/${ionproto_version}/${ionproto_jar}" />
 	

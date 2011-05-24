@@ -1,6 +1,105 @@
 SIAM-CI Integration Prototype change log
 Carlos Rueda - MBARI
 
+2011-05-24
+	- Upgraded to these versions:
+		- ioncore-python 0.4.15
+		- ioncore 0.2.8
+		- ionproto 0.3.25 - as indicated in ioncore-java's .pom
+	  All tests passing as before: PASSED (skips=2, successes=42)
+	  
+		
+	  NOTE: An attempt to upgrade to latest ioncore-python 0.4.17 as of today
+	  made some tests behave differently and some even fail (similar
+	  misbehavior with 0.4.16).
+	  
+	  The new (mis)behaviors with ioncore-python 0.4.16 and 0.4.17 are exposed as follows:
+	  (some preliminary diagnostics enclosed)
+	  			  
+	  1- TestSiamAgent: 
+    	test_001_initialize ... 2011-05-24 11:14:51.944 [process        :824] WARNING:Process InstrumentAgent_testPort RPC conv-id=autonomo_shore_mbari_org_3011.29#21 timed out! 
+                                               [OK]
+	    (... similar behavior for the other tests in this class.)
+	    
+	    ==> The new behavior is the timeout, but note that the test still completes OK.
+	   
+	    
+	  2- TestSiamCiAdapterProxyAsync
+		    test_fetch_params_all_async ... 2011-05-24 11:16:54.184 [object_utils   :283] ERROR:================== GPB Wrapper ====================
+		Wrapper ID: None 
+		Wrapper repr: <ion.core.object.gpb_wrapper.Wrapper_IonMsg object at 0x30279f0> 
+		Wrapper Invalid: True 
+		Wrapper IsRoot: True 
+		Repository: ============== Repository (status: up to date) ==============
+		Number of current workspace objects: 0 
+		Number of current index hash objects: 0 
+		Current context identifier for repository: #52 
+		Not currently merging state in this repository. 
+		Excluded types:
+		object_id: 10025
+		version: 1
+		============== .git Object ==============
+		
+		 None 
+		
+		============== Root Object ==============
+		
+		 None 
+		
+		============ End Repository! ============
+		 
+		Wrapper ParentLinks: None 
+		Wrapper ChildLinks: None 
+		Wrapper Modified: False 
+		Wrapper Type: object_id: 11
+		version: 1
+		 
+		Source is Self!
+		================== Wrapper Complete =========================
+		
+		2011-05-24 11:16:54.202 [rpc            :201] ERROR:*****RPC Request Container error in message processing*****
+		Traceback (most recent call last):
+		  File "/Users/carueda/workspace/siamci/python/eggs/ioncore-0.4.17-py2.5.egg/ion/interact/rpc.py", line 184, in request
+		    res = yield process._dispatch_message_op(headers, msg, conv)
+		OOIObjectError: Can not access Invalidated Object in function "IsFieldSet"
+		2011-05-24 11:16:54.203 [rpc            :202] ERROR:*** Message payload received:
+		{'content': {'publish_id': 'fetch_params;port=testPort'},
+		 'conv-id': 'autonomo_shore_mbari_org_3011.225#466',
+		 'conv-seq': 1,
+		 'encoding': 'json',
+		 'expiry': '0',
+		 'format': 'raw',
+		 'language': 'ion1',
+		 'ontology': '',
+		 'op': 'getAccepted',
+		 'performative': 'request',
+		 'protocol': 'rpc',
+		 'receiver': 'autonomo_shore_mbari_org_3011.226',
+		 'reply-to': 'autonomo_shore_mbari_org_3011.225b',
+		 'sender': 'autonomo_shore_mbari_org_3011.225b',
+		 'sender-name': 'bootstrap',
+		 'status': 'OK',
+		 'ts': '1306261014181',
+		 'user-id': 'ANONYMOUS'}
+		2011-05-24 11:16:54.204 [rpc            :203] ERROR:None
+		2011-05-24 11:16:54.204 [rpc            :206] ERROR:*** Message Content: 
+		
+		2011-05-24 11:16:54.205 [rpc            :207] ERROR:{'publish_id': 'fetch_params;port=testPort'}
+		2011-05-24 11:16:54.205 [rpc            :209] ERROR:*****End RPC Request Container error in message processing*****
+		                                    [ERROR]
+		        
+		
+		==> The OOIObjectError errors seem to come from new code (May 15) in object_utils.py:
+		https://github.com/ooici/ioncore-python/commit/04e762dfe2277643811ab615545d11038b527a64#ion/core/object/object_utils.py
+		Perhaps the referred object has always been invalid but now this is checked?
+		In any case, why the object get invalid?
+		
+		Note that all the test_*_async.py are failing. These use the ReceiverService to get
+		notifications from java. Note that test_receiver_service.py (which does tests only
+		within python) runs fine. This suggests that the messages received from java are 
+		the ones triggering the problem.
+
+		
 2011-05-16
 	- upgraded to use ioncore-python 0.4.14 and also updated my local 'develop' repo
 	  for ioncore-python (latest commit 10544c17bcd70b00410308c9f1c07524065a374b). 
