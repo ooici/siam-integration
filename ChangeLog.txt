@@ -1,6 +1,24 @@
 SIAM-CI Integration Prototype change log
 Carlos Rueda - MBARI
 
+2011-06-01
+	- Testing with latest ioncore-python image as of now Jun 1 09:41:22 2011 -0700:
+		$ cd .../ioncore-python
+		$ workon py_buildout
+		$ git pull --rebase
+		$ git log -1 | egrep "commit|Date"
+		commit 4bfd91e32c53c625388abfa304cb3b6a63306f1b
+		Date:   Wed Jun 1 09:41:22 2011 -0700
+		$ python bootstrap
+		$ ant clean
+		$ bin/buildout -c development.cfg
+		$ bin/trial ion # in general good although with some errors and I didn't run all the tests
+		
+		# SIAM-CI:
+		$ SIAM_CI=- bin/trial siamci
+		...
+		==> Errors/warnings continue to show up apparently as with the 0.4.17 release below.
+		
 2011-05-24
 	- Upgraded to these versions:
 		- ioncore-python 0.4.15
