@@ -987,7 +987,6 @@ class SiamInstrumentDriver(InstrumentDriver):
             reply['success'] = InstErrorCode.NOT_IMPLEMENTED
             errmsg = "Notification of data to the agent not implemented yet"
             reply['result'] = errmsg
-            log.warning("__start_sampling: " +errmsg)
             return
         
         
