@@ -1,6 +1,11 @@
 SIAM-CI Integration Prototype change log
 Carlos Rueda - MBARI
 
+2011-06-07
+	- https://jira.oceanobservatories.org/tasks/browse/OOIION-67: 
+	  Created script siamci.sh to facilitate build/start/stop of the
+	  SIAM-CI adapter service.
+	  
 2011-06-01
 	- Testing with latest ioncore-python image as of now Jun 1 09:41:22 2011 -0700:
 		$ cd .../ioncore-python
