@@ -70,7 +70,9 @@ public class Siam implements ISiam {
 
         String nodeURL = getNodeURL(host);
         log.info("Looking up '" + nodeURL + "' to connect with SIAM node ...");
-        return (Node) Naming.lookup(nodeURL.toString());
+        Node node = (Node) Naming.lookup(nodeURL.toString());
+        log.info("Connected to SIAM node. (" +node.getClass().getName()+ ")");
+        return node;
     }
 
     /**
