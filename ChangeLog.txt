@@ -1,6 +1,13 @@
 SIAM-CI Integration Prototype change log
 Carlos Rueda - MBARI
 
+2011-06-23
+	- SiamUtils.getRbnbHost: now the name of the property indicating the associated
+	  RBNB host is "rbnbServer" (previously, "publisherHost"). 
+	  This change triggered by various changes in the SIAM codebase (see 
+	  org.mbari.siam.distributed.InstrumentServiceAttributes).
+	  
+	
 2011-06-07
 	- https://jira.oceanobservatories.org/tasks/browse/OOIION-67: 
 	  Created script siamci.sh to facilitate build/start/stop of the

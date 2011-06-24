@@ -14,14 +14,14 @@ import com.rbnb.sapi.Sink;
 public class SiamUtils {
 
     /**
-     * Gets the value of the "publisherHost" property.
+     * Gets the value of the "rbnbServer" property.
      * 
      * @param props
      *            the properties associated to a certain instrument
      * @return the value, or null if it is not associated
      */
     public static String getRbnbHost(Map<String, String> props) {
-        String rbnbHost = props.get("publisherHost");
+        String rbnbHost = props.get("rbnbServer");
         if (rbnbHost != null && rbnbHost.trim().length() > 0) {
             return rbnbHost.trim();
         }
