@@ -45,6 +45,8 @@ public class TestSiamInstrument1 extends PolledInstrumentService implements
     // is a random double number
     protected int readSample(byte[] sample) throws TimeoutException,
             IOException, Exception {
+        
+        System.out.println("readSample CALLED");
 
         byte[] bytes = (_sequenceNumber + ":" + Math.random()).getBytes();
         _sequenceNumber++;
