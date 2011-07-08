@@ -1,6 +1,10 @@
 SIAM-CI Integration Prototype change log
 Carlos Rueda - MBARI
 
+2011-07-07
+	- While investigating RMI connection problem with external SIAM node, I realized that
+	  the SiamSocketFactory was not set up for RMI, see Siam._getNode(String host).
+	  
 2011-06-23
 	- SiamUtils.getRbnbHost: now the name of the property indicating the associated
 	  RBNB host is "rbnbServer" (previously, "publisherHost"). 

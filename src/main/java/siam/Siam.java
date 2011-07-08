@@ -1,10 +1,10 @@
 package siam;
 
+import java.io.IOException;
 import java.io.PrintWriter;
-import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
-import java.rmi.RemoteException;
+import java.rmi.server.RMISocketFactory;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -24,6 +24,7 @@ import org.mbari.siam.distributed.PortNotFound;
 import org.mbari.siam.distributed.SensorDataPacket;
 import org.mbari.siam.distributed.PacketParser.Field;
 import org.mbari.siam.utils.PrintUtils;
+import org.mbari.siam.utils.SiamSocketFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,10 +66,11 @@ public class Siam implements ISiam {
         }
     }
 
-    private static Node _getNode(String host) throws MalformedURLException,
-            RemoteException, NotBoundException {
+    private static Node _getNode(String host) throws NotBoundException, IOException {
 
         String nodeURL = getNodeURL(host);
+        RMISocketFactory.setSocketFactory(new SiamSocketFactory(host));
+        
         log.info("Looking up '" + nodeURL + "' to connect with SIAM node ...");
         Node node = (Node) Naming.lookup(nodeURL.toString());
         log.info("Connected to SIAM node. (" +node.getClass().getName()+ ")");
