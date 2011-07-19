@@ -1,6 +1,41 @@
 SIAM-CI Integration Prototype change log
 Carlos Rueda - MBARI
 
+2011-07-18
+	- Consolidating general revision of the SIAM driver python code. I'm testing this
+	  against the latest ioncore-python from github (not against any particular release 
+	  at the moment). At this point the following are successful tests:
+		siamci.test.test_siam_driver
+		  TestSiamInstrumentDriver
+		    test_001_configure ...                                                 [OK]
+		    test_002_initialize ...                                                [OK]
+		    test_003_connect_disconnect ...                                        [OK]
+		    test_004_get_status ...                                                [OK]
+		    test_005_get_params_all ...                                            [OK]
+		    test_005_get_params_specific_channels ...                         [SKIPPED]
+		    test_005_get_params_subset_good ...                                    [OK]
+		    test_005_get_params_subset_good_and_bad ...                            [OK]
+		    test_006_set_params_invalid ...                                        [OK]
+		    test_006_set_params_valid ...                                          [OK]
+		    test_007_get_channels ...                                              [OK]
+		    test_008_get_last_sample ...                                           [OK]
+	  
+	  Note that tests of the SiamCiProxy continues to be successful without any
+	  adjustments to the code:
+		siamci.test.test_siamci
+		  TestSiamCiAdapterProxy
+		    test_fetch_params_all ...                                              [OK]
+		    test_fetch_params_some_good ...                                        [OK]
+		    test_fetch_params_some_wrong ...                                       [OK]
+		    test_get_channels ...                                                  [OK]
+		    test_get_last_sample ...                                               [OK]
+		    test_get_status ...                                                    [OK]
+		    test_list_ports ...                                                    [OK]
+		    test_ping ...                                                          [OK]
+		    test_set_params_good ...                                               [OK]
+		    test_set_params_wrong ...                                              [OK]
+	  
+	  	
 2011-07-07
 	- While investigating RMI connection problem with external SIAM node, I realized that
 	  the SiamSocketFactory was not set up for RMI, see Siam._getNode(String host).

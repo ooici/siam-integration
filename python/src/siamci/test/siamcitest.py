@@ -169,7 +169,7 @@ class SiamCiTestCase(IonTestCase):
           interpreted as a method name, wich can be a regular expression,
         AND
         - The method name does not match any of the names of the functions in 
-          the calling stack up of _run_this_test to a given maximum depth. 
+          the calling stack of _run_this_test up to a given maximum depth. 
         
         So, this allows to only run a set of methods whose name conform
         to a given pattern, even across multiple modules/classes. For example:

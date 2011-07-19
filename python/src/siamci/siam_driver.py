@@ -13,10 +13,9 @@ from twisted.internet import defer  #, reactor
 
 from ion.core.process.process import ProcessFactory
 
-from ion.agents.instrumentagents.instrument_agent import InstrumentDriver
-from ion.agents.instrumentagents.instrument_agent import InstrumentDriverClient
+from ion.agents.instrumentagents.instrument_driver import InstrumentDriver
+from ion.agents.instrumentagents.instrument_driver import InstrumentDriverClient
 from ion.agents.instrumentagents.instrument_constants import InstErrorCode
-from ion.agents.instrumentagents.instrument_fsm import InstrumentFSM
 
 from siamci.siamci_constants import SiamDriverEvent
 from siamci.siamci_constants import SiamDriverState
@@ -91,273 +90,18 @@ class SiamInstrumentDriver(InstrumentDriver):
         """
         self.publish_stream = None
 
+        self._initialize()
 
-        """
-        Instrument state handlers.
-        Note, I have followed SBE37_driver to some extent here but this is
-        very preliminary in general.
-        """
-        self.state_handlers = {
-            SiamDriverState.UNCONFIGURED : self.state_handler_unconfigured,
-            SiamDriverState.DISCONNECTED : self.state_handler_disconnected,
-            SiamDriverState.CONNECTING : self.state_handler_connecting,
-            SiamDriverState.DISCONNECTING : self.state_handler_disconnecting,
-            SiamDriverState.CONNECTED : self.state_handler_connected,
-#            SiamDriverState.ACQUIRE_SAMPLE : self.state_handler_acquire_sample,
-#            SiamDriverState.UPDATE_PARAMS : self.state_handler_update_params,
-#            SiamDriverState.SET : self.state_handler_set,
-#            SiamDriverState.AUTOSAMPLE : self.state_handler_autosample
-        }
-        
-        """
-        Instrument state machine.
-        """
-        self.fsm = InstrumentFSM(SiamDriverState, SiamDriverEvent, self.state_handlers,
-                                 SiamDriverEvent.ENTER, SiamDriverEvent.EXIT)
+
         
         
-        
-        
-    ###########################################################################
-    # <state handlers>
-    
-    def state_handler_unconfigured(self,event,params):
-        """
-        Event handler for STATE_UNCONFIGURED.
-        Events handled:
-        EVENT_ENTER: Reset communication parameters to null values.
-        EVENT_EXIT: Pass.
-        EVENT_CONFIGURE: Set communication parameters and switch to
-                STATE_DISCONNECTED if successful.
-        EVENT_INITIALIZE: Reset communication parameters to null values.
-        """
-        
-        if log.getEffectiveLevel() <= logging.DEBUG:
-            log.debug("state_handler_unconfigured: event = " +str(event) + "\n\t\t params = " + str(params))
-
-        success = InstErrorCode.OK
-        next_state = None
-        
-        if event == SiamDriverEvent.ENTER:
-            
-            if self.notify_agent:
-                # Announce the state change to agent.                        
-                content = {'type':SiamDriverAnnouncement.STATE_CHANGE,'transducer':SiamDriverChannel.INSTRUMENT,
-                           'value':SiamDriverState.UNCONFIGURED}
-                self.send(self.proc_supid,'driver_event_occurred',content)
-
-            self._initialize()
-
-        elif event == SiamDriverEvent.EXIT:
-            pass
-        
-        elif event == SiamDriverEvent.INITIALIZE:
-            self._initialize()
-            
-        elif event == SiamDriverEvent.CONFIGURE:
-            if self._configure(params):
-                next_state = SiamDriverState.DISCONNECTED
-        
-        else:
-            success = InstErrorCode.INCORRECT_STATE
-            
-        return (success,next_state)
-
-
-
-    def state_handler_disconnected(self,event,params):
-        """
-        Event handler for STATE_DISCONNECTED.
-        Events handled:
-        EVENT_ENTER: Pass.
-        EVENT_EXIT: Pass.        
-        EVENT_INITIALIZE: Switch to STATE_UNCONFIGURED.
-        EVENT_CONNECT: Switch to STATE_CONNECTING.
-        """
-        
-        if log.getEffectiveLevel() <= logging.DEBUG:
-            log.debug("state_handler_disconnected: event = " +str(event) + "\n\t\t params = " + str(params))
-
-        success = InstErrorCode.OK
-        next_state = None
-        
-        if event == SiamDriverEvent.ENTER:
-            
-            if self.notify_agent:
-                # Announce the state change to agent.            
-                content = {'type':SiamDriverAnnouncement.STATE_CHANGE,'transducer':SiamDriverChannel.INSTRUMENT,
-                           'value':SiamDriverState.DISCONNECTED}
-                self.send(self.proc_supid,'driver_event_occurred',content)
-            
-        elif event == SiamDriverEvent.EXIT:
-            pass
-
-        elif event == SiamDriverEvent.INITIALIZE:
-            next_state = SiamDriverState.UNCONFIGURED         
-                    
-        elif event == SiamDriverEvent.CONNECT:
-            next_state = SiamDriverState.CONNECTING         
-                
-        # not in sbe37    
-        elif event == SiamDriverEvent.DISCONNECT_COMPLETE:
-            pass   
-                    
-        else:
-            success = InstErrorCode.INCORRECT_STATE
-            
-        return (success,next_state)
-    
-    
-    
-    def state_handler_connecting(self,event,params):
-        """
-        Event handler for STATE_CONNECTING.
-        Events handled:
-        EVENT_ENTER: Attemmpt to establish connection.
-        EVENT_EXIT: Pass.        
-        EVENT_CONNECTION_COMPLETE: Switch to SiamDriverState.CONNECTED   (STATE_UPDATE_PARAMS in SBE37)
-        EVENT_CONNECTION_FAILED: Switch to STATE_DISCONNECTED.
-        """
-        
-        if log.getEffectiveLevel() <= logging.DEBUG:
-            log.debug("state_handler_connecting: event = " +str(event) + "\n\t\t params = " + str(params))
-        
-        success = InstErrorCode.OK
-        next_state = None
-        
-        if event == SiamDriverEvent.ENTER:
-            
-            if self.notify_agent:
-                # Announce the state change to agent.            
-                content = {'type':SiamDriverAnnouncement.STATE_CHANGE,'transducer':SiamDriverChannel.INSTRUMENT,
-                           'value':SiamDriverState.CONNECTING}
-                self.send(self.proc_supid,'driver_event_occurred',content)
-
-            
-        elif event == SiamDriverEvent.EXIT:
-            pass
-                    
-        elif event == SiamDriverEvent.CONNECTION_COMPLETE:
-#            next_state = SiamDriverState.UPDATE_PARAMS
-            next_state = SiamDriverState.CONNECTED
-                    
-        elif event == SiamDriverEvent.CONNECTION_FAILED:
-            # Error message to agent here.
-            next_state = SiamDriverState.DISCONNECTED
-
-        else:
-            success = InstErrorCode.INCORRECT_STATE
-
-        return (success,next_state)
-
-
-
-    def state_handler_connected(self,event,params):
-        """
-        Event handler for STATE_CONNECTED.
-        EVENT_ENTER: Notifies agent if instructed so
-        CONNECTION_COMPLETE: pass
-        EVENT_EXIT: Pass.        
-        EVENT_DISCONNECT: Switch to STATE_DISCONNECTING.
-        EVENT_COMMAND_RECEIVED: If a command is queued, switch to command
-        specific state for handling.
-        EVENT_DATA_RECEIVED: Pass.
-        """
-        
-        if log.getEffectiveLevel() <= logging.DEBUG:
-            log.debug("state_handler_connected: event = " +str(event) + "\n\t\t params = " + str(params))
-        
-        success = InstErrorCode.OK
-        next_state = None
-
-        if event == SiamDriverEvent.ENTER:
-            
-            if self.notify_agent:
-                # Announce the state change to agent.            
-                content = {'type':SiamDriverAnnouncement.STATE_CHANGE,'transducer':SiamDriverChannel.INSTRUMENT,
-                           'value':SiamDriverState.CONNECTED}
-                self.send(self.proc_supid,'driver_event_occurred',content)            
-            
-        elif event == SiamDriverEvent.CONNECTION_COMPLETE:
-            pass
-
-        elif event == SiamDriverEvent.EXIT:
-            pass
-            
-        elif event == SiamDriverEvent.DISCONNECT:
-            next_state = SiamDriverState.DISCONNECTING
-                    
-        elif event == SiamDriverEvent.SET:
-            next_state = SiamDriverState.SET
-            
-        elif event == SiamDriverEvent.ACQUIRE_SAMPLE:
-            next_state = SiamDriverState.ACQUIRE_SAMPLE
-            
-        elif event == SiamDriverEvent.START_AUTOSAMPLE:
-            next_state = SiamDriverState.AUTOSAMPLE
-            
-        elif event == SiamDriverEvent.TEST:
-            next_state = SiamDriverState.TEST
-            
-        elif event == SiamDriverEvent.CALIBRATE:
-            next_state = SiamDriverState.CALIBRATE
-            
-        elif event == SiamDriverEvent.RESET:
-            next_state = SiamDriverState.RESET
-            
-        elif event == SiamDriverEvent.DATA_RECEIVED:
-            pass
-                
-        else:
-            success = InstErrorCode.INCORRECT_STATE
-
-        return (success,next_state)
-
-    
-       
-    def state_handler_disconnecting(self,event,params):
-        """
-        Event handler for STATE_DISCONNECTING.
-        Events handled:
-        EVENT_ENTER: Attempt to close connection to instrument.
-        EVENT_EXIT: Pass.        
-        EVENT_DISCONNECT_COMPLETE: Switch to STATE_DISCONNECTED.
-        """
-        
-        success = InstErrorCode.OK
-        next_state = None
-            
-        if event == SiamDriverEvent.ENTER:
-            
-            if self.notify_agent:
-                # Announce the state change to agent.            
-                content = {'type':SiamDriverAnnouncement.STATE_CHANGE,'transducer':SiamDriverChannel.INSTRUMENT,
-                           'value':SiamDriverState.DISCONNECTED}
-                self.send(self.proc_supid,'driver_event_occurred',content)            
-            
-            
-        elif event == SiamDriverEvent.EXIT:
-            pass
-                    
-        elif event == SiamDriverEvent.DISCONNECT_COMPLETE:
-            next_state = SiamDriverState.DISCONNECTED
-
-        else:
-            success = InstErrorCode.INCORRECT_STATE
-
-        return (success,next_state)
-       
-       
-    # </state handlers>
-    ###########################################################################
-    
-    
     def _initialize(self):
         """
         Set the configuration to an initialized, unconfigured state.
         """
         self.pid = None
         self.port = None
+        self.current_state = SiamDriverState.UNCONFIGURED
     
 
     
@@ -372,8 +116,8 @@ class SiamInstrumentDriver(InstrumentDriver):
         yield
         
         # Set initial state.
-        self.fsm.start(SiamDriverState.UNCONFIGURED)
-        log.debug("SiamDriver plc_init: FSM started with state UNCONFIGURED")
+        self.current_state = SiamDriverState.UNCONFIGURED
+        log.debug("SiamDriver plc_init: self.current_state = " +str(self.current_state))
         
                 
 
@@ -392,41 +136,14 @@ class SiamInstrumentDriver(InstrumentDriver):
 
     @defer.inlineCallbacks
     def op_get_state(self, content, headers, msg):
-        cur_state = self.fsm.current_state
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug('op_get_state: called. current_state = ' + str(self.current_state))
+        
+        cur_state = self.current_state
         yield self.reply_ok(msg, cur_state)
 
 
-
-    @defer.inlineCallbacks
-    def op_initialize(self, content, headers, msg):
-        """
-        Restore driver to a default, unconfigured state.
-        @param content A dict with optional timeout: {'timeout':timeout}.
-        @retval A reply message with a dict {'success':success,'result':None}.
-        """
-        
-        # Timeout not implemented for this op.
-        timeout = content.get('timeout',None)
-        if timeout != None:
-            assert(isinstance(timeout,int)), 'Expected integer timeout'
-            assert(timeout>0), 'Expected positive timeout'
-            pass
-
-        # Set up the reply and fire an EVENT_INITIALIZE.
-        reply = {'success':None,'result':None}         
-        success = self.fsm.on_event(SiamDriverEvent.INITIALIZE)
-        
-        # Set success and send reply. Unsuccessful initialize means the
-        # event is not handled in the current state.
-        if not success:
-            reply['success'] = InstErrorCode.INCORRECT_STATE
-
-        else:
-            reply['success'] = InstErrorCode.OK
- 
-        yield self.reply_ok(msg, reply)
-        
-        
+       
     @defer.inlineCallbacks
     def op_configure(self, content, headers, msg):
         
@@ -434,27 +151,24 @@ class SiamInstrumentDriver(InstrumentDriver):
         params = content.get('params', None)
         assert(isinstance(params, dict)), 'Expected dict params.'
         
-        # Timeout not implemented for this op.
-        timeout = content.get('timeout', None)
-        if timeout != None:
-            assert(isinstance(timeout, int)), 'Expected integer timeout'
-            assert(timeout > 0), 'Expected positive timeout'
-            pass
-
         # Set up the reply message and validate the configuration parameters.
         # Reply with the error message if the parameters not valid.
         reply = {'success':None, 'result':params}
-        reply['success'] = self._validate_configuration(params)
+        
+        if self.current_state != SiamDriverState.UNCONFIGURED:
+            reply['success'] = InstErrorCode.INCORRECT_STATE
+            log.error('op_configure: incorrect state for this operation.  current_state = ' + str(self.current_state))
+            yield self.reply_ok(msg, reply)
+            return
+        
+        reply['success'] = self._configure(params);
         
         if InstErrorCode.is_error(reply['success']):
             yield self.reply_ok(msg, reply)
             return
         
-        # Fire EVENT_CONFIGURE with the validated configuration parameters.
-        # Set the error message if the event is not handled in the current
-        # state.
-        reply['success'] = self.fsm.on_event(SiamDriverEvent.CONFIGURE,params)
-
+        self.current_state = SiamDriverState.DISCONNECTED
+        
         if log.getEffectiveLevel() <= logging.DEBUG:
             log.debug('op_configure: complete. success = %s' % (reply['success']))
             
@@ -468,7 +182,7 @@ class SiamInstrumentDriver(InstrumentDriver):
         # Validate configuration.
         success = self._validate_configuration(params)
         if InstErrorCode.is_error(success):
-            return False
+            return success
 
         # Set configuration parameters.
         self.pid = params['pid']
@@ -480,7 +194,7 @@ class SiamInstrumentDriver(InstrumentDriver):
             
         self.siamci = SiamCiAdapterProxy(self.pid, self.port)
         
-        return True
+        return InstErrorCode.OK
     
             
     def _validate_configuration(self, params):
@@ -495,63 +209,107 @@ class SiamInstrumentDriver(InstrumentDriver):
         
         return InstErrorCode.OK
 
+
+
+
+    @defer.inlineCallbacks
+    def op_initialize(self, content, headers, msg):
+        """
+        Restore driver to a default, unconfigured state.
+        @param content A dict with optional timeout: {'timeout':timeout}.
+        @retval A reply message with a dict {'success':success,'result':None}.
+        """
+        
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug('op_initialize: called.  current_state = ' + str(self.current_state))
+        
+        # Set up the reply and fire an EVENT_INITIALIZE.
+        reply = {'success':None,'result':None}    
+        
+        if self.current_state != SiamDriverState.DISCONNECTED:
+            reply['success'] = InstErrorCode.INCORRECT_STATE
+            log.error('op_initialize: incorrect state for this operation.  current_state = ' + str(self.current_state))
+            yield self.reply_ok(msg, reply)
+            return
+        
+        self._initialize()
+        reply['success'] = InstErrorCode.OK
+ 
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug('op_initialize: reply = %s' % (str(reply)))
+
+        yield self.reply_ok(msg, reply)
+        
+         
         
         
     @defer.inlineCallbacks
     def op_connect(self, content, headers, msg):
         
-        # Timeout not implemented for this op.
-        timeout = content.get('timeout',None)
-        if timeout != None:
-            assert(isinstance(timeout,int)), 'Expected integer timeout'
-            assert(timeout>0), 'Expected positive timeout'
-            pass
-
-
-        success = self.fsm.on_event(SiamDriverEvent.CONNECT) 
-        reply = {'success':success,'result':None}
-        if InstErrorCode.is_error(reply['success']):
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug('op_connect: called.  current_state = ' + str(self.current_state))
+        
+        # Set up the reply and fire an EVENT_INITIALIZE.
+        reply = {'success':None,'result':None}    
+        
+        if self.current_state != SiamDriverState.DISCONNECTED:
+            reply['success'] = InstErrorCode.INCORRECT_STATE
+            log.error('op_connect: incorrect state for this operation.  current_state = ' + str(self.current_state))
             yield self.reply_ok(msg, reply)
             return
         
-        success = self.fsm.on_event(SiamDriverEvent.CONNECTION_COMPLETE)
-        reply['success'] = success
+        self.current_state = SiamDriverState.CONNECTING
+        
+        if self.notify_agent:
+            # Announce the state change to agent.            
+            content = {'type':SiamDriverAnnouncement.STATE_CHANGE,'transducer':SiamDriverChannel.INSTRUMENT,
+                       'value':SiamDriverState.CONNECTING}
+            yield self.send(self.proc_supid,'driver_event_occurred',content)
         
         """
-        There is no actual "connect"/"disconnect" as the driver interacts 
-        via messaging with the SIAM-CI adapter service. 
-        We just start our proxy:
+        Start our proxy:
         """
         yield self.siamci.start()
         
         if log.getEffectiveLevel() <= logging.DEBUG:
             log.debug('op_connect: SiamCiProxy started')
         
+        self.current_state = SiamDriverState.CONNECTED
+        
+        if self.notify_agent:
+            # Announce the state change to agent.            
+            content = {'type':SiamDriverAnnouncement.STATE_CHANGE,'transducer':SiamDriverChannel.INSTRUMENT,
+                       'value':SiamDriverState.CONNECTED}
+            yield self.send(self.proc_supid,'driver_event_occurred',content)            
+
+        reply['success'] = InstErrorCode.OK
+        
         yield self.reply_ok(msg, reply)
-        
-       
-        
+
+
 
     @defer.inlineCallbacks
     def op_disconnect(self, content, headers, msg):
         
-        # Timeout not implemented for this op.
-        timeout = content.get('timeout',None)
-        if timeout != None:
-            assert(isinstance(timeout,int)), 'Expected integer timeout'
-            assert(timeout>0), 'Expected positive timeout'
-            pass
-
-        success = self.fsm.on_event(SiamDriverEvent.DISCONNECT) 
-        reply = {'success':success,'result':None}
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug('op_disconnect: called.  current_state = ' + str(self.current_state))
         
-        if InstErrorCode.is_error(reply['success']):
+        # Set up the reply and fire an EVENT_INITIALIZE.
+        reply = {'success':None,'result':None}    
+        
+        if self.current_state != SiamDriverState.CONNECTED:
+            reply['success'] = InstErrorCode.INCORRECT_STATE
+            log.error('op_disconnect: incorrect state for this operation.  current_state = ' + str(self.current_state))
             yield self.reply_ok(msg, reply)
             return
         
-
-        success = self.fsm.on_event(SiamDriverEvent.DISCONNECT_COMPLETE)
-        reply['success'] = success
+        self.current_state = SiamDriverState.DISCONNECTING
+        
+        if self.notify_agent:
+            # Announce the state change to agent.            
+            content = {'type':SiamDriverAnnouncement.STATE_CHANGE,'transducer':SiamDriverChannel.INSTRUMENT,
+                       'value':SiamDriverState.DISCONNECTING}
+            yield self.send(self.proc_supid,'driver_event_occurred',content)
         
         """
         @TODO: why calling ''yield self.siamci.stop()'' to stop (terminate) the 
@@ -563,19 +321,28 @@ class SiamInstrumentDriver(InstrumentDriver):
             [state_object   :132] ERROR:Subsequent ERROR in StateObject error(), ND-ND
         """
 #        yield self.siamci.stop()
-
-
+        
         if log.getEffectiveLevel() <= logging.DEBUG:
-            log.debug('op_disconnect: complete. success = %s' % (reply['success']))
-            
-        yield self.reply_ok(msg, reply)               
-                
-                
-                
+            log.debug('op_disconnect: SiamCiProxy stopped -- NOT REALLY -- check source code')
+        
+        self.current_state = SiamDriverState.DISCONNECTED
+        
+        if self.notify_agent:
+            # Announce the state change to agent.            
+            content = {'type':SiamDriverAnnouncement.STATE_CHANGE,'transducer':SiamDriverChannel.INSTRUMENT,
+                       'value':SiamDriverState.DISCONNECTED}
+            yield self.send(self.proc_supid,'driver_event_occurred',content)            
+
+        reply['success'] = InstErrorCode.OK
+        
+        yield self.reply_ok(msg, reply)
+
 
     @defer.inlineCallbacks
     def op_get_status(self, content, headers, msg):
-        log.debug('In SiamDriver op_get_status')
+        
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug('op_get_status: called.  current_state = ' + str(self.current_state))
         
         
         assert(isinstance(content,dict)), 'Expected dict content.'
@@ -590,16 +357,6 @@ class SiamInstrumentDriver(InstrumentDriver):
         assert(all(map(lambda x:isinstance(x,tuple),params))), \
             'Expected tuple elements in params list'
         
-        # Timeout not implemented for this op.
-        timeout = content.get('timeout',None)
-        if timeout != None:
-            assert(isinstance(timeout,int)), 'Expected integer timeout'
-            assert(timeout>0), 'Expected positive timeout'
-            pass
-        
-        # @todo: Do something with the new possible argument 'timeout'
-
-
         response = yield self.siamci.get_status(params=params)
         result = response.result
         reply = {'success':InstErrorCode.OK,'result':result}
@@ -611,21 +368,23 @@ class SiamInstrumentDriver(InstrumentDriver):
     @defer.inlineCallbacks
     def op_get(self, content, headers, msg):
         
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug('op_get: called.  current_state = ' + str(self.current_state))
+            
         assert(isinstance(content,dict)),'Expected dict content.'
         params = content.get('params',None)
         assert(isinstance(params,(list,tuple))),'Expected list or tuple params.'
 
-        # Timeout not implemented for this op.
-        timeout = content.get('timeout',None)
-        if timeout != None:
-            assert(isinstance(timeout,int)), 'Expected integer timeout'
-            assert(timeout>0), 'Expected positive timeout'
-            pass
-        
         
         if log.getEffectiveLevel() <= logging.DEBUG:
-            log.debug('In SiamDriver op_get: params = ' +\
+            log.debug('op_get: params = ' +\
                       str(params)+ "  publish_stream=" +str(self.publish_stream))
+        
+        if self.current_state != SiamDriverState.CONNECTED:
+            reply['success'] = InstErrorCode.INCORRECT_STATE
+            log.error('op_get: incorrect state for this operation.  current_state = ' + str(self.current_state))
+            yield self.reply_ok(msg, reply)
+            return
         
         if self.publish_stream is None: 
             successFail = yield self.siamci.fetch_params(params)
@@ -633,7 +392,7 @@ class SiamInstrumentDriver(InstrumentDriver):
             successFail = yield self.siamci.fetch_params(params, publish_stream=self.publish_stream)
             
         if log.getEffectiveLevel() <= logging.DEBUG:
-            log.debug('In SiamDriver op_get successFail --> ' + str(successFail))
+            log.debug('op_get successFail --> ' + str(successFail))
         
         # initialize reply assuming OK
         reply = {'success':InstErrorCode.OK, 'result':None}
@@ -662,10 +421,13 @@ class SiamInstrumentDriver(InstrumentDriver):
         yield self.reply_ok(msg,reply)        
         
         
-        
+
     @defer.inlineCallbacks
     def op_set(self, content, headers, msg):
-        log.debug('In SiamDriver op_set')
+
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug('op_set: called.  current_state = ' + str(self.current_state))
+            
         
         assert(isinstance(content,dict)), 'Expected dict content.'
         
@@ -681,13 +443,17 @@ class SiamInstrumentDriver(InstrumentDriver):
         assert(all(map(lambda x: isinstance(x,str),
                        params.values()))), 'Expected string dict values.'
         
-        # Timeout not implemented for this op.
-        timeout = content.get('timeout',None)
-        if timeout != None:
-            assert(isinstance(timeout,int)), 'Expected integer timeout'
-            assert(timeout>0), 'Expected positive timeout'
-            pass
          
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug('op_set: params = ' +\
+                      str(params)+ "  publish_stream=" +str(self.publish_stream))
+        
+        if self.current_state != SiamDriverState.CONNECTED:
+            reply['success'] = InstErrorCode.INCORRECT_STATE
+            log.error('op_set: incorrect state for this operation.  current_state = ' + str(self.current_state))
+            yield self.reply_ok(msg, reply)
+            return
+        
          
         reply = {'success':None,'result':None}
         
@@ -716,12 +482,12 @@ class SiamInstrumentDriver(InstrumentDriver):
             
         
         if log.getEffectiveLevel() <= logging.DEBUG:
-            log.debug("params_for_proxy = " + str(params_for_proxy) + \
+            log.debug("op_set: params_for_proxy = " + str(params_for_proxy) + \
                       "  **** siamci = " + str(self.siamci))
             
         response = yield self.siamci.set_params(params_for_proxy)
         if log.getEffectiveLevel() <= logging.DEBUG:
-            log.debug('In SiamDriver op_set_params --> ' + str(response))
+            log.debug('op_set: set_params response --> ' + str(response))
                 
         if response.result == OK:
             reply['success'] = InstErrorCode.OK
@@ -732,38 +498,24 @@ class SiamInstrumentDriver(InstrumentDriver):
         yield self.reply_ok(msg, reply)
         
  
-         
-      
-    @defer.inlineCallbacks
-    def op_set_publish_stream(self, content, headers, msg):
-        self.publish_stream = content.get('publish_stream', None)
-        reply = {'success':InstErrorCode.OK, 'result':self.publish_stream}
-        
-        if log.getEffectiveLevel() <= logging.DEBUG:
-            log.debug("op_set_publish_stream = " + str(self.publish_stream))
 
-        yield self.reply_ok(msg, reply)
-        
-        
+
+
     @defer.inlineCallbacks
     def op_execute(self, content, headers, msg):
-        """
-        Execute a driver command. Commands may be
-        common or specific to the device, with specific commands known through
-        knowledge of the device or a previous get_capabilities query.
-        @param content A dict with channels and command lists and optional
-            timeout:
-            {'channels':[chan_arg,...,chan_arg],
-            'command':[command,arg,...,argN]),
-            'timeout':timeout}.
-        @retval A reply message with a dict
-            {'success':success,
-            'result':{chan_arg:(success,command_specific_values),...,
-            chan_arg:(success,command_specific_values)}}. 
-        """
-        
+
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug('op_execute: called.  current_state = ' + str(self.current_state))
+            
+
         assert(isinstance(content,dict)), 'Expected dict content.'
 
+        if self.current_state != SiamDriverState.CONNECTED:
+            reply['success'] = InstErrorCode.INCORRECT_STATE
+            log.error('op_execute: incorrect state for this operation.  current_state = ' + str(self.current_state))
+            yield self.reply_ok(msg, reply)
+            return
+        
         # Set up reply dict, get required parameters from message content.
         reply = {'success':None,'result':None}
         command = content.get('command',None)
@@ -1077,26 +829,6 @@ class SiamInstrumentDriverClient(InstrumentDriverClient):
     Operations are mainly supported by the SiamCiAdapterProxy class.
     """
     
-
-    @defer.inlineCallbacks
-    def set_publish_stream(self, publish_stream):
-        """
-        Sets the publish stream.  This is a convenience to allow the testing of 
-        reception of asynchronous notifications from the SIAM-CI adapter service.
-        The expected mechanism would be that an associated InstrumentAgent 
-        would get those notifications directly (eg., via the op_publish operation),
-        but this is not clear yet (2011-05-12).
-        
-        @param publish_stream: the publish stream name.  Can be None.
-        """
-        
-        log.debug("SiamInstrumentDriverClient set_publish_stream " + str(publish_stream))
-        content_outgoing = {'publish_stream':publish_stream}
-        
-        (content, headers, message) = yield self.rpc_send('set_publish_stream',
-                                                          content_outgoing)
-        
-        defer.returnValue(content)
         
         
 # Spawn of the process using the module name

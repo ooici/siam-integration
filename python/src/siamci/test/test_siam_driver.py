@@ -20,7 +20,6 @@ from siamci.siamci_constants import SiamDriverState
 from siamci.siamci_constants import SiamDriverChannel
 from siamci.siamci_constants import SiamDriverCommand
     
-from ion.agents.instrumentagents.instrument_fsm import InstrumentFSM
 from ion.agents.instrumentagents.instrument_constants import InstErrorCode
 
 import random
@@ -65,11 +64,38 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         yield self._stop_container()
 
 
+
+
+
     @defer.inlineCallbacks
-    def test_001_initialize(self):
+    def test_001_configure(self):
+
+        self._check_skip()
+                
+        current_state = yield self.driver_client.get_state()
+        self.assertEqual(current_state, SiamDriverState.UNCONFIGURED)
+        
+        params = self.driver_config
+
+        # Configure the driver and verify.
+        reply = yield self.driver_client.configure(params)        
+        success = reply['success']
+        result = reply['result']
+                
+        self.assert_(InstErrorCode.is_ok(success))
+        self.assertEqual(result,params)
+        
+        current_state = yield self.driver_client.get_state()
+        self.assertEqual(current_state, SiamDriverState.DISCONNECTED)
+
+
+    @defer.inlineCallbacks
+    def test_002_initialize(self):
         
         self._check_skip()
-                        
+        
+        yield self.test_001_configure()
+        
         reply = yield self.driver_client.initialize()
         success = reply['success']
         result = reply['result']
@@ -78,31 +104,12 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         current_state = yield self.driver_client.get_state()
         self.assertEqual(current_state, SiamDriverState.UNCONFIGURED)
         
-
-    @defer.inlineCallbacks
-    def test_002_configure(self):
-
-        self._check_skip()
-                
-        yield self.test_001_initialize()
+       
         
-        params = self.driver_config
-
-        # Configure the driver and verify.
-        reply = yield self.driver_client.configure(params)        
-        current_state = yield self.driver_client.get_state()
-        success = reply['success']
-        result = reply['result']
-                
-        self.assert_(InstErrorCode.is_ok(success))
-        self.assertEqual(result,params)
-        self.assertEqual(current_state, SiamDriverState.DISCONNECTED)
-
-
     @defer.inlineCallbacks
     def __connect(self):
 
-        yield self.test_002_configure();
+        yield self.test_001_configure();
         
         # Establish connection to device and verify.
         try:
@@ -110,31 +117,27 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         except:
             self.fail('Could not connect to the device.')
             
-        current_state = yield self.driver_client.get_state()
         success = reply['success']
-        result = reply['result']
-
         self.assert_(InstErrorCode.is_ok(success))
-        self.assertEqual(result,None)
+        
+        current_state = yield self.driver_client.get_state()
         self.assertEqual(current_state, SiamDriverState.CONNECTED)
-        
-        
+
     @defer.inlineCallbacks
     def __disconnect(self):
         # Dissolve the connection to the device.
         reply = yield self.driver_client.disconnect()
-        current_state = yield self.driver_client.get_state()
+        
         success = reply['success']
-        result = reply['result']
-
         self.assert_(InstErrorCode.is_ok(success))
-        self.assertEqual(result,None)
+        
+        current_state = yield self.driver_client.get_state()
         self.assertEqual(current_state, SiamDriverState.DISCONNECTED)
        
-        
-      
+
+
     @defer.inlineCallbacks
-    def test_003_connect(self):
+    def test_003_connect_disconnect(self):
         """
         - connect
         - disconnect
@@ -145,7 +148,6 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         yield self.__connect()
         yield self.__disconnect()
         
-
 
 
     @defer.inlineCallbacks
@@ -168,7 +170,6 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         self.assert_(InstErrorCode.is_ok(success))  
         
         yield self.__disconnect()
-        
         
         
     @defer.inlineCallbacks
@@ -305,7 +306,7 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
     def test_006_set_params_invalid(self):
         """
         - connect
-        - set some invalid parameters (we just check the operation completes)
+        - set some invalid parameters
         - disconnect
         """
         
@@ -319,6 +320,7 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         success = reply['success']
         result = reply['result']
         
+        # we should get an error
         self.assert_(InstErrorCode.is_error(success))
         
         yield self.__disconnect()
@@ -342,7 +344,7 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         success = reply['success']
         result = reply['result']
         
-        log.debug("test_009_get_channels result =" +str(result))
+        log.debug("__connect_and_get_channels result =" +str(result))
         
         self.assert_(InstErrorCode.is_ok(success))
         
@@ -366,7 +368,7 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         
         channels = yield self.__connect_and_get_channels()
         
-        log.debug("test_009_get_channels channels =" +str(channels))
+        log.debug("test_007_get_channels channels =" +str(channels))
         
         yield self.__disconnect()
         
@@ -391,7 +393,7 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         success = reply['success']
         result = reply['result']
         
-        log.debug("test_010_get_last_sample result =" +str(result))
+        log.debug("test_008_get_last_sample result =" +str(result))
         
         self.assert_(InstErrorCode.is_ok(success))
         
@@ -408,98 +410,4 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
 
         yield self.__disconnect()
         
-        
-
-    @defer.inlineCallbacks
-    def test_009_acquisition_start_wait_stop(self):
-        """
-        - connect and get channels reported by instrument
-        - select a reported channel randomly
-        - start receiver service (in lieu of InstrumentAgent)
-        - execute START_AUTO_SAMPLING with selected channel
-        - wait for a few seconds
-        - execute STOP_AUTO_SAMPLING with selected channel
-        - disconnect
-        """
-        
-        self._check_skip()
-                
-        #
-        # connect and get channels
-        #
-        channels = yield self.__connect_and_get_channels()
-        if len(channels) == 0:
-            raise unittest.SkipTest('No reported channels from the instrument at port ' +str(SiamCiTestCase.port))
-        
-        #
-        # randomly select a reported channel:
-        #
-        channel = channels[random.randint(0, len(channels) - 1)]
-        
-        #
-        # start receiver service and set the publish_stream
-        #
-        receiver_service_name = 'test_siam_driver_receiver' 
-        receiver_client = yield self._start_receiver_service(receiver_service_name)
-        publish_stream = "siamci." + receiver_service_name
-        reply = yield self.driver_client.set_publish_stream(publish_stream)
-        success = reply['success']
-        result = reply['result']
-        self.assert_(InstErrorCode.is_ok(success))
-        
-        #
-        # tell receiver to expect related publication
-        # @todo: more robust assignment of publish IDs
-        #
-        publish_id = "data_acquisition;port=" + SiamCiTestCase.port + ";channel=" +channel
-        
-        # prepare to receive result:
-        yield receiver_client.expect(publish_id);
-        
-        #
-        # execute START_AUTO_SAMPLING
-        # NOTE SiamDriverChannel.INSTRUMENT is not handled. We use the concrete
-        # channel selected above
-        #
-        channels = [channel]
-        command = [SiamDriverCommand.START_AUTO_SAMPLING]
-        timeout = 20
-        reply = yield self.driver_client.execute(channels,command,timeout)
-        success = reply['success']
-        result = reply['result']
-        
-        self.assert_(InstErrorCode.is_ok(success))
-        
-        assert(isinstance(result, dict))    
-        self.assertEqual(result.get("channel", None), channel)
-        self.assertEqual(result.get("publish_stream", None), publish_stream)
-        
-        #
-        # wait for a few samples to be notified to the receiver service
-        #
-        yield pu.asleep(20)
-
-        #
-        # check that we actually received data
-        #
-        expected = yield receiver_client.getExpected()
-        self.assertEquals(len(expected), 0)
-
-        #
-        # execute STOP_AUTO_SAMPLING
-        # 
-        channels = [channel]
-        command = [SiamDriverCommand.STOP_AUTO_SAMPLING]
-        reply = yield self.driver_client.execute(channels, command)
-        success = reply['success']
-        result = reply['result']
-        
-        self.assert_(InstErrorCode.is_ok(success))
-        
-
-        #
-        # disconnect
-        #
-        yield self.__disconnect()
-        
-        
+         
