@@ -30,7 +30,7 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
         yield self.siamci.start()
         
         self.receiver_client = yield self._start_receiver_service(receiver_service_name)
-    
+        
 
     @defer.inlineCallbacks
     def tearDown(self):
@@ -62,8 +62,10 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
         
         # actual response should indicate OK: 
         response = yield self.receiver_client.getAccepted(publish_id)
-        self.assertIsSuccessFail(response)
-        self.assertEquals(response.result, OK)
+
+        self.assertTrue(isinstance(response, dict))
+        self.assertEquals(response['result'], OK)
+        self.assertTrue(response.get('item') != None)
 
 
     @defer.inlineCallbacks
@@ -76,7 +78,7 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
         publish_id = "get_status;port=" + SiamCiTestCase.port
         
         # prepare to receive result:
-        yield self.receiver_client.expect(publish_id);
+        yield self.receiver_client.expect(publish_id)
         
         # make request:
         ret = yield self.siamci.get_status(publish_stream="siamci." + receiver_service_name)
@@ -86,12 +88,15 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
         
         # check that all expected were received
         expected = yield self.receiver_client.getExpected()
+        
         self.assertEquals(len(expected), 0)
         
         # actual response should indicate OK: 
         response = yield self.receiver_client.getAccepted(publish_id)
-        self.assertIsSuccessFail(response)
-        self.assertEquals(response.result, OK)
+        
+        self.assertTrue(isinstance(response, dict))
+        self.assertEquals(response['result'], OK)
+        self.assertTrue(response.get('item') != None)
 
 
     @defer.inlineCallbacks
@@ -118,8 +123,10 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
         
         # actual response should indicate OK: 
         response = yield self.receiver_client.getAccepted(publish_id)
-        self.assertIsSuccessFail(response)
-        self.assertEquals(response.result, OK)
+
+        self.assertTrue(isinstance(response, dict))
+        self.assertEquals(response['result'], OK)
+        self.assertTrue(response.get('item') != None)
         
 
     @defer.inlineCallbacks
@@ -146,8 +153,10 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
         
         # actual response should indicate OK: 
         response = yield self.receiver_client.getAccepted(publish_id)
-        self.assertIsSuccessFail(response)
-        self.assertEquals(response.result, OK)
+
+        self.assertTrue(isinstance(response, dict))
+        self.assertEquals(response['result'], OK)
+        self.assertTrue(response.get('item') != None)
         
 
     @defer.inlineCallbacks
@@ -173,8 +182,10 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
 
         # actual response should indicate OK: 
         response = yield self.receiver_client.getAccepted(publish_id)
-        self.assertIsSuccessFail(response)
-        self.assertEquals(response.result, OK)
+        
+        self.assertTrue(isinstance(response, dict))
+        self.assertEquals(response['result'], OK)
+        self.assertTrue(response.get('item') != None)
         
         
     @defer.inlineCallbacks
@@ -200,8 +211,11 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
         
         # ... but the actual response should indicate ERROR: 
         response = yield self.receiver_client.getAccepted(publish_id)
-        self.assertIsSuccessFail(response)
-        self.assertEquals(response.result, ERROR)
+        
+        self.assertTrue(isinstance(response, dict))
+        self.assertEquals(response['result'], ERROR)
+        self.assertTrue(response.get('item') != None)
+        
 
         
     @defer.inlineCallbacks
@@ -226,8 +240,11 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
         
         # actual response should indicate OK: 
         response = yield self.receiver_client.getAccepted(publish_id)
-        self.assertIsSuccessFail(response)
-        self.assertEquals(response.result, OK)
+        
+        self.assertTrue(isinstance(response, dict))
+        self.assertEquals(response['result'], OK)
+        self.assertTrue(response.get('item') != None)
+
 
     @defer.inlineCallbacks
     def test_set_params_good_async_timeout_30(self):
@@ -252,8 +269,12 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
         
         # actual response should indicate OK: 
         response = yield self.receiver_client.getAccepted(publish_id)
-        self.assertIsSuccessFail(response)
-        self.assertEquals(response.result, OK)
+        
+        self.assertTrue(isinstance(response, dict))
+        self.assertEquals(response['result'], OK)
+        self.assertTrue(response.get('item') != None)
+
+        
 
     @defer.inlineCallbacks
     def test_set_params_wrong_async(self):
@@ -280,5 +301,8 @@ class TestSiamCiAdapterProxyAsync(SiamCiTestCase):
         
         # actual response should indicate ERROR: 
         response = yield self.receiver_client.getAccepted(publish_id)
-        self.assertIsSuccessFail(response)
-        self.assertEquals(response.result, ERROR)
+        
+        self.assertTrue(isinstance(response, dict))
+        self.assertEquals(response['result'], ERROR)
+        self.assertTrue(response.get('item') != None)
+        

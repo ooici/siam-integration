@@ -27,6 +27,14 @@ from ion.services.coi.resource_registry.resource_client import ResourceClient
 import ion.util.procutils as pu
 
 
+from ion.core.object.object_utils import create_type_identifier
+
+Command_type = create_type_identifier(object_id=20034, version=1)
+ChannelParameterPair_type = create_type_identifier(object_id=20035, version=1)
+SuccessFail_type = create_type_identifier(object_id=20036, version=1)
+
+
+
 class SiamCiReceiverService(ServiceProcess):
     """
     Simple service to receive asynchronous reponses from the SIAM-CI adapter
@@ -103,14 +111,48 @@ class SiamCiReceiverService(ServiceProcess):
 
     @defer.inlineCallbacks
     def op_acceptResponse(self, content, headers, msg):
+#        
         publish_id = self._get_publish_id(content, headers, msg)
+        
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug("op_acceptResponse: publish_id = " +str(publish_id))
+        
         if publish_id:
+            content = self._get_python_content(content)
             self.accepted[publish_id] = content
             yield self.reply_ok(msg, {'op_acceptResponse' : "OK: response for publish_id='" +str(publish_id)+ "' accepted"})
         else:
             log.warn('op_acceptResponse: publish_id not given')
             yield self.reply_err(msg, "op_acceptResponse : WARNING: publish_id not given")
 
+
+    def _get_python_content(self, content):
+        
+#        from IPython.Shell import IPShellEmbed; (IPShellEmbed())()
+        
+        if isinstance(content, dict):
+            # this is the case when op_acceptResponse is called from python code
+            return content
+        
+        if SuccessFail_type == content.MessageType:
+            obj = content.MessageObject
+            # TODO complete conversion
+            return {'result' : obj.result,
+                    'item' : obj.item[0].str}
+        
+        elif ChannelParameterPair_type == content.MessageType:
+            # FIXME do conversion
+            return content
+        
+        elif Command_type == content.MessageType:
+            # FIXME do conversion
+            return content
+        
+        # TODO this should probably not happen
+        return content
+        
+        
+            
 
     @defer.inlineCallbacks
     def op_setExpectedTimeout(self, content, headers, msg):
@@ -170,6 +212,7 @@ class SiamCiReceiverService(ServiceProcess):
         """
         Returns the content received for a given publish_id; None if not received yet.
         """
+        
         publish_id = self._get_publish_id(content, headers, msg)
         if publish_id:
             if publish_id in self.accepted:

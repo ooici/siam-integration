@@ -57,6 +57,8 @@ class TestSiamCiAdapterProxy(SiamCiTestCase):
     def test_get_status(self):
         self._check_skip()
         ret = yield self.siamci.get_status()
+        self.assertIsSuccessFail(ret)
+        self.assertEquals(ret.result, OK)
 
     @defer.inlineCallbacks
     def test_get_last_sample(self):

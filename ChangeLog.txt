@@ -1,6 +1,104 @@
 SIAM-CI Integration Prototype change log
 Carlos Rueda - MBARI
 
+2011-07-19
+	Fixed https://jira.oceanobservatories.org/tasks/browse/OOIION-64
+	- All tests successful again after more debugging and adjustments.
+	  Most supporting classes and corresponding tests revised. Pending
+	  to revise TestSiamAgent and then incorporate proper way of notification
+	  of events via op_driver_event_occurred.  
+	  
+	  
+	The tests go as follows using a very recent (as of yesterday) clone of
+	ioncore-python and using the development.cfg buildout configuration.
+	
+	
+		(py_buildout)bochica:ioncore-python carueda$ SIAM_CI=- bin/trial siamci
+		siamci.test.test_echo_service_in_java
+		  JavaEchoTest
+		    test_send_message_instance1 ...                                        [OK]
+		    test_send_message_instance2 ...                                        [OK]
+		siamci.test.test_receiver_service
+		  SiamCiReceiverServiceTest
+		    test_expect_1 ...                                                      [OK]
+		    test_expect_accept_1 ...                                               [OK]
+		siamci.test.test_siam_agent
+		  TestSiamAgent
+		    test_001_initialize ... 2011-07-19 21:01:37.970 [process        :867] WARNING:Process InstrumentAgent_testPort RPC conv-id=bochica_local_39109.20#20 timed out! 
+		                                               [OK]
+		    test_002_go_active_run ... 2011-07-19 21:01:53.509 [process        :867] WARNING:Process InstrumentAgent_testPort RPC conv-id=bochica_local_39109.27#31 timed out! 
+		                                            [OK]
+		    test_003_go_active_run_reset ... 2011-07-19 21:02:09.163 [process        :867] WARNING:Process InstrumentAgent_testPort RPC conv-id=bochica_local_39109.34#56 timed out! 
+		                                      [OK]
+		    test_010_params_get_set_verify ... 2011-07-19 21:02:25.040 [process        :867] WARNING:Process InstrumentAgent_testPort RPC conv-id=bochica_local_39109.41#89 timed out! 
+		                                    [OK]
+		    test_020_acquisition_get_last_sample ... 2011-07-19 21:02:42.551 [process        :867] WARNING:Process InstrumentAgent_testPort RPC conv-id=bochica_local_39109.48#129 timed out! 
+		                              [OK]
+		    test_021_acquisition_start_wait_stop ... 2011-07-19 21:02:58.766 [process        :867] WARNING:Process InstrumentAgent_testPort RPC conv-id=bochica_local_39109.55#160 timed out! 
+		                         [SKIPPED]
+		siamci.test.test_siam_driver
+		  TestSiamInstrumentDriver
+		    test_001_configure ...                                                 [OK]
+		    test_002_initialize ...                                                [OK]
+		    test_003_connect_disconnect ...                                        [OK]
+		    test_004_get_status ...                                                [OK]
+		    test_005_get_params_all ...                                            [OK]
+		    test_005_get_params_specific_channels ...                         [SKIPPED]
+		    test_005_get_params_subset_good ...                                    [OK]
+		    test_005_get_params_subset_good_and_bad ...                            [OK]
+		    test_006_set_params_invalid ...                                        [OK]
+		    test_006_set_params_valid ...                                          [OK]
+		    test_007_get_channels ...                                              [OK]
+		    test_008_get_last_sample ...                                           [OK]
+		siamci.test.test_siamci
+		  TestSiamCiAdapterProxy
+		    test_fetch_params_all ...                                              [OK]
+		    test_fetch_params_some_good ...                                        [OK]
+		    test_fetch_params_some_wrong ...                                       [OK]
+		    test_get_channels ...                                                  [OK]
+		    test_get_last_sample ...                                               [OK]
+		    test_get_status ...                                                    [OK]
+		    test_list_ports ...                                                    [OK]
+		    test_ping ...                                                          [OK]
+		    test_set_params_good ...                                               [OK]
+		    test_set_params_wrong ...                                              [OK]
+		siamci.test.test_siamci_async
+		  TestSiamCiAdapterProxyAsync
+		    test_fetch_params_all_async ...                                        [OK]
+		    test_fetch_params_some_good_async ...                                  [OK]
+		    test_fetch_params_some_wrong_async ...                                 [OK]
+		    test_get_channels_async ...                                            [OK]
+		    test_get_last_sample_async ...                                         [OK]
+		    test_get_status_async ...                                              [OK]
+		    test_list_ports_async ...                                              [OK]
+		    test_set_params_good_async_timeout_30 ...                              [OK]
+		    test_set_params_wrong_async ...                                        [OK]
+		siamci.test.test_siamci_data_async
+		  TestSiamCiAdapterProxyDataAsync
+		    test_acquisition_start_verify_data ...                                 [OK]
+		    test_acquisition_start_wait_stop ...                                   [OK]
+		
+		===============================================================================
+		[SKIPPED]
+		Notification of data to the agent not implemented yet
+		
+		siamci.test.test_siam_agent.TestSiamAgent.test_021_acquisition_start_wait_stop
+		===============================================================================
+		[SKIPPED]
+		Not yet implemented
+		
+		siamci.test.test_siam_driver.TestSiamInstrumentDriver.test_005_get_params_specific_channels
+		-------------------------------------------------------------------------------
+		Ran 43 tests in 167.516s
+		
+		PASSED (skips=2, successes=41)
+	
+	  	
+	
+	
+	 
+	
+	
 2011-07-18
 	- Consolidating general revision of the SIAM driver python code. I'm testing this
 	  against the latest ioncore-python from github (not against any particular release 

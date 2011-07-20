@@ -53,7 +53,6 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
      */
     private static final long TIMEOUT = 3 * 1000;
 
-    private static final String SENDER_NAME = "SIAM-CI Adapter (java)";
 
     private final String brokerHost;
 
@@ -442,7 +441,13 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
          */
         headers.put("performative", "inform_result");
         
-        headers.put("sender-name", SENDER_NAME);
+        /*
+         * used to be only sender-name -> "SIAM-CI Adapter (java)", but now it's
+         * the queueName and for both reply-to and sender-name (on the python
+         * it's not very clear how these two propertied interplay).
+         */
+        headers.put("reply-to", queueName);
+        headers.put("sender-name", queueName);
 
         ionClient.sendMessage(msg);
 
@@ -489,7 +494,8 @@ class SiamCiServerIonMsg implements IPublisher, Runnable {
         // include the publish_id as a header:
         headers.put("publish_id", publishId);
         
-        headers.put("sender-name", SENDER_NAME);
+        headers.put("reply-to", queueName);
+        headers.put("sender-name", queueName);
 
         try {
             /*

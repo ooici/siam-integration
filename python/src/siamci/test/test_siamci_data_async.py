@@ -79,8 +79,10 @@ class TestSiamCiAdapterProxyDataAsync(SiamCiTestCase):
         
         # actual response should indicate OK: 
         response = yield receiver_client.getAccepted(publish_id)
-        self.assertIsSuccessFail(response)
-        self.assertEquals(response.result, OK)
+        
+        self.assertTrue(isinstance(response, dict))
+        self.assertEquals(response['result'], OK)
+        self.assertTrue(response.get('item') != None)
         
         defer.returnValue((receiver_client, channel, publish_id))
 
