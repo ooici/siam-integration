@@ -41,8 +41,6 @@ setup(
     package_dir = {'': 'src'},
 
     install_requires = [
-        # 2011-05-24: NOTE that 0.4.16 and 0.4.17 (the lastest as of today)
-        # make some of the SIAM-CI tests fail. So, using 0.4.15.
         'ioncore'                
                        ],
 
