@@ -1,6 +1,9 @@
 SIAM-CI Integration Prototype change log
 Carlos Rueda - MBARI
 
+2011-07-21
+	- Tests verified against ioncore-python 0.4.42
+
 2011-07-19
 	Fixed https://jira.oceanobservatories.org/tasks/browse/OOIION-64
 	- All tests successful again after more debugging and adjustments.
