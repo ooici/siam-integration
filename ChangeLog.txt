@@ -1,6 +1,17 @@
 SIAM-CI Integration Prototype change log
 Carlos Rueda - MBARI
 
+2011-07-22
+	- Java-side upgrades:
+		ioncore-java from 0.2.8 to 0.2.16
+		ionproto from 0.3.25 to 0.3.32 (according to ioncore-java's POM).
+	- Tests with these upgrades also working as well.
+	
+	(Note: a couple of these tests actually failed against siam.oceanobservatories.org
+	because of already known RMI connectivity issues. It is expected that these errors
+	will not arise on the buildbot machine in particular assuming that machine is 
+	behind the same firewall as siam.oceanobservatories.org)
+
 2011-07-21
 	- Tests verified against ioncore-python 0.4.42
 

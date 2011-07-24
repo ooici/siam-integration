@@ -15,8 +15,8 @@
 		<siam_version>2011-01</siam_version>
 		<rbnb_version>V3.2B5</rbnb_version>
 		<siam_instr_version>0.0.1-SNAPSHOT</siam_instr_version>
-		<ionproto_version>0.3.25</ionproto_version>
-		<ioncore_version>0.2.8</ioncore_version>
+		<ionproto_version>0.3.32</ionproto_version>
+		<ioncore_version>0.2.16</ioncore_version>
 		<msgpack_version>0.3</msgpack_version>
 	</properties>
 
