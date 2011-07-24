@@ -26,7 +26,11 @@ elif [ "$1" = "start" ]; then
 		echo "$PIDFILE exists; not starting as the service may be already running"
 		exit 1
 	fi
-	mvn exec:java -Psiam-ci &
+	if [ "$2" = "" ]; then
+		mvn exec:java -Psiam-ci -Dexec.args=--siam=siam.oceanobservatories.org &
+	else
+		mvn exec:java -Psiam-ci -Dexec.args=--siam=$2 &
+	fi
 	rc=$?
 	if [ "0" != "$rc" ]; then
 		echo "error running maven to launch the service program"
@@ -55,8 +59,10 @@ elif [ "$1" = "stop" ]; then
 else
 	echo "A sort of controller for the SIAM-CI adapter service"
 	echo "Usage:"
-	echo "  ./siamci.sh build    # builds the service"
-	echo "  ./siamci.sh start    # starts the service"
-	echo "  ./siamci.sh stop     # stops the service"
+	echo "  ./siamci.sh build                         # builds the service"
+	echo "  ./siamci.sh start [<siam-host>]           # starts the service"
+	echo "  ./siamci.sh stop                          # stops the service"
+	echo
+	echo "By default, <siam-host> is siam.oceanobservatories.org"
 	exit
 fi

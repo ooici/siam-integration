@@ -3,7 +3,7 @@ Carlos Rueda - MBARI
 
 2011-07-23
 	Preparations for https://jira.oceanobservatories.org/tasks/browse/OOIION-67
-	completed. Next thing is to start testing.
+	completed.
 	
 	- Deployed to the MBARI maven repo my interim SIAM changes related with explicit
 	  RMI ports to the node and the instruments. These changes are described in an 
@@ -18,6 +18,10 @@ Carlos Rueda - MBARI
 	  these changes have not been reviewed by the SIAM team.)
 	  
 	  
+	- Successful build and testing of the whole siam-integration project starting from scratch 
+	  on my laptop and against the SIAM node at siam.oceanobservatories.org
+	
+	
 	
 	
 2011-07-22
