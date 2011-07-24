@@ -54,7 +54,7 @@ as the version.
 	  -DartifactId=siam \
 	  -Dpackaging=jar \
 	  -Dfile=/Users/carueda/workspace/siam2/jars/siam.jar \
-	  -Dversion=2011-01 \
+	  -Dversion=2011-07rmi \
 	  -DgeneratePom=true
   
 * Test SIAM instrument. This JAR is from my working SIAM environment.
@@ -65,7 +65,7 @@ as the version.
 	  -DartifactId=siam-test-instr1 \
 	  -Dpackaging=jar \
 	  -Dfile=/Users/carueda/workspace/siam2/ports/TestSiamInstrument-1235.jar \
-	  -Dversion=0.0.1-SNAPSHOT \
+	  -Dversion=0.0.1rmi-SNAPSHOT \
 	  -DgeneratePom=true
   
 

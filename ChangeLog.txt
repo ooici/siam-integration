@@ -1,6 +1,25 @@
 SIAM-CI Integration Prototype change log
 Carlos Rueda - MBARI
 
+2011-07-23
+	Preparations for https://jira.oceanobservatories.org/tasks/browse/OOIION-67
+	almost complete.
+	
+	- Deployed to the MBARI maven repo my interim SIAM changes related with explicit
+	  RMI ports to the node and the instruments. These changes are described in an 
+	  MBARI confluence page (which may not be accessible externally):
+	  https://oceana.mbari.org/confluence/display/~carueda/SIAM-+enabling+user-specified+RMI+ports
+	  
+	  The specific artifacts deployed are:
+	  	siam-2011-07rmi.jar
+	  	siam-test-instr1-0.0.1rmi-SNAPSHOT.jar
+	   
+	  (NOTE: the SIAM code changes have NOT yet been committed to the SIAM repository; 
+	  these changes have not been reviewed by the SIAM team.)
+	  
+	  
+	
+	
 2011-07-22
 	- Java-side upgrades:
 		ioncore-java from 0.2.8 to 0.2.16

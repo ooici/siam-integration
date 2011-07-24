@@ -33,20 +33,27 @@ public class TestSiamInstrument1 extends PolledInstrumentService implements
 
     public TestSiamInstrument1() throws RemoteException {
         super();
+        log.debug("no-arg constructor TestSiamInstrument1() CALLED");
     }
 
+    public TestSiamInstrument1(int rmiPort) throws RemoteException {
+        super(rmiPort);
+        log.debug("constructor TestSiamInstrument1(" +rmiPort+ ") CALLED");
+    }
+    
     protected ScheduleSpecifier createDefaultSampleSchedule()
             throws ScheduleParseException {
         return new ScheduleSpecifier(10 * 1000);
     }
 
-    // puts in the buffer something like: "nn:mm", where nn is a sequence number
-    // and mm
-    // is a random double number
+	/**
+	 * puts in the buffer something like: "nn:mm", where nn is a sequence number
+	 * and mm is a random double number
+	 */
     protected int readSample(byte[] sample) throws TimeoutException,
             IOException, Exception {
         
-        System.out.println("readSample CALLED");
+        log.info("readSample CALLED");
 
         byte[] bytes = (_sequenceNumber + ":" + Math.random()).getBytes();
         _sequenceNumber++;
@@ -93,7 +100,7 @@ public class TestSiamInstrument1 extends PolledInstrumentService implements
     }
 
     protected void requestSample() throws TimeoutException, Exception {
-        System.err.println(getClass().getSimpleName()
+    	log.info(getClass().getSimpleName()
                 + ": requestSample() called, _sequenceNumber = "
                 + _sequenceNumber);
         if (_sequenceNumber == 0) {
@@ -105,7 +112,7 @@ public class TestSiamInstrument1 extends PolledInstrumentService implements
             log.debug("requestSample() - done with snooze()");
         }
         catch (Throwable e) {
-            System.err.println(getClass().getSimpleName()
+        	log.info(getClass().getSimpleName()
                     + ":  requestSample():  exception: "
                     + e.getClass().getName() + ": " + e.getMessage());
         }
