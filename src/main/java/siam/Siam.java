@@ -73,10 +73,17 @@ public class Siam implements ISiam {
         
         log.info("Looking up '" + nodeURL + "' to connect with SIAM node ...");
         Node node = (Node) Naming.lookup(nodeURL.toString());
-        log.info("Connected to SIAM node. (" +node.getClass().getName()+ ")");
+        log.info("Connected to SIAM node. (" +node+ ")");
         return node;
     }
 
+    private static NodeInfo _getNodeInfo(Node node) throws Exception {
+        log.info("Getting node info ...");
+        NodeInfo nodeInfo = node.getNodeInfo();
+        log.info("Node info: " +nodeInfo);
+        return nodeInfo;
+    }
+    
     /**
      * Logs a simplified version of the throwable and its chain of causes
      * without the full stacktrace.
@@ -126,13 +133,13 @@ public class Siam implements ISiam {
         }
         try {
             node = _getNode(host);
-            nodeId = node.getId();
-            nodeInfo = node.getNodeInfo();
+            nodeInfo = _getNodeInfo(node);
         }
         catch (Exception e) {
             _logError(e);
             throw e;
         }
+        nodeId = nodeInfo._nodeID;
     }
 
     public long getNodeId() {
