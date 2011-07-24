@@ -3,7 +3,7 @@ Carlos Rueda - MBARI
 
 2011-07-23
 	Preparations for https://jira.oceanobservatories.org/tasks/browse/OOIION-67
-	almost complete.
+	completed. Next thing is to start testing.
 	
 	- Deployed to the MBARI maven repo my interim SIAM changes related with explicit
 	  RMI ports to the node and the instruments. These changes are described in an 
