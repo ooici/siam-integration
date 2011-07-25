@@ -22,6 +22,9 @@ from siamci.siamci_constants import SiamDriverState
 from siamci.siamci_constants import SiamDriverChannel
 from siamci.siamci_constants import SiamDriverCommand
 from siamci.siamci_constants import SiamDriverAnnouncement
+from siamci.siamci_constants import SiamDriverCapability
+from siamci.siamci_constants import SiamDriverMetadataParameter
+from siamci.siamci_constants import SiamDriverStatus
 
 from siamci.siamci_proxy import SiamCiAdapterProxy
 from siamci.util.tcolor import red, blue
@@ -363,6 +366,64 @@ class SiamInstrumentDriver(InstrumentDriver):
 
         yield self.reply_ok(msg, reply)
 
+
+    @defer.inlineCallbacks
+    def op_get_capabilities(self, content, headers, msg):
+        assert(isinstance(content,dict)), 'Expected dict content.'
+        params = content.get('params',None)
+        assert(isinstance(params,(list,tuple))), 'Expected list or tuple params.'
+
+        reply = self._get_capabilities(params)
+        yield self.reply_ok(msg, reply)
+
+    def _get_capabilities(self,params):
+
+        # Set up the reply message.
+        reply = {'success':None,'result':None}
+        result = {}
+        get_errors = False
+
+        for arg in params:
+            if SiamDriverCapability.has(arg):
+                
+                if arg == SiamDriverCapability.DEVICE_COMMANDS or \
+                        arg == SiamDriverCapability.DEVICE_ALL:
+                    result[SiamDriverCapability.DEVICE_COMMANDS] = \
+                        (InstErrorCode.OK,SiamDriverCommand.list())
+                
+                if arg == SiamDriverCapability.DEVICE_METADATA or \
+                        arg == SiamDriverCapability.DEVICE_ALL:
+                    result[SiamDriverCapability.DEVICE_METADATA] = \
+                        (InstErrorCode.OK,SiamDriverMetadataParameter.list())
+                
+#                if arg == SiamDriverCapability.DEVICE_PARAMS or \
+#                        arg == SiamDriverCapability.DEVICE_ALL:
+#                    result[SiamDriverCapability.DEVICE_PARAMS] = \
+#                        (InstErrorCode.OK,self.parameters.keys())
+                
+                if arg == SiamDriverCapability.DEVICE_STATUSES or \
+                        arg == SiamDriverCapability.DEVICE_ALL:
+                    result[SiamDriverCapability.DEVICE_STATUSES] = \
+                        (InstErrorCode.OK,SiamDriverStatus.list())
+            
+                if arg == SiamDriverCapability.DEVICE_CHANNELS or \
+                        arg == SiamDriverCapability.DEVICE_ALL:
+                    result[SiamDriverCapability.DEVICE_CHANNELS] = \
+                        (InstErrorCode.OK,SiamDriverChannel.list())
+
+            else:
+                result[arg] = (InstErrorCode.INVALID_CAPABILITY,None)
+                get_errors = True
+
+        if get_errors:
+            reply['success'] = InstErrorCode.GET_DEVICE_ERR
+        else:
+            reply['success'] = InstErrorCode.OK
+        reply['result'] = result
+    
+        log.debug("_get_capabilities: returning reply: " + str(reply))       
+        return reply
+    
 
 
     @defer.inlineCallbacks

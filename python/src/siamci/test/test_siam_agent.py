@@ -143,7 +143,8 @@ class TestSiamAgent(SiamCiTestCase):
         
         # Initialize the agent.
         cmd = [AgentCommand.TRANSITION,AgentEvent.INITIALIZE]
-        reply = yield self.ia_client.execute_observatory(cmd,tid) 
+        reply = yield self.ia_client.execute_observatory(cmd,tid)
+        log.debug("test_001_initialize reply = " + str(reply)) 
         success = reply['success']
         result = reply['result']
         
@@ -355,7 +356,7 @@ class TestSiamAgent(SiamCiTestCase):
         success = reply['success']
         result = reply['result']
 
-        # temporary: instead of failing, skip
+        # TODO actually fail; temporarily skipping if not OK:
         if not InstErrorCode.is_ok(success): raise unittest.SkipTest(str(result))
         
         self.assert_(InstErrorCode.is_ok(success))

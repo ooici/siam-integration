@@ -12,14 +12,18 @@ from ion.agents.instrumentagents.instrument_constants import DriverState
 from ion.agents.instrumentagents.instrument_constants import DriverEvent
 from ion.agents.instrumentagents.instrument_constants import DriverAnnouncement
 from ion.agents.instrumentagents.instrument_constants import DriverChannel
+from ion.agents.instrumentagents.instrument_constants import DriverCapability
+from ion.agents.instrumentagents.instrument_constants import MetadataParameter
+from ion.agents.instrumentagents.instrument_constants import DriverStatus
 from ion.agents.instrumentagents.instrument_constants import InstErrorCode
 
 """
 @TODO: Some of the classes below extend corresponding classes in the
-       general CI instrument framework. Sure, that's the idea. However,
+       general CI instrument framework. However,
        there is still a need to examine and align these various 
        components; for example, there are probably certain elements 
-       (states, events) that are not necessarily applicable to a SIAM driver(?).
+       (states, events) that are not necessarily applicable to particular 
+       SIAM drivers.
 """
 
 # Device states.
@@ -61,6 +65,28 @@ class SiamDriverChannel(BaseEnum):
 class SiamDriverAnnouncement(DriverAnnouncement):
     """
     Add siam driver specific announcements here.
+    """
+    pass
+
+
+# Device specific capabilities.
+class SiamDriverCapability(DriverCapability):
+    """
+    Add siam driver capabilities here.
+    """
+    pass
+
+# Device specific capabilities.
+class SiamDriverMetadataParameter(MetadataParameter):
+    """
+    Add siam driver metadata types here.
+    """
+    pass
+
+# Device specific capabilities.
+class SiamDriverStatus(DriverStatus):
+    """
+    Add siam driver statuses here.
     """
     pass
 
