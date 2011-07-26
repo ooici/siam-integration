@@ -16,6 +16,7 @@ from ion.core.process.process import ProcessFactory
 from ion.agents.instrumentagents.instrument_driver import InstrumentDriver
 from ion.agents.instrumentagents.instrument_driver import InstrumentDriverClient
 from ion.agents.instrumentagents.instrument_constants import InstErrorCode
+from ion.agents.instrumentagents.instrument_constants import ObservatoryState
 
 from siamci.siamci_constants import SiamDriverEvent
 from siamci.siamci_constants import SiamDriverState
@@ -27,6 +28,8 @@ from siamci.siamci_constants import SiamDriverMetadataParameter
 from siamci.siamci_constants import SiamDriverStatus
 
 from siamci.siamci_proxy import SiamCiAdapterProxy
+
+from siamci.util.conversion import get_python_content
 from siamci.util.tcolor import red, blue
 
 from net.ooici.play.instr_driver_interface_pb2 import Command, SuccessFail, OK, ERROR
@@ -88,10 +91,16 @@ class SiamInstrumentDriver(InstrumentDriver):
 
 
         """
-        Used in certain operations to enable handling of notifications from the
-        SIAM-CI adapter service in lieu of InstrumentAgent
+        Used in certain non-data operations to enable handling of asynchronous 
+        notifications from the SIAM-CI adapter service
         """
         self.publish_stream = None
+
+        """
+        Used in data related operations to enable handling of asynchronous 
+        notifications from the SIAM-CI adapter service
+        """
+        self.data_publish_stream = str(self.id)
 
         self._initialize()
 
@@ -360,11 +369,119 @@ class SiamInstrumentDriver(InstrumentDriver):
         assert(all(map(lambda x:isinstance(x,tuple),params))), \
             'Expected tuple elements in params list'
         
-        response = yield self.siamci.get_status(params=params)
-        result = response.result
-        reply = {'success':InstErrorCode.OK,'result':result}
-
+        
+        reply = self._get_status(params)
+        
         yield self.reply_ok(msg, reply)
+
+
+
+    def _get_status(self,params):
+        """
+        Get the instrument and channel status.
+        @params A list of (channel,status) keys.
+        @retval A dict containing success and status results:
+            {'success':success,'result':
+            {(chan,arg):(success,val),...,(chan,arg):(success,val)}}
+        """
+        
+        ###############################################################
+        ### TODO Proper dispatch of the requested status.
+        ### Here is the initial code:      
+#        response = yield self.siamci.get_status(params=params)
+#        result = response.result
+#        reply = {'success':InstErrorCode.OK,'result':result}
+        ### But now we are dispaching part of the logic only on the 
+        ### python side.
+        ###############################################################
+        
+        
+        # Set up the reply message.
+        reply = {'success':None,'result':None}
+        result = {}
+        get_errors = False
+
+        for (chan,arg) in params:
+            if SiamDriverChannel.has(chan) and SiamDriverStatus.has(arg):
+                # If instrument channel or all.
+                if chan == SiamDriverChannel.INSTRUMENT or chan == SiamDriverChannel.ALL:
+                    if arg == SiamDriverStatus.DRIVER_STATE or \
+                            arg == SiamDriverStatus.ALL:
+                        result[(SiamDriverChannel.INSTRUMENT,
+                                SiamDriverStatus.DRIVER_STATE)] = \
+                            (InstErrorCode.OK, self.current_state)
+                    
+                    if arg == SiamDriverStatus.OBSERVATORY_STATE or \
+                            arg == SiamDriverStatus.ALL:
+                        result[(SiamDriverChannel.INSTRUMENT,
+                                SiamDriverStatus.OBSERVATORY_STATE)] = \
+                            (InstErrorCode.OK,self._get_observatory_state())
+                    
+                        #
+                        # TODO  OTHERS ......
+                        #
+                        
+            # Status or channel key or both invalid.       
+            else:
+                result[(chan,arg)] = (InstErrorCode.INVALID_STATUS,None)
+                get_errors = True
+
+        reply['result'] = result
+            
+        # Set the overall error state.
+        if get_errors:
+            reply['success'] = InstErrorCode.GET_DEVICE_ERR
+
+        else:
+            reply['success'] = InstErrorCode.OK
+            
+        return reply
+
+
+    def _get_observatory_state(self):
+        """
+        Return the observatory state of the instrument.
+        """
+        
+        curstate = self.current_state
+        if curstate == SiamDriverState.DISCONNECTED:
+            return ObservatoryState.NONE
+        
+        elif curstate == SiamDriverState.CONNECTING:
+            return ObservatoryState.NONE
+
+        elif curstate == SiamDriverState.DISCONNECTING:
+            return ObservatoryState.NONE
+
+        elif curstate == SiamDriverState.ACQUIRE_SAMPLE:
+            return ObservatoryState.ACQUIRING
+
+        elif curstate == SiamDriverState.CONNECTED:
+            return ObservatoryState.STANDBY
+
+        elif curstate == SiamDriverState.CALIBRATE:
+            return ObservatoryState.CALIBRATING
+
+        elif curstate == SiamDriverState.AUTOSAMPLE:
+            return ObservatoryState.STREAMING
+
+        elif curstate == SiamDriverState.SET:
+            return ObservatoryState.UPDATING
+
+        elif curstate == SiamDriverState.TEST:
+            return ObservatoryState.TESTING
+
+        elif curstate == SiamDriverState.UNCONFIGURED:
+            return ObservatoryState.NONE
+
+        elif curstate == SiamDriverState.UPDATE_PARAMS:
+            return ObservatoryState.UPDATING
+
+        else:
+            return ObservatoryState.UNKNOWN
+
+
+
 
 
     @defer.inlineCallbacks
@@ -702,7 +819,58 @@ class SiamInstrumentDriver(InstrumentDriver):
         return
         
        
-       
+  
+  
+      
+    @defer.inlineCallbacks
+    def op_acceptResponse(self, content, headers, msg):
+        """
+        This operation is called by the java side.
+        """
+        
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug("op_acceptResponse: called.")
+            
+        publish_id = headers['publish_id']
+        if not publish_id:
+            log.warn('op_acceptResponse: publish_id not given')
+            yield self.reply_err(msg, "op_acceptResponse : WARNING: publish_id not given")
+            return
+
+        # reply to client. TODO note that this still uses an RPC style so we
+        # should reply something, but a future change is to use just a 
+        # one-directional notification.        
+        yield self.reply_ok(msg, {'op_acceptResponse' : "OK: response for publish_id='" +str(publish_id)+ "' accepted"})
+        
+        #
+        # now, let's dispatch the notification:
+        #
+        
+        content = get_python_content(content)
+        
+        channel = content['item']['channel']
+        value = float(content['item']['value'])
+        
+        
+        if log.getEffectiveLevel() <= logging.DEBUG:
+            log.debug("op_acceptResponse: publish_id = " +str(publish_id) +
+                      " content = " +str(content))
+        
+        if self.notify_agent:
+            sample_data = {}
+            sample_data[channel] = value
+            samples = [sample_data]
+            notify_content = {'type':SiamDriverAnnouncement.DATA_RECEIVED,
+                       'transducer':channel,'value':samples}
+            
+            
+            if log.getEffectiveLevel() <= logging.DEBUG:
+                log.debug("****** notifying agent: " +str(notify_content))
+            
+            
+            yield self.send(self.proc_supid, 'driver_event_occurred', notify_content)                                                
+                
+      
       
       
     @defer.inlineCallbacks
@@ -731,7 +899,7 @@ class SiamInstrumentDriver(InstrumentDriver):
         """
         If successful, 
             reply['success'] = InstErrorCode.OK
-            reply['result'] = {'channel':channel, 'publish_stream':self.publish_stream }
+            reply['result'] = {'channel':channel, 'publish_stream':self.data_publish_stream }
             
         where channel is the channel in the singleton channels list
 
@@ -740,7 +908,7 @@ class SiamInstrumentDriver(InstrumentDriver):
         if log.getEffectiveLevel() <= logging.DEBUG:
             log.debug('__start_sampling channels = ' +str(channels) + \
                       " notify_agent = " + str(self.notify_agent) + \
-                      " publish_stream = " + str(self.publish_stream))
+                      " data_publish_stream = " + str(self.data_publish_stream))
         
         if len(channels) != 1:
             reply['success'] = InstErrorCode.INVALID_CHANNEL
@@ -760,15 +928,8 @@ class SiamInstrumentDriver(InstrumentDriver):
             return
         
         
-        #
-        # either publish_stream is given OR notify_agent is True, with
-        # publish_stream having precedence just because this was the first
-        # implemented functionality (but in general, not both properties
-        # would be indicated at the same time).
-        #
-        
-        if self.publish_stream is not None:
-            response = yield self.siamci.execute_StartAcquisition(channel, self.publish_stream)
+        if self.data_publish_stream is not None:
+            response = yield self.siamci.execute_StartAcquisition(channel, self.data_publish_stream)
             if response.result != OK:
                 log.warning("execute_StartAcquisition failed: " +str(response))
                 # TODO: some more appropriate error code
@@ -776,36 +937,13 @@ class SiamInstrumentDriver(InstrumentDriver):
                 return
             
             reply['success'] = InstErrorCode.OK
-            reply['result'] = {'channel':channel, 'publish_stream':self.publish_stream }
+            reply['result'] = {'channel':channel, 'publish_stream':self.data_publish_stream }
             return
         
           
-        #  
-        # if we are interacting with an Instrument Agent, we need to notify it
-        # whenever we get data from the instrument.
-        #
-        if self.notify_agent:
-            """
-            @TODO: implement.  This could probably be done as follows: use a
-            customized receiver service; set the publish_stream accordingly; and
-            call self.siamci.execute_StartAcquisition(channel, publish_stream) as
-            above. The customized receiver would send the notifications to the
-            agent. Alternatively, do the execute_StartAcquisition thing as above
-            but providing more information such that the java side does the
-            notifications directly to the agent (however, by looking at
-            instrument_agent.py, seems like the operation (op_publish in this
-            case, I think) requires the sender to be a child process, which
-            wouldn't be the case for the external SIAM-CI adapter service...)
-            """
-            reply['success'] = InstErrorCode.NOT_IMPLEMENTED
-            errmsg = "Notification of data to the agent not implemented yet"
-            reply['result'] = errmsg
-            return
-        
-        
         # TODO: perhaps a more appropriate error code for this situation
         reply['success'] = InstErrorCode.EXE_DEVICE_ERR
-        errmsg = "associated agent or publish_stream required for this operation"
+        errmsg = "associated data_publish_stream required for this operation"
         reply['result'] = errmsg
         log.warning("__start_sampling: " +errmsg)
         
@@ -834,15 +972,9 @@ class SiamInstrumentDriver(InstrumentDriver):
             log.warning("__stop_sampling: " +errmsg)
             return
         
-        #
-        # either publish_stream is given OR notify_agent is True, with
-        # publish_stream having precedence just because this was the first
-        # implemented functionality (but in general, not both properties
-        # would be indicated at the same time).
-        #
-        
-        if self.publish_stream is not None:
-            response = yield self.siamci.execute_StopAcquisition(channel, self.publish_stream)
+
+        if self.data_publish_stream is not None:
+            response = yield self.siamci.execute_StopAcquisition(channel, self.data_publish_stream)
             if log.getEffectiveLevel() <= logging.DEBUG:
                 log.debug('In SiamDriver __stop_sampling --> ' + str(response))  
             
@@ -852,34 +984,17 @@ class SiamInstrumentDriver(InstrumentDriver):
                 return
             
             reply['success'] = InstErrorCode.OK
-            reply['result'] = {'channel':channel, 'publish_stream':self.publish_stream }
+            reply['result'] = {'channel':channel, 'publish_stream':self.data_publish_stream }
             return
             
-            
-        #  
-        # if we are interacting with an Instrument Agent, we need to notify it
-        # that data acqusition is to stop.
-        #
-        if self.notify_agent:
-            """
-            @TODO: implement. See __start_sampling.
-            """
-            reply['success'] = InstErrorCode.NOT_IMPLEMENTED
-            errmsg = "Notification of data to the agent not implemented yet"
-            reply['result'] = errmsg
-            log.warning("__stop_sampling: " +errmsg)
-            return
-
             
         # TODO: perhaps a more appropriate error code for this situation
         reply['success'] = InstErrorCode.EXE_DEVICE_ERR
-        errmsg = "associated agent or publish_stream required for this operation"
+        errmsg = "associated data_publish_stream required for this operation"
         reply['result'] = errmsg
         log.warning("__stop_sampling: " +errmsg)
         
         
-      
-       
 
 class SiamInstrumentDriverClient(InstrumentDriverClient):
     """

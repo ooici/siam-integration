@@ -1,5 +1,8 @@
 package net.ooici.siamci.impl.data;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import net.ooici.siamci.SiamCi;
 import net.ooici.siamci.utils.ScUtils;
 
@@ -209,12 +212,18 @@ class DataNotifier implements Runnable {
     }
 
     private void _publishData(String turbineName, double value) {
+        log.info(prefix + "_publishData: '" + turbineName + "' = " + value);
         if (log.isDebugEnabled()) {
             log.debug(prefix + "_publishData: '" + turbineName + "' = " + value);
         }
 
-        GeneratedMessage response = ScUtils.createSuccessResponse("dataReceived = "
-                + value);
+        Map<String, String> map = new HashMap<String, String>();
+        
+        map.put("turbineName", "turbineName");  // for debugging purposes
+        map.put("channel", "val");  // FIXME
+        map.put("value", String.valueOf(value));
+        
+        GeneratedMessage response = ScUtils.createSuccessResponseWithMap(map);
         SiamCi.instance().getPublisher().publish(reqId,
                 publishId,
                 response,

@@ -10,7 +10,7 @@
 
 import uuid
 import re
-import os
+from os import getenv
 
 from twisted.internet import defer
 from ion.test.iontest import IonTestCase
@@ -28,11 +28,15 @@ from ion.agents.instrumentagents.instrument_constants import AgentState
 from ion.agents.instrumentagents.instrument_constants import DriverCommand
 from ion.agents.instrumentagents.instrument_constants import InstErrorCode
 
+from ion.services.dm.distribution.events import DataBlockEventSubscriber
+
+
 from siamci.siamci_constants import SiamDriverChannel
 from siamci.test.siamcitest import SiamCiTestCase
 from siamci.siamci_constants import SiamDriverCommand
 from siamci.util.tcolor import red, blue
 
+PRINT_PUBLICATIONS = getenv('PRINT_PUBLICATIONS', None)
 
 log = ion.util.ionlog.getLogger(__name__)
 
@@ -99,7 +103,33 @@ class TestSiamAgent(SiamCiTestCase):
         self.sup = yield self._spawn_processes(processes)
         self.svc_id = yield self.sup.get_child_id(instr_agent_name)
         self.ia_client = instrument_agent.InstrumentAgentClient(proc=self.sup,
-                                                                target=self.svc_id)        
+                                                                target=self.svc_id)
+        
+        
+        
+        class TestDataSubscriber(DataBlockEventSubscriber):
+            def __init__(self, *args, **kwargs):
+                self.msgs = []
+                DataBlockEventSubscriber.__init__(self, *args, **kwargs)
+                if PRINT_PUBLICATIONS:
+                    print blue('listening for data at ' + kwargs.get('origin','none')) 
+
+            def ondata(self, data):
+                content = data['content'];
+                if PRINT_PUBLICATIONS:
+                    print blue('data subscriber ondata:' + str(content.additional_data.data_block))
+
+        
+        # TODO capture channel in a proper way
+        channel = 'val'
+        origin_str = channel + '.' + str(self.svc_id)
+        datasub = TestDataSubscriber(origin=origin_str,process=self.sup)
+        yield datasub.initialize()
+        yield datasub.activate()
+        
+        
+        
+                
         
 
     @defer.inlineCallbacks
@@ -356,18 +386,17 @@ class TestSiamAgent(SiamCiTestCase):
         success = reply['success']
         result = reply['result']
 
-        # TODO actually fail; temporarily skipping if not OK:
-        if not InstErrorCode.is_ok(success): raise unittest.SkipTest(str(result))
-        
         self.assert_(InstErrorCode.is_ok(success))
+        
 
-        print red('=============== autosampling started')
+        log.debug('=============== autosampling started')
         
         # Wait for a few samples to arrive.
-        yield pu.asleep(30)
+        yield pu.asleep(20)
         
         # Stop autosampling.
-        print red('=============== stopping autosampling ')
+        log.debug('=============== stopping autosampling ')
+            
         chans = [acq_channel]
         cmd = [DriverCommand.STOP_AUTO_SAMPLING]  #,'GETDATA']
         while True:
@@ -384,7 +413,7 @@ class TestSiamAgent(SiamCiTestCase):
             else:
                 self.fail('Stop autosample failed with error: '+str(success))
             
-        print red('=============== autosampling result ' + str(result))
+        log.debug('=============== autosampling result ' + str(result))
         
         self.assert_(InstErrorCode.is_ok(success))
         

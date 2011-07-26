@@ -3,12 +3,44 @@ Carlos Rueda - MBARI
 
 2011-07-25
 	- Included get-capabilities operation to SiamInstrumentDriver. The implementation
-	  is still preliminar (basically just reflecting the approach in SBE37). For now,
-	  this removes the timeout warnings related with test_siam_agent.
+	  is still preliminar but already removes the timeout warnings related with 
+	  test_siam_agent.
 	  
-	All the tests go as follows:
-	
-		(siamci)bochica:python carueda$ SIAM_CI=- bin/trial siamci
+	- Now incorporating notification of data from the driver to the agent.
+	  Strategy: 
+	  	SiamInstrumentDriver now supports the op_acceptResponse operation, which is
+	  	called by the java side for notification of data (and later on for other
+	  	notifications). The new instance member data_publish_stream is initialized with
+	  	the process ID of the SiamInstrumentDriver itself, and this is used for
+	  	the requests involving data acquisition (__start_sampling and __stop_sampling).
+	  	
+	  	(Note: there is also a publish_stream member, which, if not None, is used by 
+	  	other non-data operations; but the variable is not being assigned any concrete
+	  	value at the moment.)
+	  	
+	  	If self.notify_agent is true, op_acceptResponse makes the corresponding
+	  	notification to the agent.
+	  	
+	  	test_siam_agent.py uses a TestDataSubscriber to verify that the notifications
+	  	through the instrument agent are taking place, for example:
+	  	
+		$ SIAM_CI=- PRINT_PUBLICATIONS=- bin/trial siamci.test.test_siam_agent.TestSiamAgent.test_021_acquisition_start_wait_stop
+		siamci.test.test_siam_agent
+		  TestSiamAgent
+		    test_021_acquisition_start_wait_stop ... listening for data at val.bochica_local_56645.4
+		data subscriber ondata:[[{"val": 0.062283812876217426}]]
+		data subscriber ondata:[[{"val": 0.30528266776680402}]]
+		                              [OK]
+	  	
+	  	
+	- NOTE: The basic mechanisms are now in place but there's still a lot of adjustments
+	  to do regarding particular details of the various operations including:
+	  - appropriate "constants" that are relevant for the SIAM driver being exercised
+	  - handling of channels in the requests
+	  
+	  
+	At this point, all the tests go as follows:
+		$ SIAM_CI=-  bin/trial siamci
 		siamci.test.test_echo_service_in_java
 		  JavaEchoTest
 		    test_send_message_instance1 ...                                        [OK]
@@ -24,7 +56,7 @@ Carlos Rueda - MBARI
 		    test_003_go_active_run_reset ...                                       [OK]
 		    test_010_params_get_set_verify ...                                     [OK]
 		    test_020_acquisition_get_last_sample ...                               [OK]
-		    test_021_acquisition_start_wait_stop ...                          [SKIPPED]
+		    test_021_acquisition_start_wait_stop ...                               [OK]
 		siamci.test.test_siam_driver
 		  TestSiamInstrumentDriver
 		    test_001_configure ...                                                 [OK]
@@ -39,6 +71,7 @@ Carlos Rueda - MBARI
 		    test_006_set_params_valid ...                                          [OK]
 		    test_007_get_channels ...                                              [OK]
 		    test_008_get_last_sample ...                                           [OK]
+		    test_090_acquisition ...                                               [OK]
 		siamci.test.test_siamci
 		  TestSiamCiAdapterProxy
 		    test_fetch_params_all ...                                              [OK]
@@ -69,18 +102,13 @@ Carlos Rueda - MBARI
 		
 		===============================================================================
 		[SKIPPED]
-		Notification of data to the agent not implemented yet
-		
-		siamci.test.test_siam_agent.TestSiamAgent.test_021_acquisition_start_wait_stop
-		===============================================================================
-		[SKIPPED]
 		Not yet implemented
 		
 		siamci.test.test_siam_driver.TestSiamInstrumentDriver.test_005_get_params_specific_channels
 		-------------------------------------------------------------------------------
-		Ran 43 tests in 75.222s
+		Ran 44 tests in 130.300s
 		
-		PASSED (skips=2, successes=41)
+		PASSED (skips=1, successes=43)	
 	
 	
 	

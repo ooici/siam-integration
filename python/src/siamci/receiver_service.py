@@ -26,12 +26,7 @@ from ion.services.coi.resource_registry.resource_client import ResourceClient
 
 import ion.util.procutils as pu
 
-
-from ion.core.object.object_utils import create_type_identifier
-
-Command_type = create_type_identifier(object_id=20034, version=1)
-ChannelParameterPair_type = create_type_identifier(object_id=20035, version=1)
-SuccessFail_type = create_type_identifier(object_id=20036, version=1)
+from siamci.util.conversion import get_python_content
 
 
 
@@ -118,7 +113,7 @@ class SiamCiReceiverService(ServiceProcess):
             log.debug("op_acceptResponse: publish_id = " +str(publish_id))
         
         if publish_id:
-            content = self._get_python_content(content)
+            content = get_python_content(content)
             self.accepted[publish_id] = content
             yield self.reply_ok(msg, {'op_acceptResponse' : "OK: response for publish_id='" +str(publish_id)+ "' accepted"})
         else:
@@ -126,32 +121,6 @@ class SiamCiReceiverService(ServiceProcess):
             yield self.reply_err(msg, "op_acceptResponse : WARNING: publish_id not given")
 
 
-    def _get_python_content(self, content):
-        
-#        from IPython.Shell import IPShellEmbed; (IPShellEmbed())()
-        
-        if isinstance(content, dict):
-            # this is the case when op_acceptResponse is called from python code
-            return content
-        
-        if SuccessFail_type == content.MessageType:
-            obj = content.MessageObject
-            # TODO complete conversion
-            return {'result' : obj.result,
-                    'item' : obj.item[0].str}
-        
-        elif ChannelParameterPair_type == content.MessageType:
-            # FIXME do conversion
-            return content
-        
-        elif Command_type == content.MessageType:
-            # FIXME do conversion
-            return content
-        
-        # TODO this should probably not happen
-        return content
-        
-        
             
 
     @defer.inlineCallbacks

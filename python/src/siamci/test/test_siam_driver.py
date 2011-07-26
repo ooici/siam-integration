@@ -18,6 +18,7 @@ from siamci.util.tcolor import red, blue
 from siamci.siam_driver import SiamInstrumentDriverClient
 from siamci.siamci_constants import SiamDriverState
 from siamci.siamci_constants import SiamDriverChannel
+from siamci.siamci_constants import SiamDriverStatus
 from siamci.siamci_constants import SiamDriverCommand
     
 from ion.agents.instrumentagents.instrument_constants import InstErrorCode
@@ -41,11 +42,10 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
             'port':SiamCiTestCase.port
         }        
         
-
-        driver_name = 'SiamInstrumentDriver_' + SiamCiTestCase.port
+        self.driver_name = 'SiamInstrumentDriver_' + SiamCiTestCase.port
         
         services = [
-            {'name': driver_name,
+            {'name': self.driver_name,
              'module':'siamci.siam_driver',
              'class':'SiamInstrumentDriver',
              'spawnargs':self.driver_config
@@ -54,7 +54,7 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
 
         self.sup = yield self._spawn_processes(services)
         
-        self.driver_pid = yield self.sup.get_child_id(driver_name)
+        self.driver_pid = yield self.sup.get_child_id(self.driver_name)
 
         self.driver_client = SiamInstrumentDriverClient(proc=self.sup,
                                                          target=self.driver_pid)
@@ -163,10 +163,13 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
         yield self.__connect()
         
         # @todo: Only the all-all params is handled; handle other possible params
-        params = [('all','all')]
+        channel = SiamDriverChannel.INSTRUMENT   # previously "all"
+        status = SiamDriverStatus.ALL            # previously "all"
+        params = [(channel, status)]
         reply = yield self.driver_client.get_status(params)
         success = reply['success']
         result = reply['result']      
+        
         self.assert_(InstErrorCode.is_ok(success))  
         
         yield self.__disconnect()
@@ -410,4 +413,47 @@ class TestSiamInstrumentDriver(SiamCiTestCase):
 
         yield self.__disconnect()
         
-         
+       
+       
+       
+    @defer.inlineCallbacks
+    def test_090_acquisition(self):
+        self._check_skip()
+
+        meth_name = "test_090_acquisition"
+        
+        # @todo: capture channel from some parameter?
+        channel = "val"
+        
+        #
+        # @todo: more robust assignment of publish IDs
+        #
+        publish_id = "data_acquisition;port=" + SiamCiTestCase.port + ";channel=" + channel
+
+
+        yield self.__connect()
+        
+        channels = ["val"]
+        command = [SiamDriverCommand.START_AUTO_SAMPLING]
+        timeout = 10
+        reply = yield self.driver_client.execute(channels,command,timeout)
+            
+        success = reply['success']
+        result = reply['result']
+        
+        log.debug(meth_name + ": result =" +str(result))
+        
+        self.assert_(InstErrorCode.is_ok(success))
+        
+        assert(isinstance(result, dict))    
+        
+     
+        current_state = yield self.driver_client.get_state()
+        self.assertEqual(current_state, SiamDriverState.CONNECTED)
+        
+        # wait for a few samples to be notified to the receiver service
+        yield pu.asleep(30)
+        
+
+        yield self.__disconnect()
+  
